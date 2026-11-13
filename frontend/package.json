@@ -1,0 +1,7 @@
+{
+  "name": "pickleball-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "零构建静态前端：index.html + api.js，由后端同源托管；不依赖 node_modules",
+  "scripts": {}
+}

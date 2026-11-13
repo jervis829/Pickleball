@@ -1,0 +1,13 @@
+node_modules/
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+.env
+.DS_Store
+coverage/
+dist/
+npm-debug.log*
+initial-admin.txt
+jwt-secret.txt

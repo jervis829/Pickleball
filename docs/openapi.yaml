@@ -1,0 +1,324 @@
+openapi: 3.0.3
+info:
+  title: 匹克球教学管理中台 API
+  version: 1.0.0
+  description: >
+    学员档案、教学计划生成数据、教学追踪与量化考核的后端接口。
+    数据存 SQLite；除健康检查与登录外均需 Bearer JWT。
+    涉及伤病、青少年与常青负荷时系统仅输出评估提示，不做医疗诊断。
+servers:
+  - url: http://127.0.0.1:8787/api/v1
+    description: 本机默认
+  - url: /api/v1
+    description: 同源部署
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Ok:
+      type: object
+      required: [success, data, timestamp]
+      properties:
+        success: { type: boolean, example: true }
+        data: {}
+        message: { type: string }
+        timestamp: { type: string, format: date-time }
+    Error:
+      type: object
+      required: [success, error, timestamp]
+      properties:
+        success: { type: boolean, example: false }
+        error:
+          type: object
+          properties:
+            code: { type: string, example: VALIDATION_ERROR }
+            message: { type: string }
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field: { type: string }
+                  message: { type: string }
+        timestamp: { type: string, format: date-time }
+    Student:
+      type: object
+      required: [name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        phone: { type: string }
+        age: { type: string, enum: [adult, youth, senior, mixed] }
+        stage: { type: integer, minimum: 1, maximum: 3 }
+        sizeLabel: { type: string }
+        total: { type: integer }
+        used: { type: integer }
+        expire: { type: string }
+        injury: { type: string, description: 非空即触发安全评估提示 }
+        techScore: { type: number }
+        fitScore: { type: number }
+        goal: { type: string }
+        status: { type: string, example: 在训 }
+        note: { type: string }
+    Plan:
+      type: object
+      required: [lesson]
+      properties:
+        id: { type: string }
+        lesson: { type: integer, minimum: 1, maximum: 48 }
+        stage: { type: integer, minimum: 1, maximum: 3 }
+        tech: { type: string }
+        minutes: { type: integer }
+        date: { type: string, format: date }
+        age: { type: string }
+        ageName: { type: string }
+        size: { type: string }
+        zones: { type: array, items: { type: string } }
+        focus: { type: string }
+        text: { type: string, description: 教案全文 }
+        studentIds:
+          type: array
+          items: { type: string }
+          description: 多人班可含多个学员 ID
+    Session:
+      type: object
+      properties:
+        id: { type: string }
+        studentId: { type: string }
+        studentName: { type: string, readOnly: true }
+        date: { type: string, format: date }
+        lesson: { type: integer, minimum: 1, maximum: 48 }
+        minutes: { type: integer }
+        attend: { type: string, enum: [出勤, 请假, 缺勤] }
+        judge: { type: string, enum: [达标, 部分达标, 未达标] }
+        rpe: { type: integer, minimum: 1, maximum: 10 }
+        note: { type: string }
+    Assessment:
+      type: object
+      properties:
+        id: { type: string }
+        studentId: { type: string }
+        studentName: { type: string, readOnly: true }
+        stage: { type: integer, minimum: 1, maximum: 3 }
+        date: { type: string, format: date }
+        vals: { type: object, additionalProperties: { type: number } }
+        total: { type: number, nullable: true }
+        conclusion: { type: string }
+    State:
+      type: object
+      properties:
+        students: { type: array, items: { $ref: '#/components/schemas/Student' } }
+        plans: { type: array, items: { $ref: '#/components/schemas/Plan' } }
+        sessions: { type: array, items: { $ref: '#/components/schemas/Session' } }
+        assessments: { type: array, items: { $ref: '#/components/schemas/Assessment' } }
+        demo: { type: boolean }
+        thresholds: { type: object }
+        defaults: { type: object }
+        prefs: { type: object }
+        ui: { type: object }
+        revision: { type: integer, description: 乐观锁版本号 }
+    PagedList:
+      type: object
+      properties:
+        items: { type: array, items: {} }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+paths:
+  /health:
+    get:
+      summary: 健康检查
+      security: []
+      responses:
+        '200': { description: ok, content: { application/json: { schema: { $ref: '#/components/schemas/Ok' } } } }
+  /auth/login:
+    post:
+      summary: 登录
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: token 与账号信息, content: { application/json: { schema: { $ref: '#/components/schemas/Ok' } } } }
+        '401': { description: 凭证错误, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  /auth/me:
+    get:
+      summary: 当前账号
+      responses:
+        '200': { description: ok, content: { application/json: { schema: { $ref: '#/components/schemas/Ok' } } } }
+  /auth/change-password:
+    post:
+      summary: 修改密码（新密码至少 10 位）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [old_password, new_password]
+              properties:
+                old_password: { type: string }
+                new_password: { type: string }
+      responses:
+        '200': { description: 已修改 }
+        '401': { description: 原密码不正确 }
+        '422': { description: 新密码长度不足 }
+  /state:
+    get:
+      summary: 拉取全量 state 与 revision
+      responses:
+        '200': { description: ok, content: { application/json: { schema: { $ref: '#/components/schemas/Ok' } } } }
+    put:
+      summary: 全量同步（单事务 + 乐观锁）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [state]
+              properties:
+                state: { $ref: '#/components/schemas/State' }
+                revision: { type: integer, nullable: true }
+      responses:
+        '200': { description: 返回新 revision }
+        '409': { description: revision 冲突，请刷新 }
+        '422': { description: 校验失败 }
+  /export:
+    get:
+      summary: 导出数据库备份
+      responses:
+        '200': { description: 含 format/version/exported_at/state }
+  /import:
+    post:
+      summary: 导入备份（强制覆盖并重置版本号）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200': { description: 导入成功 }
+  /stats:
+    get:
+      summary: KPI 数值与逐项公式
+      responses:
+        '200': { description: values + definitions + caveats }
+  /curriculum:
+    get:
+      summary: 24 教学单元 / 48 课次
+      responses:
+        '200': { description: units + lesson_count }
+  /students/{id}/records:
+    get:
+      summary: 学员学习记录（进度、时间线、安全标记）
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: ok }
+        '404': { description: 学员不存在 }
+  /students:
+    get:
+      summary: 学员列表（分页 / 搜索）
+      parameters:
+        - { in: query, name: page, schema: { type: integer, default: 1 } }
+        - { in: query, name: pageSize, schema: { type: integer, default: 50, maximum: 200 } }
+        - { in: query, name: keyword, schema: { type: string } }
+      responses:
+        '200': { description: PagedList, content: { application/json: { schema: { $ref: '#/components/schemas/Ok' } } } }
+    post:
+      summary: 新增学员
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Student' }
+      responses:
+        '201': { description: 已创建 }
+        '422': { description: 校验失败 }
+  /students/{id}:
+    get:
+      summary: 学员详情
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      responses:
+        '200': { description: ok }
+        '404': { description: 不存在 }
+    patch:
+      summary: 局部更新
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Student' }
+      responses:
+        '200': { description: ok }
+    delete:
+      summary: 软删除
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      responses:
+        '204': { description: 已删除 }
+  /plans:
+    get: { summary: 教案列表, responses: { '200': { description: PagedList } } }
+    post:
+      summary: 新建教案
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Plan' }
+      responses: { '201': { description: 已创建 }, '422': { description: 校验失败 } }
+  /plans/{id}:
+    get: { summary: 教案详情, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '200': { description: ok } } }
+    patch: { summary: 更新教案, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '200': { description: ok } } }
+    delete: { summary: 删除教案, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '204': { description: 已删除 } } }
+  /sessions:
+    get: { summary: 授课记录列表, responses: { '200': { description: PagedList } } }
+    post:
+      summary: 新增授课记录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Session' }
+      responses: { '201': { description: 已创建 } }
+  /sessions/{id}:
+    get: { summary: 记录详情, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '200': { description: ok } } }
+    patch: { summary: 更新记录, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '200': { description: ok } } }
+    delete: { summary: 删除记录, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '204': { description: 已删除 } } }
+  /assessments:
+    get: { summary: 考核记录列表, responses: { '200': { description: PagedList } } }
+    post:
+      summary: 新增考核记录
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Assessment' }
+      responses: { '201': { description: 已创建 } }
+  /assessments/{id}:
+    get: { summary: 考核详情, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '200': { description: ok } } }
+    patch: { summary: 更新考核, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '200': { description: ok } } }
+    delete: { summary: 删除考核, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '204': { description: 已删除 } } }

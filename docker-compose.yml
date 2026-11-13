@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    container_name: pickleball-academy
+    ports:
+      - "8787:8787"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8787
+      NODE_ENV: production
+      DB_FILE: data/pickleball.db
+      # 生产务必通过 .env 或密钥管理显式设置 ADMIN_PASSWORD / JWT_SECRET
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET:-}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
