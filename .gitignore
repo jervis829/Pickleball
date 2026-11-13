@@ -15,3 +15,8 @@ jwt-secret.txt
 # 部署凭据与发布包（绝不入库）
 .deploy.env
 pkb-release-*.tar.gz
+
+# Python 部署脚本缓存
+__pycache__/
+*.pyc
+.venv-deploy/
