@@ -314,10 +314,10 @@ pre.card{white-space:pre-wrap;word-break:break-word;font-family:'IBM Plex Mono',
               <div class="field"><label>授课日期</label><input type="date" id="fDate"></div>
               <div class="field"><label>当课重点</label><select id="fFocus"><option value="tech">技术主题</option><option value="fit">体能与步伐</option><option value="play">对抗应用</option></select></div>
             </div>
-            <div class="seg-group">
-              <div class="g-title">可用分区 / 器材</div>
-              <div class="seg-checks" id="fZones"></div>
-              <div class="hint" style="margin-top:8px">停用某区后，其任务并入主带区集中完成</div>
+            <div class="field">
+              <label>专项体能 / 步伐段</label>
+              <select id="fFitMode"><option value="auto">按课次自动（推荐）</option><option value="yes">本课安排</option><option value="no">本课不安排</option></select>
+              <div class="hint" style="margin-top:6px">A 新授课自动安排、B 巩固课与考核课自动不安排；热身里的 2-3 分钟步伐激活始终保留。功能区无需选择，教案会按本课次内容自动写明何时整队移步。</div>
             </div>
             <div class="err-text" id="planErr"></div>
             <button class="btn btn-primary" style="width:100%;padding:11px" data-act="generate" id="genBtn">生成详细教学计划</button>
@@ -355,7 +355,7 @@ pre.card{white-space:pre-wrap;word-break:break-word;font-family:'IBM Plex Mono',
       <div class="two-col" style="margin-top:0">
         <div class="stack">
           <div class="panel"><div class="panel-head"><h2>生成依据</h2><span class="sub">内置 48 课次体系</span></div><div class="panel-body">
-            <div class="notice">教案内容由本工作区《匹克球训练体系_初学者到高阶.md》v2 推出：24 个教学单元 × 2 课次（A 新授 / B 巩固）＝ 48 课次，加上 §2 课堂环节详细说明库、四区轮转 SOP、任务卡与常见错误纠正表。每个环节的动作清单按年龄段自动调整。</div>
+            <div class="notice">教案内容由本工作区《匹克球训练体系_初学者到高阶.md》v3 推出：24 个教学单元 × 2 课次（A 新授 / B 巩固）＝ 48 课次，加上 §2 课堂环节详细说明库、统一教学动线与常见错误纠正表。全员在同一场地由教练统一带练，需要多球 / 体能 / 对墙时由教案自动写明整队移步的功能区；不分组、不分区轮转。每个环节的动作清单按年龄段自动调整。</div>
             <div class="field" style="margin-top:16px"><label>查看课次计划</label><select id="stageView"><option value="1">阶段一 · 第 1–16 课</option><option value="2">阶段二 · 第 17–32 课</option><option value="3">阶段三 · 第 33–48 课</option></select></div>
             <div class="table-wrap" id="curriculumTable" style="max-height:340px;overflow:auto"></div>
           </div></div>
@@ -410,27 +410,27 @@ const AGE_GROUPS={
   mixed:{name:'混合班',rpe:'取各组最低上限'}
 };
 const UNITS=[
-{u:1,s:1,tech:'握拍、准备姿势、场地与非截击区规则',a:'握拍与准备姿势定格',b:'规则快问 + 站位轮转',fit:'关节活动度、基础核心激活',foot:'分腿垫步、基本站位',org:'丁克区全体示范→两人一组；打墙区徒手挥拍；体能区弹力带肩胛激活',play:'A 无对抗、教练定点喂球；B 站位小游戏（听口令抢占基准位）',hw:'徒手挥拍 [N] 次 × [N] 组；规则 3 题快问',err:'拍子下垂、重心直立',fix:'「拍在胸前、膝微屈」+ 喂球前定格检查',kp:'拍面始终高于网带|双膝微屈、重心在两脚之间|非截击区线后不截击',drill:'徒手握拍与准备姿势定格 [N] 次|教练定点喂轻球，只做接球定格不挥拍|侧向一步到位后还原准备姿势'},
-{u:2,s:1,tech:'正手击球、发球动作分解',a:'正手转体与击球点',b:'发球抛球稳定性 + 对墙连续击球',fit:'下肢力量、肩胛稳定',foot:'侧滑步、回中',org:'多球区发球机定点（主带）；打墙区对墙正手；丁克区握拍定格检查',play:'A 定点对打计分；B 发球落点小竞赛',hw:'对墙 [N] 次 × [N] 组，记录成功数',err:'只用手臂挥、抛球不稳',fix:'夹球转体练习；定点抛球 + 击球点标记',kp:'击球后肩转过来|击球点在身前 [N] cm|抛球高度稳定在 [N] 范围',drill:'徒手正手挥拍 + 夹球转体 [N] 次|发球机定点喂球 [N] 球/人，击球点标记|侧滑步到位后正手击球并回中'},
-{u:3,s:1,tech:'反手击球、接发球站位',a:'反手拍面与击球点',b:'接发站位 + 交叉步补位',fit:'灵敏、启动制动',foot:'交叉步、后退步',org:'四区循环：多球区（接发）→ 打墙区（反手）→ 体能区（绳梯/药球）→ 丁克区（站位）',play:'A 发球—接发小游戏；B 接发后 2 拍计分',hw:'步伐影子练习 [N] 组',err:'交叉脚侧移、击球后不回中',fix:'侧滑步 + 回中计次（体能区）',kp:'反手拍面不翻、击球点在体前|接发站位在底线后 [N] 步|击球后 [N] 秒内回中',drill:'徒手反手挥拍 + 拍面定格 [N] 次|教练定点喂反手 [N] 球/人|交叉步补位后反手击球并回中'},
-{u:4,s:1,tech:'网前 dink 与非截击区规则',a:'dink 拍面与「推不甩」',b:'连续 dink 回合 + 踩线自查',fit:'核心抗旋转、腕肘负荷控制',foot:'网前小步调整',org:'丁克区双人轮转（主带）；打墙区轻击落点；体能区弹力带外旋',play:'A 定点 dink 到目标区；B dink 连续回合挑战',hw:'记录 dink 连续回合数',err:'用力过大、惯性踩线截击',fix:'「推不甩」+ 目标区落点计分；线后 [N] cm 站位标记',kp:'拍面略开、用推不用甩|球过网后落在对方非截击区|脚不触非截击区线',drill:'徒手 dink 推挡 + 拍面定格 [N] 次|教练网前喂球，轻推入目标区 [N] 球|网前小步调整后连续 dink [N] 回合'},
+{u:1,s:1,tech:'握拍、准备姿势、场地与非截击区规则',a:'握拍与准备姿势定格',b:'规则快问 + 站位轮转',fit:'关节活动度、基础核心激活',foot:'分腿垫步、基本站位',org:'标准场地全体集合示范 → 两人一组对练；热身含弹力带肩胛激活',play:'A 无对抗、教练定点喂球；B 站位小游戏（听口令抢占基准位）',hw:'徒手挥拍 [N] 次 × [N] 组；规则 3 题快问',err:'拍子下垂、重心直立',fix:'「拍在胸前、膝微屈」+ 喂球前定格检查',kp:'拍面始终高于网带|双膝微屈、重心在两脚之间|非截击区线后不截击',drill:'徒手握拍与准备姿势定格 [N] 次|教练定点喂轻球，只做接球定格不挥拍|侧向一步到位后还原准备姿势'},
+{u:2,s:1,tech:'正手击球、发球动作分解',a:'正手转体与击球点',b:'发球抛球稳定性 + 对墙连续击球',fit:'下肢力量、肩胛稳定',foot:'侧滑步、回中',org:'标准场地正手定格与喂球；按需移步多球区（发球机定点）与打墙区对墙正手',play:'A 定点对打计分；B 发球落点小竞赛',hw:'对墙 [N] 次 × [N] 组，记录成功数',err:'只用手臂挥、抛球不稳',fix:'夹球转体练习；定点抛球 + 击球点标记',kp:'击球后肩转过来|击球点在身前 [N] cm|抛球高度稳定在 [N] 范围',drill:'徒手正手挥拍 + 夹球转体 [N] 次|发球机定点喂球 [N] 球/人，击球点标记|侧滑步到位后正手击球并回中'},
+{u:3,s:1,tech:'反手击球、接发球站位',a:'反手拍面与击球点',b:'接发站位 + 交叉步补位',fit:'灵敏、启动制动',foot:'交叉步、后退步',org:'标准场地为主：多球区接发专项、打墙区反手定格，按需要整队移步 1-2 处',play:'A 发球—接发小游戏；B 接发后 2 拍计分',hw:'步伐影子练习 [N] 组',err:'交叉脚侧移、击球后不回中',fix:'侧滑步 + 回中计次（体能区）',kp:'反手拍面不翻、击球点在体前|接发站位在底线后 [N] 步|击球后 [N] 秒内回中',drill:'徒手反手挥拍 + 拍面定格 [N] 次|教练定点喂反手 [N] 球/人|交叉步补位后反手击球并回中'},
+{u:4,s:1,tech:'网前 dink 与非截击区规则',a:'dink 拍面与「推不甩」',b:'连续 dink 回合 + 踩线自查',fit:'核心抗旋转、腕肘负荷控制',foot:'网前小步调整',org:'标准场地网前 dink（教练统一喂球）；按需移步打墙区练轻击落点',play:'A 定点 dink 到目标区；B dink 连续回合挑战',hw:'记录 dink 连续回合数',err:'用力过大、惯性踩线截击',fix:'「推不甩」+ 目标区落点计分；线后 [N] cm 站位标记',kp:'拍面略开、用推不用甩|球过网后落在对方非截击区|脚不触非截击区线',drill:'徒手 dink 推挡 + 拍面定格 [N] 次|教练网前喂球，轻推入目标区 [N] 球|网前小步调整后连续 dink [N] 回合'},
 {u:5,s:1,tech:'第三拍落点、吊高球基础',a:'第三拍三种选择（吊/推/挑）',b:'落点九宫格自测',fit:'耐力（间歇）',foot:'前后移动 + 回中',org:'多球区发球机 + 落点目标区；体能区间歇折返',play:'A 3 拍组合喂球；B 3 拍组合对抗（落点命中才计分）',hw:'落点自测表（左/中/右各 [N] 球）',err:'第三拍盲目强攻、落点过深',fix:'吊放/推进/挑高三选一战术卡',kp:'第三拍先判断再选吊/推/挑|落点进入对方非截击区|击球后回位到基准位',drill:'徒手模拟三种第三拍选择 [N] 次|发球机喂第三拍，定点吊放 [N] 球|前后移动到位后打落点九宫格'},
-{u:6,s:1,tech:'防守反击、扣杀判断',a:'高球判断与后退步',b:'防守后反击的时机',fit:'反应速度、下肢离心控制',foot:'启动制动强化',org:'情境卡片分组；发球机变速档 [发球机档位]；体能区单腿平衡',play:'A 教练喂高球判断；B 限定区域计分赛（先防守后反击才得分）',hw:'自录视频 [N] 分钟，标 1 个问题',err:'盲目扣杀、后退时重心后仰',fix:'先防守后反击才得分；缩短后退距离',kp:'高球先退到位再判断|不仰身后倒、重心在前脚掌|只在球低于网带时不扣杀',drill:'徒手后退步 + 高球判断口令 [N] 次|教练喂高球，后退到位后轻挡 [N] 球|移动中防守后接一拍反击'},
-{u:7,s:1,tech:'双打站位、轮转与沟通',a:'两人站位与「我的/你的」口令',b:'轮转路线 + 沟通复盘',fit:'综合体能循环',foot:'全步伐串联',org:'模拟比赛日；四区循环打卡；固定「我的 / 你的」口令',play:'A 定点双打喂球；B 循环赛（小分制）',hw:'战术复盘一页纸',err:'两人同时抢球、无沟通',fix:'「我的 / 你的」口令固定化 + 站位图',kp:'两人不站重叠|每球先喊「我的/你的」|击球后同步前后移动',drill:'徒手走位 + 口令练习 [N] 组|教练定点喂双打球，练喊口令|轮转路线实战跑位 [N] 分'},
+{u:6,s:1,tech:'防守反击、扣杀判断',a:'高球判断与后退步',b:'防守后反击的时机',fit:'反应速度、下肢离心控制',foot:'启动制动强化',org:'标准场地情境卡片演练；按需移步多球区（发球机变速档 [发球机档位]）',play:'A 教练喂高球判断；B 限定区域计分赛（先防守后反击才得分）',hw:'自录视频 [N] 分钟，标 1 个问题',err:'盲目扣杀、后退时重心后仰',fix:'先防守后反击才得分；缩短后退距离',kp:'高球先退到位再判断|不仰身后倒、重心在前脚掌|只在球低于网带时不扣杀',drill:'徒手后退步 + 高球判断口令 [N] 次|教练喂高球，后退到位后轻挡 [N] 球|移动中防守后接一拍反击'},
+{u:7,s:1,tech:'双打站位、轮转与沟通',a:'两人站位与「我的/你的」口令',b:'轮转路线 + 沟通复盘',fit:'综合体能循环',foot:'全步伐串联',org:'模拟比赛日；标准场地双打站位演练；固定「我的 / 你的」口令',play:'A 定点双打喂球；B 循环赛（小分制）',hw:'战术复盘一页纸',err:'两人同时抢球、无沟通',fix:'「我的 / 你的」口令固定化 + 站位图',kp:'两人不站重叠|每球先喊「我的/你的」|击球后同步前后移动',drill:'徒手走位 + 口令练习 [N] 组|教练定点喂双打球，练喊口令|轮转路线实战跑位 [N] 分'},
 {u:8,s:1,tech:'技术整合与量化考核',a:'全部要点复习（减量）',b:'第 16 课：阶段考核（4 项）',fit:'减量、恢复',foot:'考核动作复习',org:'考核流程说明 → 逐项测试（发球落点、定向击球、步伐质量、规则与战术）',play:'A 低强度要点复习；B 结业交流赛',hw:'下一周期建议',err:'考前突击加练致动作变形',fix:'末课减量、只做流程演练',kp:'只用已练动作|考核前完整演示流程|热身减量不引入新技术',drill:'徒手复习 8 个单元要点 [N] 次|定点喂球找手感 [N] 球|结业交流赛（不计入考核）'},
 {u:9,s:2,tech:'第三拍吊放与落点组合',a:'吊放动作与落点选择',b:'九宫格分布自查 + 约束计分',fit:'下肢力量进阶、核心抗旋转',foot:'前后移动 + 回中',org:'多球区发球机落点九宫格（主带）；丁克区目标区；打墙区连续击球',play:'A 定点落点计分；B 每分必须以第三拍落点开局',hw:'落点分布表 [N] 球',err:'第三拍只会强攻',fix:'九宫格分布集中 1 格即重练',kp:'落点分散到至少 [N] 个格|吊放弧线不过网过高|击球后回中不滞留',drill:'徒手吊放拍面轨迹 [N] 次|发球机定点喂球打九宫格 [N] 球|移动中第三拍吊放并回中'},
-{u:10,s:2,tech:'dink 变速与拍面控制',a:'两种速度与拍面角度',b:'强制变速相持',fit:'腕肘负荷控制、核心稳定',foot:'网前小步调整进阶',org:'丁克区双人轮转 + 速度档位卡；体能区弹力带外旋',play:'A 定速 dink 相持；B 每 [N] 球必须变速一次',hw:'dink 连续回合记录',err:'节奏单一、拍面后仰',fix:'「推不甩」+ 强制变速口令',kp:'两档速度可切换|变速时拍面不变形|球仍落在非截击区内',drill:'徒手两档推挡节奏 [N] 次|同伴定点 dink 定速 [N] 回合|按口令强制变速相持 [N] 回合'},
+{u:10,s:2,tech:'dink 变速与拍面控制',a:'两种速度与拍面角度',b:'强制变速相持',fit:'腕肘负荷控制、核心稳定',foot:'网前小步调整进阶',org:'标准场地网前 dink 变速（教练统一发令）；速度档位卡',play:'A 定速 dink 相持；B 每 [N] 球必须变速一次',hw:'dink 连续回合记录',err:'节奏单一、拍面后仰',fix:'「推不甩」+ 强制变速口令',kp:'两档速度可切换|变速时拍面不变形|球仍落在非截击区内',drill:'徒手两档推挡节奏 [N] 次|同伴定点 dink 定速 [N] 回合|按口令强制变速相持 [N] 回合'},
 {u:11,s:2,tech:'接发球主动上手与站位前压',a:'接发拍面与前压时机',b:'3 拍内上网执行率',fit:'灵敏、启动制动',foot:'分腿垫步 + 前压回中',org:'多球区接发专项；体能区绳梯；打墙区快节奏对墙',play:'A 接发定点；B 接发后 3 拍内必须上网',hw:'接发站位图自绘',err:'接发只挡不压、站位偏后',fix:'「接完就上」+ 前压回中计次',kp:'接发后重心向前|3 拍内到达非截击区线后|接发落点深且不过网高',drill:'徒手接发前压步 [N] 次|发球机喂接发 [N] 球，接完即前压|接发 + 前压 + 网前 dink 三拍串联'},
 {u:12,s:2,tech:'中场过渡球与防守反击',a:'过渡球选择',b:'防守反击的启动时机',fit:'反应速度、下肢离心控制',foot:'后退步 + 启动制动',org:'情境卡片分组；发球机 [发球机档位] 变速；体能区药球旋转抛',play:'A 中场喂球选择过渡；B 先防守后反击才得分',hw:'自录视频 [N] 分钟',err:'中场强行进攻、重心后倒',fix:'过渡球优先；缩短制动距离',kp:'中场球先落稳妥区|重心不前扑|反击在对手失去位置后启动',drill:'徒手中场过渡拍面 [N] 次|教练喂中场球，打过渡落点 [N] 球|防守一拍后接反击计分'},
-{u:13,s:2,tech:'双打 stacking 轮转基础',a:'stacking 站位与触发条件',b:'轮转路线默写 + 实战',fit:'综合体能循环',foot:'全步伐串联 + 轮转路线',org:'标准场地战术板讲解 → 四区轮转打卡（教练主带场地）',play:'A 无对抗走位；B 限定 stacking 站位的小分赛',hw:'轮转路线图默写',err:'轮转时机错、两人重叠',fix:'战术板 + 4 条固定沟通口令',kp:'知道何时启动 stacking|两人不重叠|轮转后各自回到指定侧',drill:'战术板前徒手走位 [N] 组|无球轮转跑位 [N] 次|带喂球的 stacking 轮转 [N] 分'},
+{u:13,s:2,tech:'双打 stacking 轮转基础',a:'stacking 站位与触发条件',b:'轮转路线默写 + 实战',fit:'综合体能循环',foot:'全步伐串联 + 轮转路线',org:'标准场地战术板讲解 → 无球走位演练（教练主带场地）',play:'A 无对抗走位；B 限定 stacking 站位的小分赛',hw:'轮转路线图默写',err:'轮转时机错、两人重叠',fix:'战术板 + 4 条固定沟通口令',kp:'知道何时启动 stacking|两人不重叠|轮转后各自回到指定侧',drill:'战术板前徒手走位 [N] 组|无球轮转跑位 [N] 次|带喂球的 stacking 轮转 [N] 分'},
 {u:14,s:2,tech:'针对性发球与接发',a:'发球落点变化',b:'接发应对卡执行',fit:'肩胛稳定、耐力（间歇）',foot:'侧滑步 + 回中',org:'多球区发球落点九宫格 + 接发应对卡；打墙区发球动作定型',play:'A 发球落点命中才计分；B 接发针对计分',hw:'发球成功 / 失误分类统计',err:'发球无变化、抛球点漂移',fix:'定点抛球 + 击球点标记',kp:'至少 [N] 种落点|抛球点固定|接发按应对卡选回球',drill:'徒手抛球定点 [N] 次|发球打九宫格 [N] 球|按应对卡接发 [N] 球'},
 {u:15,s:2,tech:'比赛节奏与心理调控',a:'赛前例行流程',b:'关键分呼吸流程演练',fit:'减量、恢复性低强度',foot:'考核动作复习',org:'模拟赛日；赛前例行流程演练（呼吸 + 固定准备动作）',play:'A 带暂停的计分赛；B 关键分情境赛',hw:'赛后 3 行复盘',err:'连丢分后节奏加快',fix:'关键分呼吸流程 + 固定准备动作',kp:'每分前做同一个准备动作|连丢分不加快发球节奏|暂停时使用呼吸流程',drill:'徒手演练赛前例行流程 [N] 次|带暂停的短局计分 [N] 分|关键分情境复演 [N] 次'},
 {u:16,s:2,tech:'阶段整合与中级考核',a:'全部要点复习（减量）',b:'第 32 课：阶段考核（6 项）',fit:'减量、恢复',foot:'考核动作复习',org:'逐项测试（6 项）→ 录像复盘',play:'A 低强度复习；B 结业循环赛',hw:'下一周期建议',err:'考核日临时改动作',fix:'考核日只做已练动作，不引入新技术',kp:'只用已练动作|考核前完整演示流程|实战与规则两项单独达标',drill:'徒手复习 16 课要点 [N] 次|定点喂球找手感 [N] 球|结业循环赛（不计入考核）'},
 {u:17,s:3,tech:'发接发体系与第三拍战术树',a:'战术树 3 个分支',b:'每局换分支的执行率',fit:'爆发力（药球）、肩肘腕预防',foot:'分腿垫步 + 前压回中',org:'多球区发球机高重复量 + 战术树卡片；教练主带',play:'A 按指定分支执行；B 每局更换 1 个战术分支',hw:'战术树一页纸 + 执行率统计',err:'战术单一、可预测',fix:'每局强制更换 1 个分支',kp:'能说出 3 个战术分支|按分支选择落点|执行后记录是否命中意图',drill:'战术树卡片口述 [N] 次|发球机高重复量按分支打 [N] 球|移动中发接发 + 第三拍分支实战'},
-{u:18,s:3,tech:'高压 dink 相持与主动提速',a:'提速时机与拍面',b:'限时回合主动提速',fit:'核心抗旋转、腕肘负荷控制',foot:'网前小步调整 + 侧向补位',org:'丁克区高压轮转（限时、限回合）；打墙区拍面微调',play:'A 限时相持；B 相持超 [N] 回合必须主动提速',hw:'dink 回合数与提速成功率',err:'被动等待对手失误',fix:'限时回合 + 主动提速口令',kp:'能识别提速窗口|提速时球仍不过高|提速后站位不失衡',drill:'徒手两档 dink 加速 [N] 次|限时 [N] 回合相持 [N] 组|按窗口主动提速计分 [N] 分'},
+{u:18,s:3,tech:'高压 dink 相持与主动提速',a:'提速时机与拍面',b:'限时回合主动提速',fit:'核心抗旋转、腕肘负荷控制',foot:'网前小步调整 + 侧向补位',org:'标准场地高压 dink 相持（限时、限回合，教练统一计时）；按需移步打墙区微调拍面',play:'A 限时相持；B 相持超 [N] 回合必须主动提速',hw:'dink 回合数与提速成功率',err:'被动等待对手失误',fix:'限时回合 + 主动提速口令',kp:'能识别提速窗口|提速时球仍不过高|提速后站位不失衡',drill:'徒手两档 dink 加速 [N] 次|限时 [N] 回合相持 [N] 组|按窗口主动提速计分 [N] 分'},
 {u:19,s:3,tech:'中前场截击与身体控制',a:'截击定格与重心',b:'随机出球下的截击',fit:'反应速度、下肢离心控制',foot:'启动制动 + 交叉步',org:'情境卡片分组；发球机 [发球机档位] 随机出球；体能区单腿平衡',play:'A 定点截击；B 截击得分翻倍计分赛',hw:'自录视频 [N] 分钟 + 判据打勾',err:'截击重心前扑、拍面失控',fix:'缩小移动距离、先定格再击球',kp:'截击前身体定格|拍面在体前|不因截击踩入非截击区',drill:'徒手截击定格 [N] 次|教练定点喂截击球 [N] 球|发球机随机出球截击 [N] 球'},
 {u:20,s:3,tech:'防守反击与吊高球变化',a:'吊高球高度与深度',b:'防守成功后的反击选择',fit:'耐力（间歇）、灵敏',foot:'后退步 + 回中强化',org:'多球区高压喂球 → 标准场地反击；体能区间歇折返',play:'A 高压防守；B 防守成功并反击才得分',hw:'防守回合复盘表',err:'吊高球过短、退不到位',fix:'缩短距离、加回位还原',kp:'吊高球过对手头顶且落底线区|退到位不仰身|反击落点选空档',drill:'徒手吊高球轨迹 [N] 次|教练高压喂球，吊高防守 [N] 球|防守成功后反击到空档 [N] 分'},
-{u:21,s:3,tech:'stacking 与双打轮转进阶、沟通协议',a:'4 条沟通协议',b:'沟通失误次数统计',fit:'综合体能循环',foot:'全步伐串联 + 轮转路线',org:'战术板 + 场地演练；固定 4 条沟通口令；四区轮转打卡',play:'A 走位演练；B 双打循环赛（小分制）',hw:'沟通失误次数统计',err:'口令不统一、轮转犹豫',fix:'口令固定化 + 轮转路线图默写',kp:'4 条口令全场一致|轮转无犹豫|失误后能复盘归因',drill:'口令齐念 + 徒手走位 [N] 组|无球轮转 [N] 次|双打循环赛记录沟通失误'},
+{u:21,s:3,tech:'stacking 与双打轮转进阶、沟通协议',a:'4 条沟通协议',b:'沟通失误次数统计',fit:'综合体能循环',foot:'全步伐串联 + 轮转路线',org:'战术板 + 场地演练；固定 4 条沟通口令；双打循环赛',play:'A 走位演练；B 双打循环赛（小分制）',hw:'沟通失误次数统计',err:'口令不统一、轮转犹豫',fix:'口令固定化 + 轮转路线图默写',kp:'4 条口令全场一致|轮转无犹豫|失误后能复盘归因',drill:'口令齐念 + 徒手走位 [N] 组|无球轮转 [N] 次|双打循环赛记录沟通失误'},
 {u:22,s:3,tech:'对手画像与临场调整',a:'3 类对手画像卡',b:'每局换画像的应对',fit:'减量、恢复性低强度',foot:'考核动作复习',org:'录像复盘 / 打墙区；教练给出 3 类对手画像卡',play:'A 单一画像约束；B 每局更换 1 个对手画像约束',hw:'对手画像卡填写',err:'一套打法打到底',fix:'对手画像 + 每局强制换约束',kp:'能说出对手的 1 个强项与 1 个弱项|针对弱项选战术|局中能换一次打法',drill:'画像卡口头推演 [N] 次|按画像约束打 [N] 分|每局换约束的实战 [N] 局'},
 {u:23,s:3,tech:'决胜分情境、心理调控与赛前流程',a:'关键分呼吸流程',b:'赛前流程清单自评',fit:'减量、恢复',foot:'考核动作复习',org:'模拟赛日；赛前例行流程 + 关键分呼吸流程演练',play:'A 决胜分专项；B 决胜分情境赛（录像）',hw:'赛前流程清单自评',err:'关键分动作收紧',fix:'关键分呼吸流程演练',kp:'决胜分前完成呼吸流程|动作幅度不缩小|发球节奏与常规分一致',drill:'徒手呼吸流程 + 准备动作 [N] 次|决胜分情境定点喂球 [N] 球|决胜分情境赛并录像'},
 {u:24,s:3,tech:'模拟赛 + 高级考核 + 录像复盘',a:'全要点复习（减量）',b:'第 48 课：阶段考核（7 项 + 决胜分加测）',fit:'减量、恢复',foot:'全步伐串联',org:'逐项测试 → 录像复盘',play:'A 低强度复习；B 结业邀请赛',hw:'下一周期训练建议',err:'考核日超量热身',fix:'热身减量、只做流程演练',kp:'只用已练动作|决胜分情境全程录像|实战与规则两项单独达标',drill:'徒手复习 48 课要点 [N] 次|定点喂球找手感 [N] 球|结业邀请赛（不计入考核）'}
@@ -446,72 +446,102 @@ const ZONES=[
   {id:'wall',name:'打墙区',risk:'low',gear:'墙面、落点标记'},
   {id:'dink',name:'丁克区',risk:'low',gear:'网、目标区'}
 ];
-const STRUCT={
-  90:[{no:'①',n:'热身',t:'0-10 min',id:'warm'},{no:'②',n:'讲解示范',t:'10-20 min',id:'demo'},{no:'③',n:'分解练习',t:'20-45 min',id:'drill'},{no:'④',n:'步伐 / 体能',t:'45-60 min',id:'fit'},{no:'⑤',n:'对抗应用',t:'60-82 min',id:'play'},{no:'⑥',n:'放松反馈',t:'82-90 min',id:'cool'}],
-  60:[{no:'①',n:'热身',t:'0-8 min',id:'warm'},{no:'②',n:'讲解示范',t:'8-15 min',id:'demo'},{no:'③',n:'分解练习',t:'15-30 min',id:'drill'},{no:'④',n:'步伐 / 体能',t:'30-40 min',id:'fit'},{no:'⑤',n:'对抗应用',t:'40-55 min',id:'play'},{no:'⑥',n:'放松反馈',t:'55-60 min',id:'cool'}]
+/* 课堂环节时长（分钟）：按「有无 ④ 专项体能 / 步伐段」自动重排，总时长严格等于所选课时 */
+const SEG_DEF=[
+ {id:'warm',no:'①',n:'热身'},{id:'demo',no:'②',n:'讲解示范'},{id:'drill',no:'③',n:'分解练习'},
+ {id:'fit',no:'④',n:'步伐 / 体能'},{id:'play',no:'⑤',n:'对抗应用'},{id:'cool',no:'⑥',n:'放松反馈'}
+];
+const DURATIONS={
+ '90-fit':[10,10,25,15,22,8],
+ '90-plain':[10,10,32,30,8],
+ '60-fit':[8,7,15,10,15,5],
+ '60-plain':[8,7,20,20,5]
 };
+/* 细分动作在所属段内的相对位置；实际分钟数按段起止换算，60 / 90 分钟都准确 */
+const BLOCK_RATIOS={
+ warm:[[0,.3],[.3,.6],[.6,.9],[.9,1]],
+ demo:[[0,.3],[.3,.8],[.8,.9],[.9,1]],
+ drill:[[0,.2],[.2,.6],[.6,1]],
+ fit:[[0,.33],[.33,.67],[.67,.87],[.87,1]],
+ play:[[0,.09],[.09,.23],[.23,.87],[.87,.95],[.95,1]],
+ cool:[[0,.5],[.5,.75],[.75,.875],[.875,1]]
+};
+function buildStruct(minutes,hasFit){
+ const dur=DURATIONS[minutes+'-'+(hasFit?'fit':'plain')];
+ const ids=hasFit?['warm','demo','drill','fit','play','cool']:['warm','demo','drill','play','cool'];
+ let t=0;
+ return ids.map((id,i)=>{
+  const start=t,end=t+dur[i];t=end;
+  const d=SEG_DEF.find(x=>x.id===id);
+  return {id,no:d.no,n:d.n,t:start+'-'+end+' min',start,end};
+ });
+}
+function blockTime(sg,i){
+ const r=(BLOCK_RATIOS[sg.id]||[])[i]||[0,1];
+ return Math.round(sg.start+(sg.end-sg.start)*r[0])+'-'+Math.round(sg.start+(sg.end-sg.start)*r[1])+' min';
+}
 /* 课堂环节详细说明库：每段含细分时间、具体动作、口令、判据、错误纠正、年龄段调整 */
 const SEGMENTS={
 warm:{name:'热身',purpose:'升高体温、逐关节活动、激活下肢与肩胛、让神经进入「可启动」状态；预防肩/肘/腕/膝/踝损伤。',
  blocks:[
-  {t:'0-3 min',l:'关节活动（自上而下，逐关节）',a:['颈左右转头各 [N] 次','肩前后绕环各 [N] 次','肘腕屈伸 + 绕环各 [N] 次','髋绕环左右各 [N] 次','膝半蹲屈伸 [N] 次','踝提踵 + 绕环各 [N] 次'],c:'「从上到下，一个关节都不跳」'},
-  {t:'3-6 min',l:'动态拉伸',a:['弓步转体左右各 [N] 次','腿后侧动态摆腿 [N] 次','开合步 [N] 次','行进间高抬腿 [距离] × [N] 趟'],c:'「动起来拉，不压住不动」'},
-  {t:'6-9 min',l:'步伐激活 + 肩胛激活',a:['原地分腿垫步 [N] 组 × [20] s（落地即能启动）','侧滑步 [距离] 折返 [N] 次','弹力带肩胛外旋 [N] 次 × [N] 组〔体能区〕'],c:'「小跳落地就能蹬出去」「肩胛往后夹」'},
-  {t:'9-10 min',l:'与本课次主题衔接',a:['当课次技术徒手模仿 [N] 次：{topic}（徒手挥拍 / 拍面定格）'],c:'「把等下要练的动作，先空手做一遍」'}],
+  {l:'关节活动（自上而下，逐关节）',a:['颈左右转头各 [N] 次','肩前后绕环各 [N] 次','肘腕屈伸 + 绕环各 [N] 次','髋绕环左右各 [N] 次','膝半蹲屈伸 [N] 次','踝提踵 + 绕环各 [N] 次'],c:'「从上到下，一个关节都不跳」'},
+  {l:'动态拉伸',a:['弓步转体左右各 [N] 次','腿后侧动态摆腿 [N] 次','开合步 [N] 次','行进间高抬腿 [距离] × [N] 趟'],c:'「动起来拉，不压住不动」'},
+  {l:'步伐激活 + 肩胛激活',a:['原地分腿垫步 [N] 组 × [20] s（落地即能启动）','侧滑步 [距离] 折返 [N] 次','弹力带肩胛外旋 [N] 次 × [N] 组〔球场边即可，无需移步〕'],c:'「小跳落地就能蹬出去」「肩胛往后夹」'},
+  {l:'与本课次主题衔接',a:['当课次技术徒手模仿 [N] 次：{topic}（徒手挥拍 / 拍面定格）'],c:'「把等下要练的动作，先空手做一遍」'}],
  link:'最后 1 min 的徒手模仿就是 ③ 分解练习第 1 步，热身与正课不脱节。',
  judge:'额头微汗、关节无弹响伴痛、分腿垫步落地能立刻启动、拍面定格稳定。',
  errors:'只做静态压腿 → 改动态拉伸；一上来大力挥拍 → 先徒手模仿再渐进加力；常青被安排跳跃 → 立即改无跳版本。',
  age:{adult:'成人：可加绳梯 [N] 组 × [20] s，全程 RPE [3-4]。',youth:'青少年：3-6 min 改为信号灯变向 / 追逐小游戏，高强度段 ≤ [N] min，RPE 上限 [RPE]。',senior:'常青：去掉跳跃与急停，增加踝/髋活动时长与扶墙单腿平衡 [N] 组 × [20] s，RPE [2-3]。',mixed:'混合班：按最保守者定强度，青少年做游戏版、常青做无跳版，分组同时开始。'}},
 demo:{name:'讲解示范',purpose:'让学员在 ③ 段开始前，脑子里有 3 个可观察的要点和正确动作图像。',
  blocks:[
-  {t:'10-13 min',l:'集合与站位',a:['学员半圆站立于丁克区 / 标准场地，距网 [距离]','教练正面 + 侧面各示范 1 次 {topic}'],c:'「看拍面，再看脚」'},
-  {t:'13-18 min',l:'3 个关键要点（每点：讲一句 → 正例 → 反例 → 给判据）',a:['要点 1：{kp1}','要点 2：{kp2}','要点 3：{kp3}'],c:'「每点只看一个地方，别一次看全身」'},
-  {t:'18-19 min',l:'学员复述',a:['随机点 [N] 名学员复述其中 2 个要点','说不出的当场再示范 1 次'],c:'「你说一遍，我就知道等下要不要再讲」'},
-  {t:'19-20 min',l:'发放分区任务卡（关键时点）',a:['每区贴 / 发 1 张任务卡，明确「现在发 → ③ 段用 → ⑥ 段交回」','宣布今天的分区与轮转顺序，每名学员确认自己第一轮在哪个区'],c:'「拿到卡先看判据，不是先看做几次」'}],
+  {l:'集合与站位',a:['全员半圆站立于标准场地（网前半场），距网 [距离]','教练正面 + 侧面各示范 1 次 {topic}'],c:'「看拍面，再看脚」'},
+  {l:'3 个关键要点（每点：讲一句 → 正例 → 反例 → 给判据）',a:['要点 1：{kp1}','要点 2：{kp2}','要点 3：{kp3}'],c:'「每点只看一个地方，别一次看全身」'},
+  {l:'学员复述',a:['随机点 [N] 名学员复述其中 2 个要点','说不出的当场再示范 1 次'],c:'「你说一遍，我就知道等下要不要再讲」'},
+  {l:'宣布本课次练习动线',a:['说明哪几步需要整队移步功能区（多球 / 打墙 / 丁克 / 体能），其余环节都在标准球场','确认器材已就位；发球机、药球由教练统一操作，学员不自行开机'],c:'「听口令整队走，不各自散开」'}],
  link:'这 3 个要点就是 ③ 分解练习要练、⑤ 对抗应用只评的内容，其余环节不追加新要求。',
- judge:'多数学员能复述 2/3 要点；每名学员知道自己第一轮在哪个区；任务卡已发放。',
- errors:'一次讲超过 3 点 → 砍到 3 点；只讲不示范 → 每点必须配正反例；没发任务卡 → ③ 段开始前补齐。',
+ judge:'多数学员能复述 2/3 要点；全员知道本课次何时整队移步、在哪里集合。',
+ errors:'一次讲超过 3 点 → 砍到 3 点；只讲不示范 → 每点必须配正反例；没说清动线 → ③ 段开始前用 30 秒重申集合点。',
  age:{adult:'成人：3 个要点 + 正反例，讲解 ≤ 10 min。',youth:'青少年：用类比 + 短讲解 ≤ [N] min，多示范少讲，可加 1 个小挑战。',senior:'常青：放慢节奏、重复示范 2 次，允许当场提问，站位可坐姿听讲解。',mixed:'混合班：先统一讲 3 点，再按组补 1 条分层要求（常青无跳、青少年游戏化）。'}},
 drill:{name:'分解练习',purpose:'把本课次技术从「听懂」练到「做得出」：先静态后移动，先无对抗后有干扰。',
  blocks:[
-  {t:'20-25 min',l:'第 1 步 · 徒手 / 定格',a:['{d1}','每 [N] 次做一次击球点定格，教练逐个检查拍面与重心','判据：拍面稳定、重心在两脚之间'],c:'「先定住，再动」'},
-  {t:'25-35 min',l:'第 2 步 · 定点喂球',a:['{d2}','教练 / 发球机定点喂球 [N] 球/人，多球区档位 [发球机档位]','打墙区对墙连续击球 [N] 次','判据：命中目标区 ≥ [成功率]（本馆实测）'],c:'「每 [N] 球停一下，看拍面」'},
-  {t:'35-45 min',l:'第 3 步 · 移动中击球',a:['{d3}','侧滑步 / 交叉步到位后击球 [N] 球/人','击球后 [N] 秒内回中（计次）','判据：能回位、不交叉脚'],c:'「打完就回中」'}],
- link:'三步递进对应本单元的技术主题；四区轮转表就是这段 25 分钟的组织方式（见下方）。',
- judge:'每人有效触球 [N] 次；任务卡判据栏无空项；连续 2 轮不达标者当场一对一纠正。',
- errors:'一上来就移动中击球 → 退回第 1 步；只喂球不看判据 → 每 [N] 球停一次定格检查；自运行区无人互评 → 补配观察员。',
- age:{adult:'成人：三步全做，第 3 步用完整 [距离] 与常规球速。',youth:'青少年：第 2 步改成落点计分小游戏，缩短单次连续时间，RPE 上限 [RPE]。',senior:'常青：第 3 步移动距离缩短 [距离]、去掉急停，回中改为步行回位，全程给退阶动作。',mixed:'混合班：按组给不同距离与球速，高风险区始终两人以上，不跨组比较达标率。'}},
+  {l:'第 1 步 · 徒手 / 定格',a:['{d1}','每 [N] 次做一次击球点定格，教练逐个检查拍面与重心','判据：拍面稳定、重心在两脚之间'],c:'「先定住，再动」'},
+  {l:'第 2 步 · 定点喂球',a:['{d2}','教练 / 发球机定点喂球 [N] 球/人，多球区档位 [发球机档位]','如需对墙练习，整队移步打墙区完成 [N] 次后返回球场','判据：命中目标区 ≥ [成功率]（本馆实测）'],c:'「每 [N] 球停一下，看拍面」'},
+  {l:'第 3 步 · 移动中击球',a:['{d3}','侧滑步 / 交叉步到位后击球 [N] 球/人','击球后 [N] 秒内回中（计次）','判据：能回位、不交叉脚'],c:'「打完就回中」'}],
+ link:'三步递进就是本段的全部组织方式：全员在教练统一带领下依次完成，只有需要多球 / 对墙 / 体能时才整队移步对应区域（见「场地与器材动线」）。',
+ judge:'每人有效触球 [N] 次；3 个要点逐人打勾；连续 2 次不达标当场一对一纠正。',
+ errors:'一上来就移动中击球 → 退回第 1 步；只喂球不看判据 → 每 [N] 球停一次定格检查；学员各自散开练 → 回到全员同一步骤、教练统一发令。',
+ age:{adult:'成人：三步全做，第 3 步用完整 [距离] 与常规球速。',youth:'青少年：第 2 步改成落点计分小游戏，缩短单次连续时间，RPE 上限 [RPE]。',senior:'常青：第 3 步移动距离缩短 [距离]、去掉急停，回中改为步行回位，全程给退阶动作。',mixed:'混合班：按组给不同距离与球速，使用发球机 / 药球时教练必须在场，不跨组比较达标率。'}},
 fit:{name:'步伐 / 体能',purpose:'把本课次的体能重点与步伐重点练到位，同时做肩肘腕膝踝的预防性训练。',
  blocks:[
-  {t:'45-50 min',l:'本课次体能重点：{fit}',a:['按体能模块执行：[N] 组 × [N] 次 / [20-30] s，RPE [4-6]，休息 [60-90] s','器材：药球 [重量]、弹力带 [阻力色阶]〔体能区〕','超 RPE 上限立即降一档'],c:'「宁可少一组，不要顶着做」'},
-  {t:'50-55 min',l:'本课次步伐重点：{foot}',a:['按步伐模块执行：[N] 组 × [20] s，RPE [5-6]，休息 [45] s','标志物 / 绳梯〔体能区〕，按关键判据逐项打勾','未达标改退阶版'],c:'「脚先到，手再到」'},
-  {t:'55-58 min',l:'肩肘腕 / 膝踝预防',a:['弹力带外旋 [N] 次 × [12-15]','单腿平衡 [N] 组 × [20] s','提踵 [10-12] 次'],c:'「小重量，慢一点」'},
-  {t:'58-60 min',l:'全步伐串联',a:['分腿垫步 → 侧滑步 → 交叉步 → 后退步 → 回中，教练口令随机切换 1 组'],c:'「听口令换，不抢拍」'}],
- link:'练哪 1 项体能 + 1 项步伐，由本课次「体能重点 / 步伐重点」决定，不是通用体能课。',
+  {l:'本课次体能重点：{fit}',a:['按体能模块执行：[N] 组 × [N] 次 / [20-30] s，RPE [4-6]，休息 [60-90] s','器材：药球 [重量]、弹力带 [阻力色阶]〔体能区〕','超 RPE 上限立即降一档'],c:'「宁可少一组，不要顶着做」'},
+  {l:'本课次步伐重点：{foot}',a:['按步伐模块执行：[N] 组 × [20] s，RPE [5-6]，休息 [45] s','标志物 / 绳梯〔体能区〕，按关键判据逐项打勾','未达标改退阶版'],c:'「脚先到，手再到」'},
+  {l:'肩肘腕 / 膝踝预防',a:['弹力带外旋 [N] 次 × [12-15]','单腿平衡 [N] 组 × [20] s','提踵 [10-12] 次'],c:'「小重量，慢一点」'},
+  {l:'全步伐串联',a:['分腿垫步 → 侧滑步 → 交叉步 → 后退步 → 回中，教练口令随机切换 1 组'],c:'「听口令换，不抢拍」'}],
+ link:'仅当本课次安排 ④ 段时才出现；练哪 1 项体能 + 1 项步伐由「体能重点 / 步伐重点」决定，不是每节课的通用体能课。',
  judge:'RPE 自评不超上限；动作退阶记录完整；无疼痛报告。',
  errors:'RPE 超上限仍加量 → 立即降一档；药球对人抛投 → 停止并改徒手；常青被安排急停 → 改步行变向。',
  age:{adult:'成人：按上表完整执行，RPE [4-6]（灵敏段可到 [6-7]）。',youth:'青少年：改游戏化循环（信号灯 / 追逐），RPE 上限 [RPE]，高强度段 ≤ [N] min。',senior:'常青：去掉急停折返与跳跃，改低强度持续移动 + 平衡柔韧，全程提供退阶动作。',mixed:'混合班：取各组最低 RPE 上限，常青组用退阶动作，青少年组用游戏版，同时间段分组进行。'}},
 play:{name:'对抗应用',purpose:'把本课次 3 个要点放进「有对手、有计分」的情境里，检验是否真的会用。',
  blocks:[
-  {t:'60-62 min',l:'规则说明',a:['宣布本课次对抗形式：{play}','说明计分方式、约束条件、场地划分'],c:'「今天只按这个规则打分」'},
-  {t:'62-65 min',l:'分组与轮转',a:['按人数分 [N] 组；多人班按任务卡名单分组','每组上场 [N] 分钟轮转，保证每人至少上场 1 次'],c:'「按名单上，不挑人」'},
-  {t:'65-80 min',l:'主体对抗',a:['执行带约束计分：{play}','只评本课次 3 个要点中的 1-2 个，其余不追加要求','记录每名学员的要点达成情况'],c:'「我只喊那两个点」'},
-  {t:'80-81 min',l:'即时叫停',a:['非截击区踩线、危险动作、连续 2 次同类失误立即叫停','回到 ③ 段第 1 步定格纠正 1 次再继续'],c:'「停，回到定格」'},
-  {t:'81-82 min',l:'收尾',a:['每组报 1 个「今天做到的要点」+ 1 个「还没做到的」'],c:'「一人一句就够」'}],
+  {l:'规则说明',a:['宣布本课次对抗形式：{play}','说明计分方式、约束条件、场地划分'],c:'「今天只按这个规则打分」'},
+  {l:'上场顺序',a:['按人数排定上场顺序，多人班分 2 组交替（同一场地、教练统一发令）','每人至少上场 1 次，轮换由教练点名'],c:'「按名单上，不挑人」'},
+  {l:'主体对抗',a:['执行带约束计分：{play}','只评本课次 3 个要点中的 1-2 个，其余不追加要求','记录每名学员的要点达成情况'],c:'「我只喊那两个点」'},
+  {l:'即时叫停',a:['非截击区踩线、危险动作、连续 2 次同类失误立即叫停','回到 ③ 段第 1 步定格纠正 1 次再继续'],c:'「停，回到定格」'},
+  {l:'收尾',a:['每组报 1 个「今天做到的要点」+ 1 个「还没做到的」'],c:'「一人一句就够」'}],
  link:'约束条件直接来自本课次对抗形式，确保练的就是今天教的；不看这张表就会变成自由打比赛。',
  judge:'每名学员至少上场 1 次；只记录 1-2 个要点的达成情况；违规叫停有记录。',
- errors:'变成自由打比赛 → 恢复约束条件；一次点评 5 个问题 → 收回到 1-2 个要点；只让强学员上场 → 按名单强制轮转。',
+ errors:'变成自由打比赛 → 恢复约束条件；一次点评 5 个问题 → 收回到 1-2 个要点；只让强学员上场 → 按名单强制轮换上场。',
  age:{adult:'成人：按课次对抗形式执行，标准局时与计分。',youth:'青少年：缩短单局至 [N] 分钟、加入游戏化计分，不排名个人。',senior:'常青：降低回合强度、缩短局时、不排名个人，随时可改无对抗练习。',mixed:'混合班：分组对抗、不跨组比较；同组内有常青时取消急停类约束。'}},
 cool:{name:'放松反馈',purpose:'降心率、复述要点、把课堂记录闭环、把作业带回家。',
  blocks:[
-  {t:'82-86 min',l:'静态拉伸',a:['髋屈肌、腿后侧、胸椎、肩后侧各 [30] s × [N] 组','常青增加踝 / 小腿 [30] s','不做弹震式拉伸'],c:'「慢慢拉，不弹」'},
-  {t:'86-88 min',l:'要点复述',a:['一人一句：说出本课次 1 个要点 + 自己 1 个改进点','教练补齐没说到的第 3 点'],c:'「说你自己的，不用说别人的」'},
-  {t:'88-89 min',l:'回收任务卡 + 出勤（关键时点）',a:['逐区回收任务卡，教练抽检判据栏与观察员签名','点名记录出勤 / 请假 / 缺勤，写入学员学习记录'],c:'「卡交回来，判据才算数」'},
-  {t:'89-90 min',l:'布置作业 + 预告',a:['布置本课次家庭作业：{hw}','预告下一课次：{next}'],c:'「下次先做今天这个的进阶」'}],
+  {l:'静态拉伸',a:['髋屈肌、腿后侧、胸椎、肩后侧各 [30] s × [N] 组','常青增加踝 / 小腿 [30] s','不做弹震式拉伸'],c:'「慢慢拉，不弹」'},
+  {l:'要点复述',a:['一人一句：说出本课次 1 个要点 + 自己 1 个改进点','教练补齐没说到的第 3 点'],c:'「说你自己的，不用说别人的」'},
+  {l:'要点复盘 + 出勤',a:['逐人核对 3 个要点的达成情况，写入学员学习记录','点名记录出勤 / 请假 / 缺勤'],c:'「今天做到没做到，要留一条记录」'},
+  {l:'布置作业 + 预告',a:['布置本课次家庭作业：{hw}','预告下一课次：{next}'],c:'「下次先做今天这个的进阶」'}],
  link:'作业是本课次技术主题的延伸；下一课次（A→B 或 B→下一单元 A）与本课次连续。',
- judge:'任务卡全部回收；每人 1 条反馈已记录；出勤表无空项。',
- errors:'只拉伸不复述 → 补 2 min 复述；任务卡没回收 → 下次课无法做判据复查。',
- age:{adult:'成人：标准复述 + 出勤回收。',youth:'青少年：用「今天最酷的一个动作」替代口头复述，作业用打卡表。',senior:'常青：拉伸延长 [N] 秒、允许坐姿完成，反馈可口头由教练代记。',mixed:'混合班：按组收卡，逐人核对反馈，不合并出勤记录。'}}
+ judge:'每人 1 条反馈已记录；出勤表无空项。',
+ errors:'只拉伸不复述 → 补 2 min 复述；没记反馈 → 下次课失去判据复查依据。',
+ age:{adult:'成人：标准复述 + 出勤回收。',youth:'青少年：用「今天最酷的一个动作」替代口头复述，作业用打卡表。',senior:'常青：拉伸延长 [N] 秒、允许坐姿完成，反馈可口头由教练代记。',mixed:'混合班：逐人核对反馈与出勤，不合并记录。'}}
 };
 const ASSESS_ITEMS=[
  {id:'serve',name:'发球落点成功率',unit:'%'},{id:'aim',name:'定向击球准确率',unit:'%'},{id:'dink',name:'dink 连续回合',unit:'回合'},
@@ -521,7 +551,7 @@ const STAGE_ITEMS={1:['serve','aim','foot','rule'],2:['serve','aim','foot','rule
 const MGMT_ROWS=[
  ['出勤点名与异常联系','主教练 → 前台','每次课','缺勤 [N] 次触发联系','出勤表'],
  ['阶段反馈','主教练','每 [N] 课次','每人 1 条优点 + 1 条改进点','反馈记录'],
- ['任务卡回收与判据抽检','主教练','每次课','判据栏无空项；连续 2 轮不达标触发一对一纠正','任务卡归档'],
+ ['课堂判据核对与反馈记录','主教练','每次课','3 个要点逐人打勾；连续 2 次不达标触发一对一纠正','授课记录'],
  ['阶段考核与晋级判定','主教练','第 16 / 32 / 48 课','按量化考核表执行','考核记录表'],
  ['续费预警','店长','每周','剩余课次 ≤ [预警课次] 或距到期 ≤ [预警天数]','预警名单'],
  ['满意度调查','店长','每周期 / 每次事件后','回收率 [回收率]、低分 [低分线] 触发回访','满意度汇总'],
@@ -545,7 +575,8 @@ function normalize(p){
  (p.students||[]).forEach(x=>{if(!x.age||!AGE_GROUPS[x.age])x.age=amap[x.age]||'adult';});
  if(p.ui){
   if(p.ui.lastPlan&&(!p.ui.lastPlan.lesson||!p.ui.lastPlan.students))p.ui.lastPlan=null;
-  if(p.ui.planForm){const pf=p.ui.planForm;if(!pf.studentIds)pf.studentIds=pf.studentId?[pf.studentId]:[];if(!pf.zones)pf.zones=ZONES.map(z=>z.id);pf.lesson=undefined;}
+  if(p.ui.planForm){const pf=p.ui.planForm;if(!pf.studentIds)pf.studentIds=pf.studentId?[pf.studentId]:[];delete pf.zones;if(!pf.fitMode)pf.fitMode='auto';pf.lesson=undefined;}
+  if(p.ui.lastPlan&&(p.ui.lastPlan.rotation||p.ui.lastPlan.taskCard))p.ui.lastPlan=null;
  }
  return p;
 }
@@ -567,86 +598,74 @@ function fill(t,p){
   '{fit}':p.unit.fit,'{foot}':p.unit.foot,'{play}':p.playNow,'{hw}':p.unit.hw,'{next}':p.nextLabel,'{focus}':p.lesson.focus};
  let out=t;for(const k in map)out=out.split(k).join(map[k]);return out;
 }
+function fitDecision(f,lesson){
+ const m=f.fitMode||'auto';
+ if(m==='yes')return {hasFit:true,reason:'教练指定：本课安排 ④ 专项体能 / 步伐段'};
+ if(m==='no')return {hasFit:false,reason:'教练指定：本课不安排 ④ 专项体能 / 步伐段'};
+ if([16,32,48].includes(lesson.n))return {hasFit:false,reason:'考核课自动减量：不设 ④ 段，时间并入技术复习与流程演练'};
+ if(lesson.type==='A')return {hasFit:true,reason:'A 新授课：新技术需配套步法，安排 ④ 专项体能 / 步伐段'};
+ return {hasFit:false,reason:'B 巩固课：不设 ④ 段，热身仍含 2-3 min 步伐激活，时间并入 ③ 分解练习与 ⑤ 对抗应用'};
+}
+/* 场地动线：不再让用户在生成时勾选区域，改为按本课次「课堂组织」自动写明 */
+function venuePlan(p){
+ const parts=(p.unit.org||'').split(/[；;→]/).map(x=>x.trim()).filter(Boolean);
+ const found=[];
+ ZONES.forEach(z=>{
+  const key=z.name.replace(/（[^）]*）/g,'').replace(/^独立/,'');
+  const hit=parts.filter(x=>x.includes(key));
+  if(hit.length)found.push({name:z.name,gear:z.gear,what:hit.join('；')});
+ });
+ const L=[];
+ L.push('默认：全程在标准球场，教练统一讲解、统一带练；不分组、不分区轮转。');
+ if(found.length){
+  L.push('本课次可能用到的功能区（按课次内容自动判定，按当天实际需要选 1-2 处，整队往返）：');
+  found.forEach((x,i)=>L.push('  '+(i+1)+'. '+x.name+'（'+x.gear+'）：'+x.what+' → 完成后整队返回球场。'));
+ }else L.push('本课次全部环节可在标准球场完成，不需要移步功能区。');
+ if(p.hasFit)L.push('  '+(found.length+1)+'. 独立体能区（药球、弹力带、标志物）：④ 段执行本课次体能重点「'+p.unit.fit+'」与步伐重点「'+p.unit.foot+'」，结束后整队返回球场。');
+ else L.push('本课次不设 ④ 独立体能段；热身中的 2-3 min 步伐激活保留。需要专项体能时，在生成参数选「本课安排」。');
+ L.push('组织原则：教练 1 人统一发令，同一时刻全班做同一件事；移步时整队往返，设备只由教练操作。');
+ return L;
+}
 function buildPlan(f){
  const students=(f.studentIds||[]).map(id=>state.students.find(x=>x.id===id)).filter(Boolean);
  const lesson=LESSONS.find(l=>l.n===Number(f.lesson));
  if(!students.length||!lesson)return null;
- const u=lesson.unit, minutes=Number(f.minutes);
+ const u=lesson.unit;
+ const minutes=[60,90].includes(Number(f.minutes))?Number(f.minutes):90;
  const parts=u.play.split(/；|;\s*/).filter(Boolean);
  const playNow=lesson.type==='A'?(parts[0]||u.play):(parts[1]||parts[0]||u.play);
  const nextL=LESSONS.find(l=>l.n===lesson.n+1);
  const nextLabel=nextL?('第 '+nextL.n+' 课（'+nextL.type+' 课）· '+nextL.tech):'本阶段已结业，进入下一阶段第 1 课';
- const zones=(f.zones||[]).slice();
- const mainZone=zones.includes('multi')?'多球区（发球机）':(zones.length?ZONES.find(z=>z.id===zones[0]).name:'标准场地');
- const selfZones=f.size==='solo'?[]:ZONES.filter(z=>zones.includes(z.id)&&z.name!==mainZone);
- const missing=ZONES.filter(z=>!zones.includes(z.id));
- const rounds=minutes===90?3:2;
- const slots=minutes===90?['20-28 min','29-37 min','38-45 min']:['15-22 min','23-30 min'];
- const zoneTask=z=>{
-  if(z.id==='wall')return '打墙区：对墙连续击球 [N] 次（本课次 '+u.tech+'）';
-  if(z.id==='dink')return '丁克区：拍面 / 落点定格（'+u.tech+'）';
-  if(z.id==='fit')return '体能区：本课次步伐重点的退阶版（'+u.foot+'）';
-  return '多球区：定点喂球 [N] 球';
- };
- const rotation=[];
- for(let i=0;i<rounds;i++){
-  const shift=i%Math.max(selfZones.length,1);
-  const order=selfZones.slice(shift).concat(selfZones.slice(0,shift)).map(zoneTask);
-  rotation.push({no:i+1,time:slots[i],main:mainZone+'（当课次技术主题）',
-   self:selfZones.length?order.join('　/　'):'无自运行区 → 全员集中主带区',
-   coach:i===0?'主带第 1 步徒手 + 第 2 步定点喂球；换区间隙巡检体能区药球':(i===1?'推进第 2 步；巡检发球机参数与清场':'推进第 3 步移动中击球；巡检丁克区踩线判据'),
-   judge:'每人有效触球 [N] 次 / 判据栏无空项'});
- }
+ const fit=fitDecision(f,lesson);
+ const hasFit=fit.hasFit;
+ const struct=buildStruct(minutes,hasFit);
  const age=f.age||'adult';
- const agesInClass=[...new Set(students.map(s=>s.age||'adult'))];
+ const agesInClass=[...new Set(students.map(x=>x.age||'adult'))];
  const autoMixed=agesInClass.length>1;
  const safety=[];
- safety.push('高风险区（药球 / 发球机）不得单人在区；换区口令「停—收—换」后设备断电、器材归位。');
- safety.push('发球机仅教练或指定组长开机；开机前口令「清场确认」；拾球与发射区物理隔离；卡球先断电再处理。');
- if(zones.includes('fit'))safety.push('药球不对人、不对墙超 [距离] 抛投；弹力带课前检查带体老化；腰痛 / 肩痛即降阶。');
+ safety.push('全员在教练统一带领下进行，不分组到不同区域自练；需移步功能区时整队往返，集合点固定。');
+ safety.push('发球机 / 药球 / 弹力带仅教练操作与发放；开机前「清场确认」，卡球先断电再处理，弹力带课前检查老化。');
+ if(hasFit)safety.push('④ 段使用药球 / 弹力带：不对人抛投、不超 [距离]；腰痛 / 肩痛即降阶，疼痛即停。');
  if(age==='youth'||agesInClass.includes('youth'))safety.push('青少年：须家长知情同意；高强度段 ≤ [N] 分钟，RPE 上限 [RPE]，须先经专业人员评估后填写。');
  if(age==='senior'||agesInClass.includes('senior'))safety.push('常青：须先经医生或专业人员评估；去掉急停折返与跳跃，改平衡柔韧与低强度持续移动，全程提供退阶动作。');
- if(age==='mixed'||autoMixed)safety.push('混合年龄段：按最保守负荷执行，分组给不同任务，不跨组比较达标率；阈值分别记录，不与成人混用。');
- const injured=students.filter(s=>s.injury&&String(s.injury).trim());
- if(injured.length)safety.push('以下学员有伤病 / 疼痛记录（'+injured.map(s=>s.name).join('、')+'）：须先经医生或专业人员评估，全程启用退阶动作，疼痛即停；本系统不做医疗诊断。');
- if(f.size==='large')safety.push('8-12 人团课：改为双循环并增设组长；教练 1 人不得同时覆盖全部高危区。');
- if(f.size==='solo')safety.push('私教 1 人：取消自运行区，六段全部由教练主带；高风险区仍须教练在场。');
+ if(age==='mixed'||autoMixed)safety.push('混合年龄段：按最保守负荷执行，同一步骤内给不同难度，不跨组比较达标率；阈值分别记录，不与成人混用。');
+ const injured=students.filter(x=>x.injury&&String(x.injury).trim());
+ if(injured.length)safety.push('以下学员有伤病 / 疼痛记录（'+injured.map(x=>x.name).join('、')+'）：须先经医生或专业人员评估，全程启用退阶动作，疼痛即停；本系统不做医疗诊断。');
+ if(f.size==='large')safety.push('8-12 人团课：上场顺序分 2 组交替，增设 1 名组长协助清点器材，教练仍统一发令。');
+ if(f.size==='solo')safety.push('私教 1 人：全程一对一主带，不分组、不安排学员自练；所有器材由教练操作。');
  if(!injured.length&&age==='adult'&&!autoMixed)safety.push('本次为成人常规班〔默认假设〕：无伤病限制；出现疼痛即时改按退阶流程处理。');
  const p={students,lesson,u,unit:u,minutes,age,ageName:AGE_GROUPS[age].name,autoMixed,agesInClass,
-  struct:STRUCT[minutes],zones,missing,rotation,rounds,mainZone,selfZones,safety,size:f.size,date:f.date||'____',
+  struct,hasFit,fitReason:fit.reason,fitMode:f.fitMode||'auto',safety,size:f.size,date:f.date||'____',
   focus:f.focus,playNow,nextLabel,lessonType:lesson.type};
- p.taskCard=taskCard(p);
+ p.venue=venuePlan(p);
  return p;
-}
-function taskCard(p){
- const lines=p.students.map(s=>'   '+s.name+'（'+(AGE_GROUPS[s.age||'adult']||{name:'成人'}).name+'）  完成 □  判据达标 □  观察员签名：______');
- return [
-'【分区任务卡】  分区：'+p.mainZone+'   课次：第 '+p.lesson.n+' 课（'+p.lessonType+' 课）   日期：'+p.date,
-'年龄段：'+p.ageName+'   班型：'+(p.size==='large'?'8-12 人团课':p.size==='solo'?'私教 1 人':'4-6 人小班'),
-'当课次主题：'+p.unit.tech,
-'',
-'1. 动作与负荷：'+p.lesson.focus,
-'   组次：[N] 组 × [N] 次 / [N] s    RPE：'+AGE_GROUPS[p.age].rpe+'    休息：[60-90] s',
-'   器材档位：[重量] / [阻力色阶] / [发球机档位]（课前实测填写）',
-'',
-'2. 可观察判据（同伴打勾）：',
-'   □ '+p.unit.kp.split('|')[0],
-'   □ '+p.unit.kp.split('|')[1],
-'   □ '+p.unit.kp.split('|')[2],
-'',
-'3. 安全提示：疼痛即停并举手报告教练；高风险区不得单人；',
-'   换区口令「停—收—换」后设备断电、器材归位。',
-'',
-'4. 打卡栏（多人班按人分行）：',
-...lines,
-'',
-'   教练抽检签字：______    回收时点：⑥ 放松反馈段'
- ].join('\n');
 }
 function planText(p){
  const L=[];
  L.push('匹克球教学计划 · 第 '+p.lesson.n+' 课（'+p.lessonType+' 课） · '+p.students.map(s=>s.name).join(' / '));
  L.push('阶段 '+p.lesson.s+' '+STAGES[p.lesson.s].name+' | 年龄段 '+p.ageName+' | '+p.minutes+' 分钟 | '+p.date+' | 教练 1 人');
+ L.push('课堂结构：'+p.minutes+' 分钟 / '+(p.hasFit?'6 段（含 ④ 专项体能 / 步伐）':'5 段（不设 ④ 专项体能 / 步伐）'));
+ L.push('体能段判定：'+p.fitReason);
  L.push('');L.push('【当课次技术拆解】'+p.unit.tech);
  L.push('  本课次重点：'+p.lesson.focus);
  L.push('  3 个可观察判据：'+p.unit.kp.split('|').join(' / '));
@@ -656,8 +675,8 @@ function planText(p){
  p.struct.forEach(sg=>{
   const d=SEGMENTS[sg.id];
   L.push('【'+sg.no+' '+sg.n+'｜'+sg.t+'】'+d.purpose);
-  d.blocks.forEach(b=>{
-   L.push('  · '+b.t+' '+fill(b.l,p));
+  d.blocks.forEach((b,i)=>{
+   L.push('  · '+blockTime(sg,i)+' '+fill(b.l,p));
    fill(b.a.join('\n'),p).split('\n').forEach(a=>L.push('      - '+a));
    L.push('      口令：'+fill(b.c,p));
   });
@@ -667,12 +686,10 @@ function planText(p){
   L.push('  常见错误与立即纠正：'+d.errors);
   L.push('');
  });
- L.push('【四区轮转排布】仅用于 ③ 分解练习段：1 名教练固定主带 1 区，其余分区靠任务卡自运行。');
- p.rotation.forEach(r=>L.push('  第'+r.no+'轮 '+r.time+'｜主带：'+r.main+'｜自运行：'+r.self+'｜'+r.coach));
+ L.push('【场地与器材动线】');
+ p.venue.forEach(v=>L.push('  '+v));
  L.push('');
- L.push('【分区任务卡使用时机】② 讲解示范段末发放 → ③ 分解练习段使用 → ⑥ 放松反馈段回收抽检。');
- L.push('');L.push('【安全与退阶】');p.safety.forEach(s=>L.push('  - '+s));
- L.push('');L.push(p.taskCard);
+ L.push('【安全与退阶】');p.safety.forEach(x=>L.push('  - '+x));
  return L.join('\n');
 }
 
@@ -767,14 +784,13 @@ function renderDetail(){
  '<div class="panel"><div class="panel-head"><h2>考核与晋级</h2></div><div>'+(exams.length?exams.map(x=>'<div class="list-row"><div><div class="main-txt">阶段 '+x.stage+' · '+esc(x.conclusion||'')+'</div><div class="sub-txt">'+esc(x.date||'')+' · '+(x.total==null?'阈值未校准':x.total+' 分')+'</div></div></div>').join(''):'<div class="list-row"><span class="muted" style="font-size:12px">暂无考核记录</span></div>')+'</div></div></div>';
 }
 function renderPlanPage(){
- const f=state.ui.planForm||{studentIds:[],lesson:1,minutes:state.defaults.minutes||90,date:today(),size:state.defaults.size||'small',age:state.defaults.age||'adult',focus:'tech',zones:ZONES.map(z=>z.id)};
+ const f=state.ui.planForm||{studentIds:[],lesson:1,minutes:state.defaults.minutes||90,date:today(),size:state.defaults.size||'small',age:state.defaults.age||'adult',focus:'tech',fitMode:'auto'};
  state.ui.planForm=f;
  renderPicker();
- $('#fAge').value=f.age||'adult';$('#fSize').value=f.size||'small';$('#fMinutes').value=String(f.minutes||90);$('#fDate').value=f.date||today();$('#fFocus').value=f.focus||'tech';
- $('#fZones').innerHTML=ZONES.map(z=>'<label class="check-row"><input type="checkbox" data-zone="'+z.id+'" '+((f.zones||[]).includes(z.id)?'checked':'')+'>'+z.name+'</label>').join('');
+ $('#fAge').value=f.age||'adult';$('#fSize').value=f.size||'small';$('#fMinutes').value=String(f.minutes||90);$('#fDate').value=f.date||today();$('#fFocus').value=f.focus||'tech';$('#fFitMode').value=f.fitMode||'auto';
  refreshLessonOptions();
  const p=state.ui.lastPlan;
- $('#planOutput').innerHTML=p?renderPlanHTML(p):'<div class="empty" style="border:0"><div class="mark">[ → ]</div><h3>等待生成</h3><p>左侧选 1 名或多名学员、年龄段、课次与课时，系统按 48 课次体系自动产出六个环节的详细动作清单，教练可直接照着带课。</p></div>';
+ $('#planOutput').innerHTML=p?renderPlanHTML(p):'<div class="empty" style="border:0"><div class="mark">[ → ]</div><h3>等待生成</h3><p>左侧选 1 名或多名学员、年龄段、课次与课时，系统按 48 课次体系自动产出逐段详细动作清单，教练可直接照着带课。</p></div>';
 }
 function renderPicker(){
  const q=($('#pickerSearch').value||'').trim().toLowerCase();
@@ -798,12 +814,8 @@ function refreshLessonOptions(){
 }
 function segCardHTML(sg,p){
  const d=SEGMENTS[sg.id];
- const acts=d.blocks.map(b=>'<div class="act-block"><div class="at">'+b.t+'</div><div class="al">'+esc(fill(b.l,p))+'</div><ul>'+b.a.map(a=>'<li>'+esc(fill(a,p))+'</li>').join('')+'</ul><div class="call">教练口令：'+esc(fill(b.c,p))+'</div></div>').join('');
- let rotationHTML='';
- if(sg.id==='drill'){
-  rotationHTML='<div style="margin-top:16px;padding-top:16px;border-top:1px dashed var(--hairline)"><div class="why" style="margin-bottom:12px"><b>四区轮转排布 · 只属于 ③ 分解练习段（'+sg.t+'）。</b><br>本课次是 '+(p.size==='large'?'8-12 人团课':p.size==='solo'?'私教 1 人':'4-6 人小班')+' 但只有 1 名教练，教练固定主带 1 个「技术主题区」深教，其余学员按任务卡在自运行区轮转、每区至少 2 人互为观察员。下表就是「这 '+(p.minutes===90?'25':'15')+' 分钟里，谁在哪个区、练什么、教练在哪」。</div><div class="table-wrap"><table><thead><tr><th>轮次</th><th>时间</th><th>主带区（教练在场）</th><th>自运行区（按任务卡）</th><th>教练动作</th><th>完成判据</th></tr></thead><tbody>'+p.rotation.map(r=>'<tr><td class="num">'+r.no+'</td><td class="num">'+r.time+'</td><td>'+esc(r.main)+'</td><td class="sec">'+esc(r.self)+'</td><td class="sec">'+esc(r.coach)+'</td><td class="sec">'+esc(r.judge)+'</td></tr>').join('')+'</tbody></table></div>'+(p.missing.length?'<div class="notice" style="margin-top:10px">已停用：'+p.missing.map(z=>esc(z.name)).join('、')+'，其任务并入主带区集中完成。</div>':'')+'</div>';
- }
- return '<div class="seg-card"><div class="seg-card-top"><span class="no">'+sg.no+'</span><span class="nm">'+sg.n+'</span><span class="tm">'+sg.t+'</span></div><div class="seg-card-body"><div class="purpose"><strong>目的：</strong>'+esc(d.purpose)+'</div>'+acts+rotationHTML+
+ const acts=d.blocks.map((b,i)=>'<div class="act-block"><div class="at">'+blockTime(sg,i)+'</div><div class="al">'+esc(fill(b.l,p))+'</div><ul>'+b.a.map(a=>'<li>'+esc(fill(a,p))+'</li>').join('')+'</ul><div class="call">教练口令：'+esc(fill(b.c,p))+'</div></div>').join('');
+ return '<div class="seg-card"><div class="seg-card-top"><span class="no">'+sg.no+'</span><span class="nm">'+sg.n+'</span><span class="tm">'+sg.t+'</span></div><div class="seg-card-body"><div class="purpose"><strong>目的：</strong>'+esc(d.purpose)+'</div>'+acts+
   '<div class="seg-meta"><div class="m age"><div class="k">年龄段调整 · '+esc(p.ageName)+'</div><div class="v">'+esc(d.age[p.age])+'</div></div>'+
   '<div class="m"><div class="k">与本课次的关系</div><div class="v">'+esc(fill(d.link,p))+'</div></div>'+
   '<div class="m"><div class="k">教练判据</div><div class="v">'+esc(d.judge)+'</div></div>'+
@@ -812,21 +824,23 @@ function segCardHTML(sg,p){
 function renderPlanHTML(p){
  const v=state.ui.planview||'timeline';
  const names=p.students.map(s=>esc(s.name)).join(' / ');
- const head='<div class="plan-head no-print"><div class="eyebrow">AUTO-GENERATED · 第 '+p.lesson.n+' 课 · '+p.lessonType+' 课</div><h2>'+esc(p.unit.tech)+'</h2><div style="font-size:12px;color:var(--text-2)">阶段 '+p.lesson.s+' '+STAGES[p.lesson.s].name+' · 本课次重点：'+esc(p.lesson.focus)+'</div><div class="meta"><span class="chip chip-accent">'+esc(p.date)+'</span><span class="chip">'+p.minutes+' 分钟</span><span class="chip chip-accent">'+esc(p.ageName)+'</span><span class="chip">'+(p.size==='large'?'8-12 人团课':p.size==='solo'?'私教 1 人':'4-6 人小班')+'</span><span class="chip">'+p.students.length+' 名学员</span><span class="chip">'+p.rounds+' 轮轮转</span><span class="chip">教练 1 人</span></div><div class="students"><strong>学员名单：</strong>'+names+(p.autoMixed?' <span class="chip chip-warn">混合年龄段 · 已按最保守负荷处理</span>':'')+'</div></div>';
+ const sizeName=p.size==='large'?'8-12 人团课':p.size==='solo'?'私教 1 人':'4-6 人小班';
+ const head='<div class="plan-head no-print"><div class="eyebrow">AUTO-GENERATED · 第 '+p.lesson.n+' 课 · '+p.lessonType+' 课</div><h2>'+esc(p.unit.tech)+'</h2><div style="font-size:12px;color:var(--text-2)">阶段 '+p.lesson.s+' '+STAGES[p.lesson.s].name+' · 本课次重点：'+esc(p.lesson.focus)+'</div><div class="meta"><span class="chip chip-accent">'+esc(p.date)+'</span><span class="chip">'+p.minutes+' 分钟</span><span class="chip chip-accent">'+esc(p.ageName)+'</span><span class="chip">'+sizeName+'</span><span class="chip">'+p.students.length+' 名学员</span><span class="chip">'+(p.hasFit?'含 ④ 体能段':'不设 ④ 体能段')+'</span><span class="chip">教练 1 人 · 统一带练</span></div><div class="students"><strong>学员名单：</strong>'+names+(p.autoMixed?' <span class="chip chip-warn">混合年龄段 · 已按最保守负荷处理</span>':'')+'</div></div>';
  if(v==='print')return head+'<div class="plan-body"><div class="block"><h3>打印稿（含全部详细动作）</h3><pre class="card">'+esc(planText(p))+'</pre></div></div>';
  if(v==='table'){
   let rows='';
-  p.struct.forEach(sg=>{const d=SEGMENTS[sg.id];d.blocks.forEach(b=>{rows+='<tr><td>'+sg.no+' '+sg.n+'</td><td class="num">'+b.t+'</td><td>'+esc(fill(b.l,p))+'</td><td class="sec">'+b.a.map(a=>esc(fill(a,p))).join('；')+'</td><td class="sec">'+esc(fill(b.c,p))+'</td></tr>'})});
+  p.struct.forEach(sg=>{const d=SEGMENTS[sg.id];d.blocks.forEach((b,i)=>{rows+='<tr><td>'+sg.no+' '+sg.n+'</td><td class="num">'+blockTime(sg,i)+'</td><td>'+esc(fill(b.l,p))+'</td><td class="sec">'+b.a.map(a=>esc(fill(a,p))).join('；')+'</td><td class="sec">'+esc(fill(b.c,p))+'</td></tr>'})});
+  const venueRows=p.venue.map((x,i)=>'<tr><td class="num">'+(i+1)+'</td><td class="sec">'+esc(x)+'</td></tr>').join('');
   return head+'<div class="plan-body rise"><div class="block"><h3><span class="idx">01</span>课堂结构表（含具体动作）</h3><div class="table-wrap"><table><thead><tr><th>环节</th><th>时间</th><th>做什么</th><th>具体动作 / 组次</th><th>教练口令</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
-   '<div class="block"><h3><span class="idx">02</span>四区轮转（③ 分解练习段）</h3><div class="table-wrap"><table><thead><tr><th>轮次</th><th>时间</th><th>主带区</th><th>自运行区</th><th>完成判据</th></tr></thead><tbody>'+p.rotation.map(r=>'<tr><td class="num">'+r.no+'</td><td class="num">'+r.time+'</td><td>'+esc(r.main)+'</td><td class="sec">'+esc(r.self)+'</td><td class="sec">'+esc(r.judge)+'</td></tr>').join('')+'</tbody></table></div></div>'+
-   '<div class="block"><h3><span class="idx">03</span>任务卡与安全</h3><pre class="card">'+esc(p.taskCard)+'</pre><div style="margin-top:12px">'+p.safety.map(s=>'<div style="font-size:11.5px;color:var(--text-2);padding:5px 0">— '+esc(s)+'</div>').join('')+'</div></div></div>';
+   '<div class="block"><h3><span class="idx">02</span>场地与器材动线</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>说明</th></tr></thead><tbody>'+venueRows+'</tbody></table></div></div>'+
+   '<div class="block"><h3><span class="idx">03</span>安全与退阶</h3>'+p.safety.map(x=>'<div style="font-size:11.5px;color:var(--text-2);padding:5px 0">— '+esc(x)+'</div>').join('')+'</div></div>';
  }
  const kp=p.unit.kp.split('|'),dr=p.unit.drill.split('|');
- let body='<div class="block"><h3><span class="idx">00</span>三块内容与本节课的关系</h3><div class="why"><b>当课次技术拆解</b>决定「练什么」→ ② 讲、③ 练、⑤ 只评它；<b>四区轮转排布</b>决定「③ 分解练习那 25 分钟怎么组织」→ 已嵌在下方 ③ 环节里，不是独立表格；<b>分区任务卡</b>是自运行区的执行纸 → ② 段末发放、③ 段使用、⑥ 段回收。三者都只服务当前这一课次。</div></div>';
- body+='<div class="block"><h3><span class="idx">01</span>当课次技术拆解 <span class="chip chip-accent">第 '+p.lesson.n+' 课 · '+p.lessonType+' 课</span></h3><div class="lead">这一块就是 ② 讲解示范要讲、③ 分解练习要练、⑤ 对抗应用只评的内容。下面的六个环节会告诉你每个时段具体怎么带。</div><div class="kv"><div class="item"><div class="k">本课次重点</div><div class="v">'+esc(p.lesson.focus)+'</div></div><div class="item"><div class="k">对抗形式（本课次）</div><div class="v">'+esc(p.playNow)+'</div></div><div class="item"><div class="k">家庭作业</div><div class="v">'+esc(p.unit.hw)+'</div></div><div class="item"><div class="k">常见错误 → 纠正</div><div class="v">'+esc(p.unit.err)+' → '+esc(p.unit.fix)+'</div></div></div><div style="margin-top:14px"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px">3 个可观察判据（② 讲 / ③ 查 / ⑤ 评）</div>'+kp.map((k,i)=>'<div style="font-size:12px;padding:6px 0;border-bottom:1px dashed var(--hairline)"><span class="mono" style="color:var(--accent)">0'+(i+1)+'</span>　'+esc(k)+'</div>').join('')+'</div><div style="margin-top:14px"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px">③ 分解练习三步递进</div>'+dr.map((d,i)=>'<div style="font-size:12px;padding:6px 0;border-bottom:1px dashed var(--hairline)"><span class="mono" style="color:var(--accent)">STEP '+(i+1)+'</span>　'+esc(d)+'</div>').join('')+'</div></div>';
- body+='<div class="block"><h3><span class="idx">02</span>六个环节 · 逐段详细动作</h3><div class="lead">按时间顺序照着带即可；每段含具体动作、组次、口令、年龄段调整、判据与错误纠正。</div>'+p.struct.map(sg=>segCardHTML(sg,p)).join('')+'</div>';
- body+='<div class="block"><h3><span class="idx">03</span>分区任务卡 · 使用时机</h3><div class="why"><b>② 讲解示范段末发放</b>（19-20 min）→ <b>③ 分解练习段使用</b>（学员轮转到该区时照卡练、同伴按判据打勾）→ <b>⑥ 放松反馈段回收</b>（88-89 min，教练抽检判据栏与观察员签名）。多人班打卡栏按人分行，不共用一行。</div><pre class="card">'+esc(p.taskCard)+'</pre></div>';
- body+='<div class="block"><h3><span class="idx">04</span>安全与退阶</h3>'+p.safety.map(s=>'<div style="font-size:11.5px;color:var(--text-2);padding:6px 0;border-bottom:1px dashed var(--hairline)">— '+esc(s)+'</div>').join('')+'</div>';
+ let body='<div class="block"><h3><span class="idx">00</span>本课次怎么带</h3><div class="why"><b>当课次技术拆解</b>决定「练什么」→ ② 讲、③ 练、⑤ 只评它；<b>下面逐段动作</b>决定「每个时段具体带什么」；<b>场地与器材动线</b>只说明哪几步需要整队移步功能区。全员在同一场地由教练统一带练，不分组、不分区轮转。</div><div class="why" style="margin-top:10px"><b>体能段判定：</b>'+esc(p.fitReason)+'</div></div>';
+ body+='<div class="block"><h3><span class="idx">01</span>当课次技术拆解 <span class="chip chip-accent">第 '+p.lesson.n+' 课 · '+p.lessonType+' 课</span></h3><div class="lead">这一块就是 ② 讲解示范要讲、③ 分解练习要练、⑤ 对抗应用只评的内容。下面逐段会告诉你每个时段具体怎么带。</div><div class="kv"><div class="item"><div class="k">本课次重点</div><div class="v">'+esc(p.lesson.focus)+'</div></div><div class="item"><div class="k">对抗形式（本课次）</div><div class="v">'+esc(p.playNow)+'</div></div><div class="item"><div class="k">家庭作业</div><div class="v">'+esc(p.unit.hw)+'</div></div><div class="item"><div class="k">常见错误 → 纠正</div><div class="v">'+esc(p.unit.err)+' → '+esc(p.unit.fix)+'</div></div></div><div style="margin-top:14px"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px">3 个可观察判据（② 讲 / ③ 查 / ⑤ 评）</div>'+kp.map((k,i)=>'<div style="font-size:12px;padding:6px 0;border-bottom:1px dashed var(--hairline)"><span class="mono" style="color:var(--accent)">0'+(i+1)+'</span>　'+esc(k)+'</div>').join('')+'</div><div style="margin-top:14px"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px">③ 分解练习三步递进</div>'+dr.map((d,i)=>'<div style="font-size:12px;padding:6px 0;border-bottom:1px dashed var(--hairline)"><span class="mono" style="color:var(--accent)">STEP '+(i+1)+'</span>　'+esc(d)+'</div>').join('')+'</div></div>';
+ body+='<div class="block"><h3><span class="idx">02</span>逐段详细动作 · '+p.struct.length+' 段 / '+p.minutes+' 分钟</h3><div class="lead">按时间顺序照着带即可；每段含具体动作、组次、口令、年龄段调整、判据与错误纠正。'+(p.hasFit?'':'本课次不设 ④ 独立体能 / 步伐段，时间已并入 ③ 分解练习与 ⑤ 对抗应用。')+'</div>'+p.struct.map(sg=>segCardHTML(sg,p)).join('')+'</div>';
+ body+='<div class="block"><h3><span class="idx">03</span>场地与器材动线</h3><div class="why">功能区不用在生成时勾选：系统按本课次「课堂组织」自动判定可能用到的区域，教练按当天实际需要选 1-2 处，<b>整队前往、整队返回</b>，始终全员同一步骤。</div>'+p.venue.map(x=>'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)">'+esc(x)+'</div>').join('')+'</div>';
+ body+='<div class="block"><h3><span class="idx">04</span>安全与退阶</h3>'+p.safety.map(x=>'<div style="font-size:11.5px;color:var(--text-2);padding:6px 0;border-bottom:1px dashed var(--hairline)">— '+esc(x)+'</div>').join('')+'</div>';
  return head+'<div class="plan-body rise">'+body+'</div>';
 }
 function renderTracking(){
@@ -846,7 +860,7 @@ function renderSettings(){
  const d=state.defaults||{};
  $('#stageView').onchange=e=>renderCurriculumTable(Number(e.target.value));
  renderCurriculumTable(1);
- $('#defaultsForm').innerHTML='<div class="grid-2"><div class="field"><label>每阶教学单元数〔默认假设〕</label><input type="number" data-default="unitsPerStage" value="'+esc(d.unitsPerStage||8)+'"></div><div class="field"><label>每周课次〔默认假设〕</label><input type="number" data-default="freq" value="'+esc(d.freq||2)+'"></div><div class="field"><label>默认单次时长</label><select data-default="minutes"><option value="90" '+(d.minutes==90?'selected':'')+'>90 分钟</option><option value="60" '+(d.minutes==60?'selected':'')+'>60 分钟</option></select></div><div class="field"><label>默认年龄段</label><select data-default="age"><option value="adult" '+(d.age==='adult'?'selected':'')+'>成人</option><option value="youth" '+(d.age==='youth'?'selected':'')+'>青少年</option><option value="senior" '+(d.age==='senior'?'selected':'')+'>常青</option><option value="mixed" '+(d.age==='mixed'?'selected':'')+'>混合班</option></select></div><div class="field"><label>默认班型</label><select data-default="size"><option value="small" '+(d.size==='small'?'selected':'')+'>4-6 人小班</option><option value="large" '+(d.size==='large'?'selected':'')+'>8-12 人团课</option><option value="solo" '+(d.size==='solo'?'selected':'')+'>私教 1 人</option></select></div><div class="field"><label>场地片数〔默认假设〕</label><input type="number" data-default="courts" value="'+esc(d.courts||1)+'"></div><div class="field"><label>续费预警剩余课次</label><input type="number" data-default="renewWarn" value="'+esc(d.renewWarn||3)+'"></div></div><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" data-act="save-defaults">保存默认假设</button></div><div class="notice" style="margin-top:14px">每阶课次数 = 单元数 × 2 = '+esc((d.unitsPerStage||8)*2)+' 课〔默认假设推算〕。改动时长 / 单元数 / 人数 / 场地后，按体系 §0.1 重算清单检查课次编号、轮转区数与巡检路线。</div>';
+ $('#defaultsForm').innerHTML='<div class="grid-2"><div class="field"><label>每阶教学单元数〔默认假设〕</label><input type="number" data-default="unitsPerStage" value="'+esc(d.unitsPerStage||8)+'"></div><div class="field"><label>每周课次〔默认假设〕</label><input type="number" data-default="freq" value="'+esc(d.freq||2)+'"></div><div class="field"><label>默认单次时长</label><select data-default="minutes"><option value="90" '+(d.minutes==90?'selected':'')+'>90 分钟</option><option value="60" '+(d.minutes==60?'selected':'')+'>60 分钟</option></select></div><div class="field"><label>默认年龄段</label><select data-default="age"><option value="adult" '+(d.age==='adult'?'selected':'')+'>成人</option><option value="youth" '+(d.age==='youth'?'selected':'')+'>青少年</option><option value="senior" '+(d.age==='senior'?'selected':'')+'>常青</option><option value="mixed" '+(d.age==='mixed'?'selected':'')+'>混合班</option></select></div><div class="field"><label>默认班型</label><select data-default="size"><option value="small" '+(d.size==='small'?'selected':'')+'>4-6 人小班</option><option value="large" '+(d.size==='large'?'selected':'')+'>8-12 人团课</option><option value="solo" '+(d.size==='solo'?'selected':'')+'>私教 1 人</option></select></div><div class="field"><label>场地片数〔默认假设〕</label><input type="number" data-default="courts" value="'+esc(d.courts||1)+'"></div><div class="field"><label>续费预警剩余课次</label><input type="number" data-default="renewWarn" value="'+esc(d.renewWarn||3)+'"></div></div><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" data-act="save-defaults">保存默认假设</button></div><div class="notice" style="margin-top:14px">每阶课次数 = 单元数 × 2 = '+esc((d.unitsPerStage||8)*2)+' 课〔默认假设推算〕。改动时长 / 单元数 / 人数 / 场地后，按体系 §0.1 重算清单检查课次编号、体能段安排与场地动线。</div>';
  const t=state.thresholds||{};
  $('#thresholdForm').innerHTML='<div class="grid-3"><div class="field"><label>P50 初级线</label><input type="number" data-th="t1" value="'+esc(t.t1||'')+'" placeholder="[T-初]"></div><div class="field"><label>P75 中级线</label><input type="number" data-th="t2" value="'+esc(t.t2||'')+'" placeholder="[T-中]"></div><div class="field"><label>P90 高级线</label><input type="number" data-th="t3" value="'+esc(t.t3||'')+'" placeholder="[T-高]"></div></div><div class="grid-2"><div class="field"><label>晋级线 · 中级</label><input type="number" data-th="line2" value="'+esc(t.line2||'')+'" placeholder="[晋级线-中]"></div><div class="field"><label>晋级线 · 高级</label><input type="number" data-th="line3" value="'+esc(t.line3||'')+'" placeholder="[晋级线-高]"></div><div class="field"><label>单项满分 [100]</label><input type="number" data-th="w" value="'+esc(t.w||100)+'"></div><div class="field"><label>样本量 [N]</label><input type="text" data-th="sample" value="'+esc(t.sample||'')+'" placeholder="入班实测人数"></div></div><div class="field"><label>统计日期 [日期]</label><input type="date" data-th="date" value="'+esc(t.date||'')+'"></div><div class="hint" style="color:var(--text-3);font-size:10.5px">阈值须标注「本馆实测值 / 默认假设」、样本量 [N] 与统计日期；7 项权重 Σw = 100%。青少年与常青须按年龄组另建基线，不与成人混用。</div>';
  /* 数据服务面板：后端 SQLite 状态、账号与同步 */
@@ -920,8 +934,7 @@ function generate(){
  const f=state.ui.planForm;$('#planErr').textContent='';
  if(!f||!f.studentIds||!f.studentIds.length){$('#planErr').textContent='请至少选择 1 名学员（多人班可多选）';return}
  f.age=$('#fAge').value;f.size=$('#fSize').value;f.minutes=Number($('#fMinutes').value);f.lesson=Number($('#fLesson').value);f.date=$('#fDate').value;f.focus=$('#fFocus').value;
- f.zones=$$('#fZones input:checked').map(x=>x.dataset.zone);
- if(!f.zones.length){$('#planErr').textContent='至少保留一个可用分区';return}
+ f.fitMode=$('#fFitMode').value;
  if(f.size==='solo'&&f.studentIds.length>1){$('#planErr').textContent='私教仅能选 1 名学员，请取消多余勾选或改班型';return}
  const btn=$('#genBtn');btn.disabled=true;btn.textContent='生成中…';
  setTimeout(()=>{
@@ -947,7 +960,7 @@ function assessJudge(stage,vals){
 }
 document.addEventListener('click',e=>{
  const nav=e.target.closest('[data-nav]');if(nav){navigate(nav.dataset.nav);return}
- const go=e.target.closest('[data-go]');if(go){navigate(go.dataset.go);if(go.dataset.openPlan){const p=state.plans.find(x=>x.id===go.dataset.openPlan);if(p){state.ui.planForm=Object.assign({},state.ui.planForm||{},{studentIds:p.studentIds||[],lesson:p.lesson,minutes:p.minutes,date:p.date,age:p.age==='混合班'?'mixed':'adult',zones:ZONES.map(z=>z.id),focus:'tech',size:'small'});state.ui.lastPlan=buildPlan(state.ui.planForm);renderPlanPage()}}return}
+ const go=e.target.closest('[data-go]');if(go){navigate(go.dataset.go);if(go.dataset.openPlan){const p=state.plans.find(x=>x.id===go.dataset.openPlan);if(p){state.ui.planForm=Object.assign({},state.ui.planForm||{},{studentIds:p.studentIds||[],lesson:p.lesson,minutes:p.minutes,date:p.date,age:p.age==='混合班'?'mixed':'adult',fitMode:'auto',focus:'tech',size:'small'});state.ui.lastPlan=buildPlan(state.ui.planForm);renderPlanPage()}}return}
  const tw=e.target.closest('[data-tweak] button');if(tw){const k=tw.closest('[data-tweak]').dataset.tweak,v=tw.dataset.v;
   if(k==='planview'){state.ui.planview=v;save();if(state.ui.lastPlan)$('#planOutput').innerHTML=renderPlanHTML(state.ui.lastPlan)}
   else{state.prefs[k]=v;applyPrefs()}
@@ -969,7 +982,7 @@ document.addEventListener('click',e=>{
   exportData({student:s,plans:state.plans.filter(p=>(p.studentIds||[]).includes(id)),sessions:state.sessions.filter(x=>x.studentId===id),assessments:state.assessments.filter(x=>x.studentId===id)});return;
  }
  if(act==='plan-for'){const s=state.students.find(x=>x.id===id);if(!s)return;
-  state.ui.planForm=Object.assign({},state.ui.planForm||{},{studentIds:[id],lesson:Math.min(Number(s.used)+1,STAGES[Number(s.stage)].to),date:today(),age:s.age||'adult',zones:ZONES.map(z=>z.id)});
+  state.ui.planForm=Object.assign({},state.ui.planForm||{},{studentIds:[id],lesson:Math.min(Number(s.used)+1,STAGES[Number(s.stage)].to),date:today(),age:s.age||'adult',fitMode:'auto'});
   state.ui.lastPlan=null;navigate('plan');toast('已带入 '+s.name+' 的推荐课次');return;
  }
  if(act==='generate'){generate();return}
@@ -1050,7 +1063,7 @@ document.addEventListener('change',e=>{
   if(t.id==='fMinutes')f.minutes=Number(t.value);
   if(t.id==='fDate')f.date=t.value;
   if(t.id==='fFocus')f.focus=t.value;
-  if(t.dataset.zone)f.zones=$$('#fZones input:checked').map(x=>x.dataset.zone);
+  if(t.id==='fFitMode')f.fitMode=t.value;
   save();
  }
  if(e.target.id==='stageFilter'||e.target.id==='ageFilter')renderStudents();
@@ -1083,7 +1096,7 @@ function applyPrefs(){
   }
  }
  applyPrefs();
- $('[data-tweak="planview"] button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===(state.ui.planview||'timeline'))));
+ $$('[data-tweak="planview"] button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===(state.ui.planview||'timeline'))));
  navigate(state.ui.view||'dash');
  renderStorageNote();
 })();
