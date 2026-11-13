@@ -291,3 +291,58 @@ bash scripts/publish-to-github.sh
 - 教案生成引擎在前端（纯函数），课程体系数据已同步入库，可由 `/api/v1/curriculum` 供未来的移动端或第二前端复用。
 - 若要升级为多场馆 / 多教练 SaaS：把 `repositories` 层的参数化 SQL 适配到 PostgreSQL（表结构可平移），引入 Redis 做会话与热点缓存，前端教案生成拆为共享模块，并加 CI/CD 与数据库迁移流水线。
 - 阈值、药球重量、发球机档位等 `[占位]` 仍按体系文档保留，需由本馆实测值填充，系统不代填。
+
+---
+
+## 17. SSH 部署到服务器（生产）
+
+当前生产环境（2026-11-14 首次部署并验证）：
+
+| 项 | 值 |
+|---|---|
+| 服务器 | 阿里云 Ubuntu 24.04.3 LTS，`47.93.190.91` |
+| 访问地址 | `http://ajtech.top`（DNS 已解析；Nginx 80 → `127.0.0.1:8787`） |
+| 应用 | systemd 服务 `pickleball`，运行用户 `pkb`，目录 `/opt/pickleball` |
+| 运行时 | Node 22.22.2 官方二进制装在 `/opt/node22`（服务器 apt 只有 Node 18，不改动系统包） |
+| 数据库 | `/opt/pickleball/data/pickleball.db`，属主 `pkb`，密钥文件权限 600 |
+
+### 一键部署
+
+```bash
+cp .deploy.env.example .deploy.env     # 填 DEPLOY_HOST / USER / KEY 或 PWD，可选 DOMAIN
+python3 -m venv .venv-deploy && .venv-deploy/bin/pip install paramiko
+.venv-deploy/bin/python scripts/deploy.py
+```
+
+`scripts/deploy.py` 按「SSH → 远端备份 → SFTP → 语法校验 → 环境/服务配置 → systemd 重启 → curl 真机验证 → 日志」执行，任一步失败自动回滚：
+
+- **白名单打包**：只用 `git ls-files`，`.env`（含 GitHub PAT）、`.deploy.env`、`data/`、`.git` 绝不上传
+- **保留数据**：切换版本时把服务器上已有的 `data/` 原样移入新版本，数据库与密钥不丢失
+- **环境自适应**：检测 `/opt/node22`，缺失时从官方源（回退 npmmirror）下载安装
+- **网络**：填了 `DEPLOY_DOMAIN` 且 Nginx 可用时，新增独立 `conf.d/pickleball.conf` 做 80 反代（不改动既有站点），应用自动收敛为仅监听 `127.0.0.1`
+- **验证**：health、首页、`api.js`、域名路由逐项 curl，并打印初始管理员凭据与 journalctl 日志
+
+### 常用运维
+
+```bash
+systemctl status pickleball
+systemctl restart pickleball
+journalctl -u pickleball -n 50 --no-pager
+cat /opt/pickleball/data/initial-admin.txt   # 首次密码；登录后立即改密并删除该文件
+```
+
+回滚（时间戳见部署输出）：
+
+```bash
+systemctl stop pickleball
+mv /opt/pickleball /opt/pickleball.failed
+mv /opt/pickleball.bak.<时间戳> /opt/pickleball
+systemctl start pickleball
+```
+
+### 上线注意
+
+- 应用只监听 `127.0.0.1:8787`，公网统一由 Nginx 代理；云安全组只需放行 80（以及后续 443），**不要放行 8787**。
+- 当前是 HTTP 明文，公网正式使用前应配置 HTTPS（`certbot --nginx -d ajtech.top`）并立即修改 `admin` 密码。
+- `.deploy.env` 含服务器密码，已被 `.gitignore` 排除，绝不入库、不进对话。
+- 定期备份 `data/pickleball.db`（见 §12），数据库不随代码部署覆盖。
