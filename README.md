@@ -301,7 +301,8 @@ bash scripts/publish-to-github.sh
 | 项 | 值 |
 |---|---|
 | 服务器 | 阿里云 Ubuntu 24.04.3 LTS，`47.93.190.91` |
-| 访问地址 | `http://ajtech.top`（DNS 已解析；Nginx 80 → `127.0.0.1:8787`） |
+| 访问地址 | **`https://ajtech.top`**（HTTP 自动 301 跳转；Nginx 443 → `127.0.0.1:8787`） |
+| HTTPS | Let's Encrypt 证书，覆盖 `ajtech.top` + `www.ajtech.top`，有效期至 2027-02-11；`certbot.timer` 自动续期，续期演练已通过 |
 | 应用 | systemd 服务 `pickleball`，运行用户 `pkb`，目录 `/opt/pickleball` |
 | 运行时 | Node 22.22.2 官方二进制装在 `/opt/node22`（服务器 apt 只有 Node 18，不改动系统包） |
 | 数据库 | `/opt/pickleball/data/pickleball.db`，属主 `pkb`，密钥文件权限 600 |
@@ -319,8 +320,9 @@ python3 -m venv .venv-deploy && .venv-deploy/bin/pip install paramiko
 - **白名单打包**：只用 `git ls-files`，`.env`（含 GitHub PAT）、`.deploy.env`、`data/`、`.git` 绝不上传
 - **保留数据**：切换版本时把服务器上已有的 `data/` 原样移入新版本，数据库与密钥不丢失
 - **环境自适应**：检测 `/opt/node22`，缺失时从官方源（回退 npmmirror）下载安装
-- **网络**：填了 `DEPLOY_DOMAIN` 且 Nginx 可用时，新增独立 `conf.d/pickleball.conf` 做 80 反代（不改动既有站点），应用自动收敛为仅监听 `127.0.0.1`
-- **验证**：health、首页、`api.js`、域名路由逐项 curl，并打印初始管理员凭据与 journalctl 日志
+- **网络**：填了 `DEPLOY_DOMAIN` 且 Nginx 可用时，新增独立 `conf.d/pickleball.conf` 做反代（不改动既有站点），应用自动收敛为仅监听 `127.0.0.1`
+- **HTTPS 幂等**：若 conf 已由 certbot 管理（含 `ssl_certificate`），重新部署**保留不覆盖**；若证书存在但 conf 丢失，自动重建 443 + 80 跳转
+- **验证**：health、首页、`api.js`、域名路由（HTTP/HTTPS 两种场景）逐项 curl，并打印初始管理员凭据与 journalctl 日志
 
 ### 常用运维
 
@@ -329,6 +331,10 @@ systemctl status pickleball
 systemctl restart pickleball
 journalctl -u pickleball -n 50 --no-pager
 cat /opt/pickleball/data/initial-admin.txt   # 首次密码；登录后立即改密并删除该文件
+
+certbot certificates                        # 证书与到期日
+certbot renew --dry-run                     # 续期演练
+systemctl list-timers certbot.timer --no-pager
 ```
 
 回滚（时间戳见部署输出）：
@@ -342,7 +348,9 @@ systemctl start pickleball
 
 ### 上线注意
 
-- 应用只监听 `127.0.0.1:8787`，公网统一由 Nginx 代理；云安全组只需放行 80（以及后续 443），**不要放行 8787**。
-- 当前是 HTTP 明文，公网正式使用前应配置 HTTPS（`certbot --nginx -d ajtech.top`）并立即修改 `admin` 密码。
+- 应用只监听 `127.0.0.1:8787`，公网统一由 Nginx 代理；云安全组只需放行 80/443，**不要放行 8787**。
+- HTTPS 已配好（签证书前的配置备份在 `/etc/nginx/conf.d/pickleball.conf.bak.<时间戳>`）；`/etc/nginx/conf.d/pickleball.conf` 由 certbot 管理，不要手工改写。
+- 自动续期由 `certbot.timer`（每天两次）执行，到期前 30 天开始；国内网络偶发 ACME 超时会自动重试，可用 `certbot renew --dry-run` 检查。
+- **仍需立即修改 `admin` 初始密码并删除 `initial-admin.txt`**。
 - `.deploy.env` 含服务器密码，已被 `.gitignore` 排除，绝不入库、不进对话。
 - 定期备份 `data/pickleball.db`（见 §12），数据库不随代码部署覆盖。

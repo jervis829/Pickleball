@@ -122,6 +122,8 @@ def main():
     sftp = cli.open_sftp()
     backup_done = False
     nginx_added = False
+    nginx_created = False
+    nginx_https = False
     try:
         # ---- [2] 远端备份（首次部署无旧目录则跳过）----
         print('[2] 远端备份')
@@ -207,16 +209,18 @@ WantedBy=multi-user.target
         put_text(sftp, unit_content, f'/tmp/{svc}.service.{ts}', unit)
         sh(cli, f"mv /tmp/{svc}.service.{ts} {unit} && chmod 644 {unit} && echo UNIT_OK", 'install-unit')
 
-        # ---- [8] Nginx 反代（仅在填写域名且 nginx 可用时，新增独立 conf）----
+        # ---- [8] Nginx 反代（域名场景；保留 certbot 已配置的 HTTPS）----
         if domain:
             print('[8] 配置 Nginx 反代')
             if has_nginx == 'yes':
+                _, state = sh(cli,
+                              f"if grep -q 'ssl_certificate' {nginx_conf} 2>/dev/null; then echo managed; "
+                              f"elif [ -f /etc/letsencrypt/live/{domain}/fullchain.pem ]; then echo cert-only; "
+                              f"else echo none; fi",
+                              'nginx-https-state', check=False)
+                nginx_https = state in ('managed', 'cert-only')
                 server_names = domain + (f' www.{domain}' if not domain.startswith('www.') else '')
-                conf = f"""server {{
-    listen 80;
-    server_name {server_names};
-
-    location / {{
+                location = f"""    location / {{
         proxy_pass http://127.0.0.1:{port};
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -225,11 +229,39 @@ WantedBy=multi-user.target
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 60s;
     }}
+"""
+                if state == 'managed':
+                    print('    检测到 certbot 管理的 HTTPS 配置，保留不覆盖（避免重新部署丢失证书）')
+                    sh(cli, 'nginx -t >/dev/null 2>&1 && systemctl reload nginx && echo NGINX_OK',
+                       'nginx-reload')
+                else:
+                    if state == 'cert-only':
+                        print('    检测到已有证书但缺 Nginx 配置，重建 443 + 80 跳转')
+                        conf = f"""server {{
+    server_name {server_names};
+{location}
+    listen 443 ssl;
+    ssl_certificate /etc/letsencrypt/live/{domain}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{domain}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+}}
+server {{
+    listen 80;
+    server_name {server_names};
+    return 301 https://$host$request_uri;
 }}
 """
-                put_text(sftp, conf, f'/tmp/pickleball-nginx.{ts}', nginx_conf)
-                sh(cli, f"mv /tmp/pickleball-nginx.{ts} {nginx_conf} && nginx -t 2>&1 | tail -2 && "
-                        f"systemctl reload nginx && echo NGINX_OK", 'nginx-reload')
+                    else:
+                        conf = f"""server {{
+    listen 80;
+    server_name {server_names};
+{location}}}
+"""
+                    put_text(sftp, conf, f'/tmp/pickleball-nginx.{ts}', nginx_conf)
+                    sh(cli, f"mv /tmp/pickleball-nginx.{ts} {nginx_conf} && nginx -t 2>&1 | tail -2 && "
+                            f"systemctl reload nginx && echo NGINX_OK", 'nginx-reload')
+                    nginx_created = True
                 nginx_added = True
             else:
                 print('    未检测到 nginx，跳过反代')
@@ -258,10 +290,20 @@ WantedBy=multi-user.target
             _, c = sh(cli, f"curl -s -o /dev/null -w '%{{http_code}}' '{url}'", label, check=False)
             print(f'    {label} -> HTTP {c}')
         if domain and nginx_added:
-            _, c = sh(cli,
-                      f"curl -s -H 'Host: {domain}' -o /dev/null -w '%{{http_code}}' "
-                      f"'http://127.0.0.1/api/v1/health'", 'nginx-域名路由', check=False)
-            print(f'    域名反代 -> HTTP {c}')
+            if nginx_https:
+                _, c = sh(cli,
+                          f"curl -sk -H 'Host: {domain}' -o /dev/null -w '%{{http_code}}' "
+                          f"'https://127.0.0.1/api/v1/health'", 'nginx-HTTPS路由', check=False)
+                print(f'    HTTPS 域名反代 -> HTTP {c}')
+                _, c2 = sh(cli,
+                           f"curl -s -H 'Host: {domain}' -o /dev/null -w '%{{http_code}}' "
+                           f"'http://127.0.0.1/api/v1/health'", 'nginx-HTTP跳转', check=False)
+                print(f'    HTTP 跳转（应为 301）-> HTTP {c2}')
+            else:
+                _, c = sh(cli,
+                          f"curl -s -H 'Host: {domain}' -o /dev/null -w '%{{http_code}}' "
+                          f"'http://127.0.0.1/api/v1/health'", 'nginx-域名路由', check=False)
+                print(f'    域名反代 -> HTTP {c}')
 
         # ---- [11] 初始管理员凭据 + 日志 ----
         print('[11] 初始凭据与日志')
@@ -286,7 +328,7 @@ WantedBy=multi-user.target
             if backup_done:
                 sh(cli, f"test -d {remote_bak} && (rm -rf {d}.failed.{ts}; mv {d} {d}.failed.{ts}; "
                         f"mv {remote_bak} {d}) || true", 'rollback-dir', check=False)
-            if nginx_added:
+            if nginx_created:
                 sh(cli, f"rm -f {nginx_conf}; nginx -t >/dev/null 2>&1 && systemctl reload nginx || true",
                    'rollback-nginx', check=False)
             sh(cli, f"systemctl daemon-reload; systemctl restart {svc} 2>/dev/null || true",
