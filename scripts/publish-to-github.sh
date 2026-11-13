@@ -27,8 +27,10 @@ fi
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 AUTH=$(printf 'x-access-token:%s' "$PAT" | base64 | tr -d '\n')
 
+# 部分网络环境对 GitHub 的 HTTP/2 支持不稳定（HTTP2 framing layer），强制 HTTP/1.1
 if ! GIT_TERMINAL_PROMPT=0 \
-  git -c "http.extraheader=AUTHORIZATION: basic ${AUTH}" push -u origin "${BRANCH}" 2>&1; then
+  git -c "http.version=HTTP/1.1" \
+      -c "http.extraheader=AUTHORIZATION: basic ${AUTH}" push -u origin "${BRANCH}" 2>&1; then
   echo "" >&2
   echo "推送失败。常见原因：PAT 无 repo/Contents 写权限、token 已过期、细粒度 PAT 未选中 Pickleball 仓库、或网络被拦截。" >&2
   exit 1
