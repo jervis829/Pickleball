@@ -1,0 +1,25 @@
+# 绝不进入镜像构建上下文：凭据、本地数据库、运行时数据
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+data/
+node_modules/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+initial-admin.txt
+jwt-secret.txt
+coverage/
+dist/
+npm-debug.log*
+.DS_Store
+
+# 部署 / 开发辅助，镜像内不需要
+docs/
+backend/tests/
+scripts/
+*.md
+!README.md
