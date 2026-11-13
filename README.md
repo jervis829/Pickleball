@@ -272,6 +272,17 @@ git push -u origin main
 
 提交前检查：`.env`、`data/*.db`、`data/initial-admin.txt`、`data/jwt-secret.txt` 均已在 `.gitignore` 中，**绝不入库**。
 
+**当 WorkBuddy GitHub 连接为只读时**（返回 `403 Resource not accessible by integration`），用 PAT 一键推送：
+
+```bash
+# 1. 在 .env 中追加一行（该文件已 gitignore，不会进对话记录或仓库）
+#    GITHUB_PAT=<具备 repo 权限的 Personal Access Token>
+# 2. 执行
+bash scripts/publish-to-github.sh
+```
+
+脚本把令牌以一次性 `http.extraheader` 传给 git，不写入 remote URL、不落盘、不打印；推送成功后建议在 GitHub 撤销或轮换该令牌。
+
 ---
 
 ## 16. 边界与下一步
