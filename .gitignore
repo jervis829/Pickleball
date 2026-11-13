@@ -11,3 +11,7 @@ dist/
 npm-debug.log*
 initial-admin.txt
 jwt-secret.txt
+
+# 部署凭据与发布包（绝不入库）
+.deploy.env
+pkb-release-*.tar.gz
