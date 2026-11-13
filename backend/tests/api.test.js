@@ -38,7 +38,7 @@ after(async () => {
 });
 
 async function api(path, opts = {}, useToken = true) {
-  const headers = { 'content-type': 'application/json' };
+  const headers = Object.assign({ 'content-type': 'application/json' }, opts.headers || {});
   if (token && useToken) headers.authorization = 'Bearer ' + token;
   const res = await fetch(base + path, Object.assign({}, opts, { headers }));
   let body = null;
@@ -188,4 +188,56 @@ test('14 静态前端与 API.js 可访问，且带安全头', async () => {
 test('15 路径穿越被拒绝', async () => {
   const r = await api('/../.env', {}, false);
   assert.ok([403, 404].includes(r.status));
+});
+
+// ---- CORS：复现「来源不在白名单：https://ajtech.top」----
+const proxyHeaders = (origin, host) => ({
+  origin,
+  host,
+  'x-forwarded-host': host,
+  'x-forwarded-proto': 'https'
+});
+
+test('16 HTTPS 反代下的同源 Origin 放行，恶意来源仍拒绝', async () => {
+  const main = await api('/api/v1/health', { headers: proxyHeaders('https://ajtech.top', 'ajtech.top') }, false);
+  assert.equal(main.status, 200, '经反代访问的本站点不得被判为跨域');
+  assert.equal(main.headers.get('access-control-allow-origin'), 'https://ajtech.top');
+
+  const www = await api('/api/v1/health', { headers: proxyHeaders('https://www.ajtech.top', 'www.ajtech.top') }, false);
+  assert.equal(www.status, 200, 'www 子域同样自动同源');
+
+  const evil = await api('/api/v1/health', { headers: proxyHeaders('https://evil.example', 'ajtech.top') }, false);
+  assert.equal(evil.status, 403);
+  assert.equal(evil.body.error.code, 'CORS_FORBIDDEN');
+});
+
+test('17 浏览器带 Origin 的登录不再被 CORS 拦截', async () => {
+  const r = await api('/api/v1/auth/login', {
+    method: 'POST',
+    headers: proxyHeaders('https://ajtech.top', 'ajtech.top'),
+    body: JSON.stringify({ username: 'admin', password: 'test-password-123' })
+  }, false);
+  assert.equal(r.status, 200);
+  assert.ok(r.body.data.token);
+});
+
+test('18 OPTIONS 预检：同源 204、跨域 403', async () => {
+  const ok = await api('/api/v1/state', { method: 'OPTIONS', headers: proxyHeaders('https://ajtech.top', 'ajtech.top') }, false);
+  assert.equal(ok.status, 204);
+  assert.equal(ok.headers.get('access-control-allow-methods'), 'GET,POST,PATCH,PUT,DELETE,OPTIONS');
+  const no = await api('/api/v1/state', { method: 'OPTIONS', headers: proxyHeaders('https://evil.example', 'ajtech.top') }, false);
+  assert.equal(no.status, 403);
+});
+
+test('19 显式 CORS_ORIGINS 与同源来源取并集，不互相覆盖', async () => {
+  const saved = config.corsOrigins;
+  config.corsOrigins = ['https://partner.example'];
+  try {
+    const partner = await api('/api/v1/health', { headers: proxyHeaders('https://partner.example', 'ajtech.top') }, false);
+    assert.equal(partner.status, 200);
+    const self = await api('/api/v1/health', { headers: proxyHeaders('https://ajtech.top', 'ajtech.top') }, false);
+    assert.equal(self.status, 200, '配置跨域白名单不应把本站同源请求挡掉');
+  } finally {
+    config.corsOrigins = saved;
+  }
 });

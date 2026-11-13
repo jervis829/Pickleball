@@ -96,7 +96,7 @@ npm start
 
 启动时按顺序自动完成：执行迁移 → 写入 24 教学单元 → 创建管理员账号 → 生成 JWT 密钥（若未配置）。
 
-可选配置：复制 `.env.example` 为 `.env`，按需设置端口、绑定地址、管理员密码、JWT 密钥、CORS 白名单与限流阈值。
+可选配置：复制 `.env.example` 为 `.env`，按需设置端口、绑定地址、管理员密码、JWT 密钥、跨域白名单与限流阈值。本站同源来源（含经 HTTPS 反代访问的域名）自动放行，**不需要**把域名填进 `CORS_ORIGINS`；该变量只用于真正的跨域接入。
 
 ---
 
@@ -209,7 +209,7 @@ npm start
 | 数据库文件损坏 / 误清空 | 学员数骤降、导入误操作 | 按第 12 节每周导出备份；清空前强制确认 | 店长 |
 | 多端同时编辑 | 409 同步冲突提示 | 刷新页面获取最新 revision 后再编辑 | 主教练 |
 | 弱口令 / 密钥外泄 | 使用默认随机密码未改、`.env` 入库 | 首次登录立即改密；`.env`、`data/` 已 gitignore；生产用密钥管理注入 | 维护者 |
-| 公网直接暴露 | 从非本机访问 | 默认仅绑定 `127.0.0.1`；对外须配 HTTPS 反向代理与 CORS 白名单 | 维护者 |
+| 公网直接暴露 | 从非本机访问 | 默认仅绑定 `127.0.0.1`；对外须配 HTTPS 反向代理。同源来源按请求 Host 自动放行，恶意域仍返回 403 `CORS_FORBIDDEN` | 维护者 |
 | 阈值未校准却给出晋级结论 | 设置页出现黄色提示 | 系统一律显示「无法判定」，不编造标准值 | 主教练 |
 | 学员伤病 / 青少年 / 常青负荷 | 档案含伤病记录或选择对应年龄段 | **先经医生或专业人员评估**；教案自动追加退阶与 RPE 上限提示。系统不做医疗诊断、不开具康复处方 | 主教练 |
 
@@ -352,5 +352,6 @@ systemctl start pickleball
 - HTTPS 已配好（签证书前的配置备份在 `/etc/nginx/conf.d/pickleball.conf.bak.<时间戳>`）；`/etc/nginx/conf.d/pickleball.conf` 由 certbot 管理，不要手工改写。
 - 自动续期由 `certbot.timer`（每天两次）执行，到期前 30 天开始；国内网络偶发 ACME 超时会自动重试，可用 `certbot renew --dry-run` 检查。
 - **仍需立即修改 `admin` 初始密码并删除 `initial-admin.txt`**。
+- 浏览器登录若提示「来源不在白名单」：说明 `Origin` 与后端按请求 `Host` 推导出的同源来源不一致（常见于自建反代未传 `Host` / `X-Forwarded-Host`）。复现命令（错密码时应返回 **401** 而非 403）：`curl -i -X POST https://ajtech.top/api/v1/auth/login -H 'Origin: https://ajtech.top' -H 'content-type: application/json' -d '{"username":"admin","password":"x"}'`。确认 Nginx 含 `proxy_set_header Host $host;`；确需额外来源时才填 `CORS_ORIGINS`。
 - `.deploy.env` 含服务器密码，已被 `.gitignore` 排除，绝不入库、不进对话。
 - 定期备份 `data/pickleball.db`（见 §12），数据库不随代码部署覆盖。

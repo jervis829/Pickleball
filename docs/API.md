@@ -128,7 +128,9 @@ curl http://127.0.0.1:8787/api/v1/students/S001/records \
 
 - 所有 SQL 使用参数化查询；动态列名只来自服务端常量表，不拼接用户输入。
 - 请求体上限 5 MB；按 IP 限流（默认 60 秒 600 次，可配置）。
-- CORS 默认仅允许同源；跨域需在 `.env` 的 `CORS_ORIGINS` 显式列出。
+- CORS 默认放行**与请求同源**的来源：直连 `127.0.0.1:8787`，以及经反向代理由 `Host` / `X-Forwarded-Host` 推导出的本站域名（HTTP、HTTPS、www 子域自动覆盖），**无需手工配置域名**；其它站点一律 403 `CORS_FORBIDDEN`。仅按实际到达的 Host 推导，不反射任意 Origin。
+- 确有跨域接入时，在 `.env` 的 `CORS_ORIGINS` 用逗号分隔列出额外来源；该配置与同源来源取**并集**，不会把本站自己挡掉。
+- 带 `Origin` 的 `OPTIONS` 预检：同源返回 204 + 允许方法；非白名单返回 403。
 - 响应带 `X-Content-Type-Options`、`X-Frame-Options: DENY`、`Referrer-Policy`、`Permissions-Policy`、CSP。
 - 日志为结构化 JSON，自动脱敏 `password` / `token` / `authorization` / `secret` 等字段，且不记录请求体。
 - 生产环境（`NODE_ENV=production`）不返回内部错误详情与堆栈。

@@ -24,14 +24,32 @@ function applySecurity(ctx) {
   for (const [k, v] of Object.entries(headers)) h.setHeader(k, v);
 }
 
+/**
+ * 与当前请求同源的候选来源。
+ * 浏览器访问经 HTTPS 反代时，Origin 是 https://域名，而后端只知道 127.0.0.1:8787；
+ * 用反代传入的 Host / X-Forwarded-Host 推导同源来源，避免把本站自己判成跨域。
+ * 仅按「请求实际到达的 Host」推导，不反射任意 Origin，恶意站点仍被拒绝。
+ */
+function sameOriginOrigins(ctx) {
+  const h = ctx.req.headers;
+  const host = String(h['x-forwarded-host'] || h.host || '').split(',')[0].trim().toLowerCase();
+  if (!host) return [];
+  // 反代同时承载 80/443 时协议可能不同；同 Host 的两种协议都视为本站同源
+  return ['http://' + host, 'https://' + host];
+}
+
 /** 返回 false 表示已结束响应 */
 function applyCors(ctx) {
   const origin = ctx.req.headers.origin;
   if (!origin) return true;
-  const allowed = config.corsOrigins.length
-    ? config.corsOrigins
-    : [`http://${config.host}:${config.port}`, 'http://localhost:' + config.port, 'http://127.0.0.1:' + config.port];
-  if (!allowed.includes(origin)) {
+  const allowed = new Set([
+    ...config.corsOrigins,
+    ...sameOriginOrigins(ctx),
+    `http://${config.host}:${config.port}`,
+    'http://localhost:' + config.port,
+    'http://127.0.0.1:' + config.port
+  ]);
+  if (!allowed.has(origin)) {
     fail(ctx.res, 403, 'CORS_FORBIDDEN', '来源不在白名单：' + origin);
     return false;
   }
