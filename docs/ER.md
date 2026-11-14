@@ -101,6 +101,9 @@ erDiagram
 | `stage` | INTEGER | CHECK 1–3 | 阶段：初学者 / 进阶 / 竞技 |
 | `total` / `used` | INTEGER | — | 总课次 / 已耗课次，剩余用于续费预警 |
 | `injury_note` | TEXT | — | 伤病记录；非空即触发安全提示 |
+| `tech_score` / `fit_score` | REAL | — | 入班技术 / 体能 0-5；驱动教案难度与强度 |
+| `pk_level` / `racket_base` | REAL | — | v4.1 双维技术评分的 A（匹克球专项水平）/ B（其他挥拍类运动基础），迁移 002 增列 |
+| `goal` | TEXT | — | 5 类训练目标之一；改变段配比与对抗形式 |
 | `status` | TEXT | — | 在训 / 待考 / 结业 |
 | `deleted_at` | TEXT | NULL = 有效 | 软删除 |
 
@@ -111,7 +114,7 @@ erDiagram
 | `lesson` | INTEGER | 课次 1–48（CHECK） |
 | `stage` | INTEGER | 1–3 |
 | `content` | TEXT | 教案全文（六环节详细内容） |
-| `zones_json` | TEXT | 本课次启用的分区数组 |
+| `content` | TEXT | 教案全文（含调整说明与高阶加练，均为实数） |
 | `age_name` / `class_size` | TEXT | 年龄段显示名 / 班型 |
 
 ### plan_students 计划与学员

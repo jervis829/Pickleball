@@ -14,7 +14,7 @@ try {
 
   const server = createServer();
   server.listen(config.port, config.host, () => {
-    console.log('\n  匹克球教学管理中台 · 已启动');
+    console.log('\n  匹克球教学管理平台 · 已启动');
     console.log(`  访问地址   http://${config.host}:${config.port}`);
     console.log(`  数据库     ${config.dbFile}`);
     console.log(`  课程体系   ${seeded.units} 个教学单元 / ${seeded.units * 2} 课次`);

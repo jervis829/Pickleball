@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: 匹克球教学管理中台 API
+  title: 匹克球教学管理平台 API
   version: 1.0.0
   description: >
     学员档案、教学计划生成数据、教学追踪与量化考核的后端接口。

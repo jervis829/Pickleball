@@ -1,4 +1,4 @@
--- Up: 匹克球教学管理中台 v1 数据库结构 (SQLite)
+-- Up: 匹克球教学管理平台 v1 数据库结构 (SQLite)
 -- 命名：小写下划线、复数表名、created_at/updated_at/deleted_at、显式外键、参数化查询由仓储层保证
 
 PRAGMA foreign_keys = ON;

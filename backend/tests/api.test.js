@@ -241,3 +241,39 @@ test('19 显式 CORS_ORIGINS 与同源来源取并集，不互相覆盖', async 
     config.corsOrigins = saved;
   }
 });
+
+test('20 v4.1 训练参数与双维评分字段可持久化', async () => {
+  const cur = await api('/api/v1/state');
+  const snap = snapshot();
+  snap.params = { feedBalls: 24, strengthSets: 4, jointReps: 10 };
+  snap.students[0].techScore = 3;
+  snap.students[0].fitScore = 5;
+  snap.students[0].pkLevel = 0;
+  snap.students[0].racketBase = 5;
+  snap.students[0].goal = '兴趣体验';
+  const put = await api('/api/v1/state', {
+    method: 'PUT', body: JSON.stringify({ state: snap, revision: cur.body.data.revision })
+  });
+  assert.equal(put.status, 200);
+  const get = await api('/api/v1/state');
+  assert.equal(get.body.data.params.feedBalls, 24);
+  assert.equal(get.body.data.params.strengthSets, 4);
+  const s1 = get.body.data.students.find(x => x.id === 'S001');
+  assert.equal(s1.techScore, 3, '网球职业转项：技术 3 分');
+  assert.equal(s1.fitScore, 5, '其他项目职业运动员：体能 5 分');
+  assert.equal(s1.pkLevel, 0);
+  assert.equal(s1.racketBase, 5);
+  assert.equal(s1.goal, '兴趣体验');
+});
+
+test('21 v4.1 课程体系含手法层技术点 flick / roll', async () => {
+  const r = await api('/api/v1/curriculum');
+  assert.equal(r.status, 200);
+  const text = JSON.stringify(r.body.data.units);
+  assert.equal(r.body.data.units.length, 24);
+  assert.ok(/flick/.test(text), 'U14 应含 flick');
+  assert.ok(/roll volley/.test(text), 'U14 应含 roll volley');
+  assert.ok(/roll dink/.test(text), 'U13 应含 roll dink');
+  assert.ok(/hands battle/.test(text), 'U19 应含 hands battle');
+  assert.ok(!/教学管理中台/.test(text));
+});

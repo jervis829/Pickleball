@@ -1,5 +1,5 @@
 /* ============================================================
-   匹克球教学管理中台 · 前端数据访问层（API 层）
+   匹克球教学管理平台 · 前端数据访问层（API 层）
    - 唯一数据写入口：后端 SQLite 数据库（/api/v1/state）
    - localStorage 仅作离线缓存与降级，不再是数据源
    - 双写策略：save() 立即写本地缓存 → 450ms 防抖推数据库
@@ -86,7 +86,7 @@
         '</style>' +
         '<form class="card" autocomplete="on">' +
         '<div class="kicker">PICKLEBALL ACADEMY / DATA SERVICE</div>' +
-        '<h2>登录教学管理中台</h2>' +
+        '<h2>登录教学管理平台</h2>' +
         '<p>学员、教案与追踪数据保存在本机 SQLite 数据库。登录后自动同步；未登录时可离线继续，但数据仅存本机浏览器。</p>' +
         '<label>账号<input name="username" value="admin" autocomplete="username"></label>' +
         '<label>密码<input name="password" type="password" autocomplete="current-password" placeholder="首次密码见 data/initial-admin.txt"></label>' +
@@ -140,7 +140,7 @@
       students: s.students || [], plans: s.plans || [],
       sessions: s.sessions || [], assessments: s.assessments || [],
       demo: Boolean(s.demo), thresholds: s.thresholds || {},
-      defaults: s.defaults || {}, prefs: s.prefs || {}
+      defaults: s.defaults || {}, prefs: s.prefs || {}, params: s.params || {}
     };
   }
 
@@ -184,7 +184,7 @@
   async function exportAll() {
     try {
       const d = await request('/export');
-      download('匹克球教学管理中台-数据库备份-' + day() + '.json', d);
+      download('匹克球教学管理平台-数据库备份-' + day() + '.json', d);
       toast('已导出数据库备份（含 revision）');
     } catch (e) {
       if (typeof window.exportData === 'function') { window.exportData(); toast('服务不可用，已导出本机缓存'); }

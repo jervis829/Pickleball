@@ -6,7 +6,7 @@ const { curriculum } = require('../../backend/src/repositories/misc');
 const { ensureAdmin } = require('../../backend/src/services/auth');
 
 /**
- * 幂等种子：写入 24 教学单元（数据源：匹克球训练体系_初学者到高阶.md v3）
+ * 幂等种子：写入 24 教学单元（数据源：匹克球训练体系_初学者到高阶.md v4.1）
  * 首次运行同时创建管理员账号。可独立执行：npm run seed
  */
 function seed(opts = {}) {

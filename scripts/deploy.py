@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""匹克球教学管理中台 · SSH 部署与真机验证。
+"""匹克球教学管理平台 · SSH 部署与真机验证。
 
 流程遵循 ssh-deploy-verify：SSH 连接 -> 远端备份 -> SFTP 上传 -> 语法校验
 -> 额外命令(环境/服务配置) -> systemd 重启 -> curl 真机验证 -> 日志。

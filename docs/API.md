@@ -138,3 +138,18 @@ curl http://127.0.0.1:8787/api/v1/students/S001/records \
 ## 7. 安全边界
 
 涉及学员伤病、疼痛、心血管风险、青少年与常青负荷时，系统仅输出「先经医生或专业人员评估」提示与退阶建议；**不做医疗诊断、不开具康复处方**。考核阈值未校准时，晋级判定一律返回「无法判定」，不编造标准值。
+
+---
+
+## v4.1 新增状态字段（`PUT/GET /api/v1/state`）
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `state.params` | object | 训练参数覆盖表（键见前端 `PARAMS`），写入 `settings` 表；缺省用教学建议默认值 |
+| `students[].pkLevel` | number 0-5 | A 匹克球专项水平 |
+| `students[].racketBase` | number 0-5 | B 其他挥拍类运动基础 |
+| `students[].techScore` | number 0-5 | 由 A × B 矩阵综合评定的入班技术分 |
+| `students[].fitScore` | number 0-5 | 入班体能分 |
+| `students[].goal` | string | 技术晋级 / 兴趣体验 / 减脂塑形 / 比赛备战 / 专项补强 |
+
+迁移 `002_v41_scoring.sql` 为存量库补 `students.pk_level` / `students.racket_base` 两列；旧快照缺字段时前端按 `techScore→A`、`B=0`、目标「技术晋级」兼容，不白屏。

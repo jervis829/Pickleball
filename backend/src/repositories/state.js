@@ -5,6 +5,7 @@ const { transaction, run } = require('../db/connection');
 const { HttpError } = require('../utils/response');
 
 const DEFAULT_DEFAULTS = { minutes: 90, size: 'small', age: 'adult', freq: 2, unitsPerStage: 8, courts: 1, renewWarn: 3 };
+const DEFAULT_PARAMS = {};
 const DEFAULT_PREFS = { theme: 'dark', accent: 'lime', density: 'comfortable', motion: 'on' };
 const DEFAULT_UI = { view: 'dash', planview: 'timeline', planForm: null, lastPlan: null, detailId: null };
 const ENTITY_KEYS = ['students', 'plans', 'sessions', 'assessments'];
@@ -19,6 +20,7 @@ function readState() {
     assessments: entities.listAll('assessments'),
     demo: Boolean(s.meta && s.meta.demo),
     thresholds: s.thresholds || {},
+    params: Object.assign({}, DEFAULT_PARAMS, s.params || {}),
     defaults: Object.assign({}, DEFAULT_DEFAULTS, s.defaults || {}),
     prefs: Object.assign({}, DEFAULT_PREFS, s.prefs || {}),
     ui: { ...DEFAULT_UI },
@@ -55,6 +57,7 @@ function replaceState(snapshot, expectedRevision = null) {
     for (const a of snapshot.assessments || []) entities.upsertRow('assessments', entities.toDb('assessments', a));
 
     settings.set('thresholds', snapshot.thresholds || {});
+    settings.set('params', snapshot.params || DEFAULT_PARAMS);
     settings.set('defaults', snapshot.defaults || DEFAULT_DEFAULTS);
     settings.set('prefs', snapshot.prefs || DEFAULT_PREFS);
     settings.set('meta', { demo: Boolean(snapshot.demo) });
@@ -66,4 +69,4 @@ function replaceState(snapshot, expectedRevision = null) {
   });
 }
 
-module.exports = { readState, replaceState, DEFAULT_DEFAULTS, DEFAULT_PREFS, DEFAULT_UI, ENTITY_KEYS };
+module.exports = { readState, replaceState, DEFAULT_DEFAULTS, DEFAULT_PARAMS, DEFAULT_PREFS, DEFAULT_UI, ENTITY_KEYS };

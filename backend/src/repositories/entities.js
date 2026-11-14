@@ -4,14 +4,14 @@ const { newId } = require('../utils/crypto');
 const { HttpError } = require('../utils/response');
 
 const TS = () => new Date().toISOString();
-const NUM_COLS = new Set(['stage', 'total', 'used', 'lesson', 'minutes', 'rpe', 'tech_score', 'fit_score']);
+const NUM_COLS = new Set(['stage', 'total', 'used', 'lesson', 'minutes', 'rpe', 'tech_score', 'fit_score', 'pk_level', 'racket_base']);
 const JSON_COLS = new Set(['vals_json', 'zones_json']);
 
 /** 前端字段 -> 数据库列（列名来自本文件常量，不拼接用户输入） */
 const DEFS = {
   students: {
     table: 'students',
-    cols: { name: 'name', phone: 'phone', age: 'age_group', stage: 'stage', sizeLabel: 'size_label', total: 'total', used: 'used', expire: 'expire_date', injury: 'injury_note', techScore: 'tech_score', fitScore: 'fit_score', goal: 'goal', status: 'status', note: 'note' },
+    cols: { name: 'name', phone: 'phone', age: 'age_group', stage: 'stage', sizeLabel: 'size_label', total: 'total', used: 'used', expire: 'expire_date', injury: 'injury_note', techScore: 'tech_score', fitScore: 'fit_score', pkLevel: 'pk_level', racketBase: 'racket_base', goal: 'goal', status: 'status', note: 'note' },
     defaults: { age: 'adult', stage: 1, total: 48, used: 0, status: '在训', sizeLabel: '4-6 人小班' },
     search: ['name', 'id', 'phone']
   },
