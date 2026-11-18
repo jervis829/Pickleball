@@ -40,19 +40,33 @@ log()  { printf '[auto-deploy] %s\n' "$*"; }
 mkdir -p "$(dirname "$STATE_FILE")" "$WORK_DIR"
 
 # ---------- [0] 防止并发重入 ----------
-exec 9>"$LOCK_FILE"
-if ! flock -n 9; then log "已有部署在进行，跳过本次轮询"; exit 0; fi
+# 用 PID 文件而不是 flock：
+#   flock 的 fd 会被所有子进程继承，一旦某个子进程（如挂住的 git）不退出，
+#   锁就永远不释放，后续每一轮轮询都会被"已有部署在进行"挡掉。
+#   PID 文件则随进程退出自然失效，还能识别出"进程已死但锁文件还在"的僵尸状态。
+if [ -f "$LOCK_FILE" ]; then
+  OLD_PID="$(cat "$LOCK_FILE" 2>/dev/null || echo 0)"
+  if [ "$OLD_PID" -gt 0 ] 2>/dev/null && kill -0 "$OLD_PID" 2>/dev/null; then
+    log "已有部署在进行（pid ${OLD_PID}），跳过本次轮询"
+    exit 0
+  fi
+  log "清理僵尸锁（pid ${OLD_PID} 已不存在）"
+  rm -f "$LOCK_FILE"
+fi
+echo $$ > "$LOCK_FILE"
+cleanup_lock() { rm -f "$LOCK_FILE"; }
+trap cleanup_lock EXIT
 
 # ---------- [1] 连通性 ----------
 # 用 git ls-remote 判活：它走 git 协议端点，**不受 GitHub REST API 匿名配额限制**
 # （匿名 core 配额只有 60 次/小时，而本定时器每分钟就要查 1 次，用 REST API 必然被限流 403）
-if ! git ls-remote "https://github.com/${REPO_OWNER}/${REPO_NAME}.git" "refs/heads/${BRANCH}" >/dev/null 2>&1; then
+if ! timeout 25 git ls-remote "https://github.com/${REPO_OWNER}/${REPO_NAME}.git" "refs/heads/${BRANCH}" >/dev/null 2>&1; then
   log "无法访问 github.com，本次跳过（不影响线上服务）"
   exit 0
 fi
 
 # ---------- [2] 取 main 最新 SHA（git ls-remote，无限额）----------
-REMOTE_SHA="$(git ls-remote "https://github.com/${REPO_OWNER}/${REPO_NAME}.git" "refs/heads/${BRANCH}" 2>/dev/null \
+REMOTE_SHA="$(timeout 25 git ls-remote "https://github.com/${REPO_OWNER}/${REPO_NAME}.git" "refs/heads/${BRANCH}" 2>/dev/null \
   | awk 'NR==1{print $1}')"
 [ -n "$REMOTE_SHA" ] || { log "未能取得远端 SHA，跳过"; exit 0; }
 
