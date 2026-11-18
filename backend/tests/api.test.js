@@ -351,4 +351,18 @@ test('22 教案评分快照、课后0–5分录入与学员技术成长查询', 
   assert.ok(rec.body.data.weakSkills.some(x => x.skillKey === item.skillKey));
   assert.ok(rec.body.data.matchedWeakSkills.some(x => x.skillKey === item.skillKey));
   assert.equal(rec.body.data.safety.holdAdditionalLoad, true);
+
+  // 连续三次达到4分及以上，状态转为稳定掌握。
+  for (const n of [4, 5, 6]) {
+    const planId = 'PSKILL0' + n, sessionId = 'RSKILL0' + n;
+    await api('/api/v1/plans', { method: 'POST', body: JSON.stringify({ id: planId, lesson: 1, stage: 1, tech: '稳定掌握测试', minutes: 90, studentIds: ['S001'], text: '测试' }) });
+    const snap = await api('/api/v1/plans/' + planId + '/skill-points');
+    await api('/api/v1/sessions', { method: 'POST', body: JSON.stringify({ id: sessionId, studentId: 'S001', planId, lesson: 1, date: '2026-11-18', minutes: 90, rpe: 5, attend: '出勤' }) });
+    const point = snap.body.data.items.find(x => x.skillKey === item.skillKey);
+    await api('/api/v1/sessions/' + sessionId + '/skill-scores', { method: 'PUT', body: JSON.stringify({ scores: [{ planSkillPointId: point.id, score: 4 }] }) });
+  }
+  const mastered = await api('/api/v1/students/S001/training-recommendations?lesson=1');
+  assert.equal(mastered.status, 200);
+  assert.ok(mastered.body.data.masteredSkills.some(x => x.skillKey === item.skillKey));
+  assert.ok(!mastered.body.data.weakSkills.some(x => x.skillKey === item.skillKey));
 });
