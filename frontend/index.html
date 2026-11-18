@@ -1138,6 +1138,32 @@ function sessionModal(){
   '<div class="field"><label>阶段反馈（1 条优点 + 1 条改进点）</label><textarea data-rf="note" placeholder="例：分腿垫步时机改善；击球后回中仍偏慢"></textarea></div>'+
   '</div><div class="modal-foot"><button class="btn" data-act="close-modal">取消</button><button class="btn btn-primary" data-act="save-session">保存记录</button></div>');
 }
+async function openSkillScoreModal(sessionId){
+ if(!window.PKB_API){toast('数据服务不可用');return}
+ try{
+  const data=await window.PKB_API.request('/sessions/'+encodeURIComponent(sessionId)+'/skill-scores');
+  const items=data.items||[];
+  const html=items.map(p=>{
+   const anchors=(p.rubric&&p.rubric.anchors)||[];
+   const rubric=anchors.map(a=>'<div style="font-size:11px;margin:3px 0"><b>'+a.score+'分 '+esc(a.label)+'</b>：'+esc(a.description)+'</div>').join('');
+   return '<div class="panel" style="padding:14px;margin-bottom:10px"><b>'+esc(p.skillName)+'</b><div style="font-size:11px;color:var(--text-2);margin:5px 0">本课焦点：'+esc(p.focus||'—')+'<br>关键判据：'+esc(p.criterion)+'</div><div class="field"><label>评分（0–5；留空表示未评）</label><select data-skill-point="'+p.id+'"><option value="">待评分</option>'+[0,1,2,3,4,5].map(n=>'<option value="'+n+'" '+(p.score===n?'selected':'')+'>'+n+'分</option>').join('')+'</select></div><div class="grid-2"><div class="field"><label>尝试次数</label><input type="number" min="0" data-attempts="'+p.id+'" value="'+(p.attempts==null?'':p.attempts)+'"></div><div class="field"><label>成功次数</label><input type="number" min="0" data-successes="'+p.id+'" value="'+(p.successes==null?'':p.successes)+'"></div></div><div class="field"><label>教练观察</label><textarea data-coach-note="'+p.id+'" rows="2">'+esc(p.coachNote||'')+'</textarea></div><details><summary style="cursor:pointer;color:var(--accent)">查看评分锚点</summary>'+rubric+'</details></div>';
+  }).join('');
+  openModal('<div class="modal-head"><h3>本堂课技术点评分 · '+items.length+'项</h3><button class="x" data-act="close-modal">×</button></div><div class="modal-body" style="max-height:65vh;overflow:auto">'+(html||'暂无评分项目')+'</div><div class="modal-foot"><button class="btn" data-act="close-modal">取消</button><button class="btn btn-primary" data-act="save-skill-scores" data-id="'+sessionId+'">保存评分</button></div>');
+ }catch(e){toast('载入评分失败：'+e.message)}
+}
+async function saveSkillScores(sessionId){
+ const scores=[];
+ $('[data-skill-point]').forEach(el=>{
+  if(el.value==='')return;
+  const id=el.dataset.skillPoint,attempts=$('[data-attempts="'+id+'"]').value,successes=$('[data-successes="'+id+'"]').value;
+  scores.push({planSkillPointId:id,score:Number(el.value),attempts:attempts===''?null:Number(attempts),successes:successes===''?null:Number(successes),coachNote:$('[data-coach-note="'+id+'"]').value});
+ });
+ try{
+  await window.PKB_API.request('/sessions/'+encodeURIComponent(sessionId)+'/skill-scores',{method:'PUT',body:JSON.stringify({scores})});
+  closeModal();toast('技术评分已保存');renderTracking();
+ }catch(e){toast('保存失败：'+e.message)}
+}
+
 function loadDemo(){
  const a={id:'DEMO01',name:'示例 · 陈一',phone:'—',age:'adult',stage:1,sizeLabel:'4-6 人小班',total:48,used:6,expire:'',injury:'',techScore:2,fitScore:3,goal:'技术晋级',status:'在训',note:'演示数据'},
  b={id:'DEMO02',name:'示例 · 林二',phone:'—',age:'youth',stage:1,sizeLabel:'4-6 人小班',total:48,used:15,expire:'',injury:'',techScore:3,fitScore:3,goal:'技术晋级',status:'待考',note:'演示数据'},
