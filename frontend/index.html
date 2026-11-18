@@ -1100,6 +1100,89 @@ function renderAssess(){
  $('#assessResult').innerHTML='<div class="notice"><strong>当前判定：待新版评估协议发布。</strong><br>旧记录不会被删除；新录入数据保留原始实测值，但不生成误导性的百分制总分或晋级/补考结论。<br><br>正式评估将采用阶段专项能力项、统一测试条件、关键项门槛和教练复核。规则与安全为不可补偿的关键项。</div>';
  const a=state.assessments.slice().sort((x,y)=>(y.date||'').localeCompare(x.date||''));
  $('#assessList').innerHTML=a.length?a.map(x=>{const legacy=!x.assessmentModel;const status=legacy?(x.conclusion==='晋级'?'历史晋级结论（旧规则）':'历史记录（旧规则）'):(x.conclusion||'待教练复核');return '<div class="list-row"><div><div class="main-txt">'+esc(x.studentName)+' · 阶段 '+x.stage+'</div><div class="sub-txt">'+esc(x.date)+' · '+esc(status)+'</div></div><div class="right"><span class="chip chip-warn">'+esc(x.total==null?'待复核':x.total+' 分（旧规则）')+'</span></div></div>'}).join(''):'<div class="list-row"><span class="muted" style="font-size:12px">暂无考核记录</span></div>';
+ renderStageAssessmentPanel();
+}
+
+
+async function renderStageAssessmentPanel(){
+ let host=$('#stageAssessmentPanel');
+ if(!host){host=document.createElement('div');host.id='stageAssessmentPanel';host.className='panel';host.style.marginTop='18px';$('#view-assess').appendChild(host);}
+ if(!window.PKB_API||!window.PKB_API.online()){
+  host.innerHTML='<div class="panel-head"><h2>新版阶段能力评估 · 补训复测</h2></div><div class="panel-body"><div class="notice notice-warn">请先连接数据服务并登录，才能使用版本化协议、教练复核和补训复测。</div></div>';return;
+ }
+ try{
+  const [protocols,students]=await Promise.all([
+   window.PKB_API.request('/assessment-protocols?status=draft'),
+   Promise.resolve(state.students||[])
+  ]);
+  const selectedStudent=host.dataset.student||students[0]?.id||'';
+  const stage=Number(host.dataset.stage||1);
+  const protocolsForStage=protocols.filter(p=>p.stage===stage);
+  const selectedProtocol=protocolsForStage[0]?.id||'';
+  const attempts=selectedStudent?await window.PKB_API.request('/students/'+encodeURIComponent(selectedStudent)+'/assessment-attempts'):[];
+  host.innerHTML='<div class="panel-head"><h2>新版阶段能力评估 · 补训复测</h2><span class="sub">草案协议 · 教练复核 · 不自动晋级</span></div>'+
+   '<div class="panel-body"><div class="notice notice-warn" style="margin-bottom:14px">阶段评分采用0–4描述性锚点，与课堂技术点0–5分独立。当前协议仍为试测稿，不提供自动晋级结论；请由教练确认每项结果。</div>'+
+   '<div class="grid-3"><div class="field"><label>学员</label><select id="stageAssessStudent">'+students.map(s=>'<option value="'+esc(s.id)+'" '+(s.id===selectedStudent?'selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></div>'+
+   '<div class="field"><label>阶段协议</label><select id="stageAssessStage">'+[1,2,3].map(n=>'<option value="'+n+'" '+(n===stage?'selected':'')+'>阶段 '+n+'</option>').join('')+'</select></div>'+
+   '<div class="field"><label>关联课次（可选）</label><input id="stageAssessLesson" type="number" min="1" max="48" placeholder="16 / 32 / 48"></div></div>'+
+   '<button class="btn btn-primary btn-sm" data-act="create-stage-attempt" data-protocol="'+esc(selectedProtocol)+'" '+(!selectedProtocol?'disabled':'')+'>创建阶段能力评估</button>'+
+   '<div class="divider"></div><div class="section-title"><h2 style="font-size:14px">评估记录与教练复核</h2><span class="note">最近记录</span></div>'+
+   (attempts.length?attempts.slice(0,8).map(a=>{
+    const status=a.status==='cancelled'?'已取消':a.status==='submitted'?'已提交':'进行中';
+    const results=(a.results||[]).map(r=>{
+     const rv=r.coachReviewStatus||'pending';
+     return '<div style="padding:10px 0;border-bottom:1px dashed var(--hairline)"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>'+esc(r.criterionSnapshot?.name||r.criterionCode)+'</b><span class="chip">0–4：'+(r.score==null?'未评分':r.score)+'</span><span class="chip '+(rv==='needs_remediation'?'chip-danger':rv==='confirmed'?'chip-ok':'chip-warn')+'">'+(rv==='needs_remediation'?'需补训':rv==='confirmed'?'已确认':rv==='not_applicable'?'不适用':'待复核')+'</span></div>'+
+      '<div class="field" style="margin:8px 0"><label>教练复核结论</label><select id="review-'+a.id+'-'+r.criterionCode+'"><option value="confirmed" '+(rv==='confirmed'?'selected':'')+'>确认达到 / 记录完成</option><option value="needs_remediation" '+(rv==='needs_remediation'?'selected':'')+'>需补训</option><option value="not_applicable" '+(rv==='not_applicable'?'selected':'')+'>不适用（需说明）</option></select></div>'+
+      '<button class="btn btn-sm" data-act="review-stage-result" data-attempt="'+a.id+'" data-code="'+esc(r.criterionCode)+'">保存复核</button>'+
+      (r.coachDecisionNote?'<div class="sub-txt">'+esc(r.coachDecisionNote)+'</div>':'')+'</div>';
+    }).join('');
+    return '<details style="border:1px solid var(--hairline);border-radius:8px;padding:12px;margin:10px 0"><summary style="cursor:pointer"><b>'+esc(a.assessmentDate)+' · 阶段 '+a.protocolSnapshot.stage+'</b> <span class="chip">'+status+'</span> <span class="chip">'+(a.results||[]).length+'/'+(a.protocolSnapshot.criteria||[]).length+' 项已录入</span></summary>'+
+      '<div style="padding-top:10px">'+results+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-sm" data-act="preview-remediation" data-attempt="'+a.id+'">查看补训建议</button></div><div id="remediation-'+a.id+'" style="margin-top:10px"></div></div></details>';
+   }).join(''):'<div class="empty" style="padding:24px"><h3>暂无新版评估记录</h3><p>选择学员和阶段协议，创建第一份阶段能力评估。</p></div>')+
+   '</div>';
+  host.dataset.student=selectedStudent;host.dataset.stage=String(stage);
+ }catch(e){host.innerHTML='<div class="panel-head"><h2>新版阶段能力评估</h2></div><div class="panel-body"><div class="notice notice-warn">载入失败：'+esc(e.message)+'</div></div>';}
+}
+async function createStageAttempt(protocolId){
+ const studentId=$('#stageAssessStudent')?.value,stage=Number($('#stageAssessStage')?.value||1);
+ const protocolList=await window.PKB_API.request('/assessment-protocols?stage='+stage+'&status=draft');
+ const protocol=protocolList[0];if(!studentId||!protocol){toast('缺少学员或阶段协议');return}
+ const lesson=Number($('#stageAssessLesson')?.value||0)||null;
+ try{
+  const a=await window.PKB_API.request('/assessment-attempts',{method:'POST',body:JSON.stringify({studentId,protocolId:protocol.id,lessonNumber:lesson,assessmentDate:today()})});
+  const results=protocol.criteria.map(c=>({criterionId:c.id,score:null,achieved:null,rawTrials:[],observations:''}));
+  await window.PKB_API.request('/assessment-attempts/'+a.id+'/results',{method:'PUT',body:JSON.stringify({results})});
+  toast('已创建阶段评估；请逐项录入观察分数并完成教练复核');
+  const host=$('#stageAssessmentPanel');host.dataset.student=studentId;host.dataset.stage=String(stage);await renderStageAssessmentPanel();
+ }catch(e){toast('创建评估失败：'+e.message)}
+}
+async function reviewStageResult(attemptId,code){
+ const status=$('#review-'+attemptId+'-'+code)?.value;
+ try{await window.PKB_API.request('/assessment-attempts/'+attemptId+'/results/'+encodeURIComponent(code)+'/review',{method:'PUT',body:JSON.stringify({status,note:'由考核与晋级页面教练复核'})});toast('复核已保存');await renderStageAssessmentPanel();}
+ catch(e){toast('复核失败：'+e.message)}
+}
+async function previewRemediation(attemptId){
+ const box=$('#remediation-'+attemptId);if(!box)return;
+ try{
+  const p=await window.PKB_API.request('/assessment-attempts/'+attemptId+'/remediation');
+  box.innerHTML='<div class="notice">'+esc(p.policy)+'</div>'+
+   '<div style="margin-top:8px;font-size:12px"><b>需补训 '+p.needsRemediation.length+' 项 · 待复核 '+p.pendingReview.length+' 项 · 必测缺项 '+p.unassessedRequired.length+' 项</b></div>'+
+   (p.needsRemediation.length?p.needsRemediation.map(x=>'<div style="padding:8px 0;border-bottom:1px dashed var(--hairline)"><b>'+esc(x.name)+'</b> · 建议课次 '+(x.lessons.length?x.lessons.join('、'):'待教练指定')+'<div class="sub-txt">'+esc(x.activity)+'</div></div>').join(''):'')+
+   (p.canCreatePlan?'<button class="btn btn-primary btn-sm" style="margin-top:10px" data-act="create-remediation-plan" data-attempt="'+attemptId+'">生成补训计划草案</button>':'<div class="notice notice-warn" style="margin-top:10px">需先补齐必测项并完成所有已录入项的教练复核，系统才会生成补训计划。</div>');
+ }catch(e){box.textContent='补训建议载入失败：'+e.message}
+}
+async function createRemediationPlan(attemptId){
+ try{
+  const plan=await window.PKB_API.request('/assessment-attempts/'+attemptId+'/remediation-plans',{method:'POST',body:JSON.stringify({})});
+  await window.PKB_API.request('/assessment-remediation-plans/'+plan.id+'/confirm',{method:'POST',body:JSON.stringify({})});
+  const retest=await window.PKB_API.request('/assessment-retests',{method:'POST',body:JSON.stringify({
+   studentId:plan.studentId,protocolId:(await window.PKB_API.request('/assessment-attempts/'+attemptId)).protocolId,
+   retestOfId:attemptId,remediationPlanId:plan.id,criterionCodes:plan.items.map(x=>x.criterionCode)
+  })});
+  toast('补训计划已确认，并建立限定范围复测记录 '+retest.id);
+  await renderStageAssessmentPanel();
+ }catch(e){toast('补训计划处理失败：'+e.message)}
 }
 
 function renderParamsPanel(){
@@ -1343,6 +1426,10 @@ document.addEventListener('click',e=>{
   else fallbackCopy(txt);return;
  }
  if(act==='print-plan'){if(!state.ui.lastPlan){toast('请先生成计划');return}window.print();return}
+ if(act==='create-stage-attempt'){createStageAttempt(btn.dataset.protocol);return}
+ if(act==='review-stage-result'){reviewStageResult(btn.dataset.attempt,btn.dataset.code);return}
+ if(act==='preview-remediation'){previewRemediation(btn.dataset.attempt);return}
+ if(act==='create-remediation-plan'){createRemediationPlan(btn.dataset.attempt);return}
  if(act==='skill-score'){openSkillScoreModal(id);return}
  if(act==='skill-progress'){openSkillProgressModal(id);return}
  if(act==='save-skill-scores'){saveSkillScores(id);return}
@@ -1430,6 +1517,9 @@ document.addEventListener('change',e=>{
  }
  if(e.target.id==='stageFilter'||e.target.id==='ageFilter')renderStudents();
  if(e.target.id==='stageView')renderCurriculumTable(Number(e.target.value));
+ if(e.target.id==='stageAssessStudent'||e.target.id==='stageAssessStage'){
+  const host=$('#stageAssessmentPanel');if(host){if(e.target.id==='stageAssessStudent')host.dataset.student=e.target.value;else host.dataset.stage=e.target.value;renderStageAssessmentPanel();}
+ }
 });
 document.addEventListener('input',e=>{
  if(e.target.id==='studentSearch')renderStudents();
