@@ -62,6 +62,11 @@ function sessionPlan(sessionId) {
   const session = get('SELECT id, student_id, plan_id, lesson FROM sessions WHERE id = ? AND deleted_at IS NULL', [sessionId]);
   if (!session) throw new HttpError(404, 'NOT_FOUND', '授课记录不存在');
   if (!session.plan_id) throw new HttpError(422, 'PLAN_REQUIRED', '该授课记录尚未关联教案，无法载入本堂评分项目');
+  if (session.student_id) {
+    const linked = get('SELECT COUNT(*) AS n FROM plan_students WHERE plan_id = ?', [session.plan_id]).n;
+    const member = get('SELECT 1 AS ok FROM plan_students WHERE plan_id = ? AND student_id = ?', [session.plan_id, session.student_id]);
+    if (linked > 0 && !member) throw new HttpError(422, 'PLAN_STUDENT_MISMATCH', '该学员不属于所关联教案的学员名单');
+  }
   return session;
 }
 
