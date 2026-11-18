@@ -936,7 +936,7 @@ function renderDetail(){
  exams.forEach(x=>items.push({d:x.date||'—',t:'阶段 '+x.stage+' 考核',c:esc(x.conclusion||'')+' · '+(x.total==null?'未校准':x.total+' 分')+' <span class="chip chip-warn">考核</span>'}));
  items.sort((a,b)=>(b.d||'').localeCompare(a.d||''));
  $('#detailContent').innerHTML=
- '<div class="panel"><div class="detail-hero"><div class="avatar">'+esc(s.name.slice(0,1))+'</div><div style="flex:1"><h2>'+esc(s.name)+'</h2><div style="display:flex;flex-wrap:wrap;gap:7px"><span class="chip mono">'+esc(s.id)+'</span><span class="chip">'+esc(AGE_GROUPS[s.age||'adult'].name)+'</span><span class="chip">阶段 '+s.stage+' '+STAGES[s.stage].name+'</span><span class="chip chip-accent">第 '+esc(s.used)+' / '+esc(s.total)+' 课</span><span class="chip">出勤 '+at+'</span><span class="chip">'+esc(s.status||'在训')+'</span></div><div style="margin-top:10px;font-size:11.5px;color:var(--text-3)">入班技术 '+esc(s.techScore==null?'—':s.techScore)+' / 5（A '+esc(s.pkLevel==null?'—':s.pkLevel)+' · B '+esc(s.racketBase==null?'0':s.racketBase)+'） · 入班体能 '+esc(s.fitScore==null?'—':s.fitScore)+' / 5 · 目标 '+esc(s.goal||'技术晋级')+'</div></div><div class="no-print" style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-sm btn-primary" data-act="plan-for" data-id="'+s.id+'">生成下一课次计划</button><button class="btn btn-sm" data-act="export-student" data-id="'+s.id+'">导出该学员记录</button></div></div>'+
+ '<div class="panel"><div class="detail-hero"><div class="avatar">'+esc(s.name.slice(0,1))+'</div><div style="flex:1"><h2>'+esc(s.name)+'</h2><div style="display:flex;flex-wrap:wrap;gap:7px"><span class="chip mono">'+esc(s.id)+'</span><span class="chip">'+esc(AGE_GROUPS[s.age||'adult'].name)+'</span><span class="chip">阶段 '+s.stage+' '+STAGES[s.stage].name+'</span><span class="chip chip-accent">第 '+esc(s.used)+' / '+esc(s.total)+' 课</span><span class="chip">出勤 '+at+'</span><span class="chip">'+esc(s.status||'在训')+'</span></div><div style="margin-top:10px;font-size:11.5px;color:var(--text-3)">入班技术 '+esc(s.techScore==null?'—':s.techScore)+' / 5（A '+esc(s.pkLevel==null?'—':s.pkLevel)+' · B '+esc(s.racketBase==null?'0':s.racketBase)+'） · 入班体能 '+esc(s.fitScore==null?'—':s.fitScore)+' / 5 · 目标 '+esc(s.goal||'技术晋级')+'</div></div><div class="no-print" style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-sm btn-primary" data-act="plan-for" data-id="'+s.id+'">生成下一课次计划</button><button class="btn btn-sm" data-act="skill-progress" data-id="'+s.id+'">技术成长</button><button class="btn btn-sm" data-act="export-student" data-id="'+s.id+'">导出该学员记录</button></div></div>'+
  (s.injury?'<div class="panel-body" style="padding-bottom:0"><div class="notice notice-danger"><strong>安全标记：</strong>'+esc(s.injury)+' — 须先经医生或专业人员评估，训练全程启用退阶动作；本系统不做医疗诊断。</div></div>':'')+
  '<div class="panel-body"><div class="section-title" style="margin-bottom:8px"><h2 style="font-size:15px">学习记录时间线</h2><span class="note">按日期倒序 · 计划 / 授课 / 考核合并</span></div>'+
  (items.length?items.map(i=>'<div class="timeline-item"><div class="d">'+esc(i.d)+'</div><div><div class="t">'+i.t+'</div><div class="c">'+i.c+'</div></div></div>').join(''):'<div class="empty" style="border:0"><div class="mark">[ 00 ]</div><h3>暂无学习记录</h3><p>生成并保存计划、补录授课记录后，这里会自动汇总该学员的进度与反馈。</p></div>')+
@@ -1164,6 +1164,16 @@ async function saveSkillScores(sessionId){
  }catch(e){toast('保存失败：'+e.message)}
 }
 
+async function openSkillProgressModal(studentId){
+ if(!window.PKB_API){toast('数据服务不可用');return}
+ try{
+  const data=await window.PKB_API.request('/students/'+encodeURIComponent(studentId)+'/skill-progress');
+  const skills=data.skills||[];
+  const body=skills.map(x=>'<tr><td>'+esc(x.skillName)+'</td><td class="num">'+x.latestScore+'/5</td><td class="num">'+x.recentAverage+'</td><td class="num">'+(x.trend>0?'+':'')+x.trend+'</td><td class="num">'+x.count+'</td></tr>').join('');
+  openModal('<div class="modal-head"><h3>技术成长 · '+esc(data.student.name)+'</h3><button class="x" data-act="close-modal">×</button></div><div class="modal-body">'+(skills.length?'<div class="notice">共记录 '+data.totalScores+' 项技术评分。近三次平均仅使用已评分记录，未评分不计为0。</div><table><thead><tr><th>技术点</th><th>最近分</th><th>近三次均分</th><th>变化</th><th>次数</th></tr></thead><tbody>'+body+'</tbody></table>':'<div class="empty">暂无技术评分。请先在教学追踪中为关联教案的授课记录录入评分。</div>')+'</div><div class="modal-foot"><button class="btn" data-act="close-modal">关闭</button></div>');
+ }catch(e){toast('技术成长载入失败：'+e.message)}
+}
+
 function loadDemo(){
  const a={id:'DEMO01',name:'示例 · 陈一',phone:'—',age:'adult',stage:1,sizeLabel:'4-6 人小班',total:48,used:6,expire:'',injury:'',techScore:2,fitScore:3,goal:'技术晋级',status:'在训',note:'演示数据'},
  b={id:'DEMO02',name:'示例 · 林二',phone:'—',age:'youth',stage:1,sizeLabel:'4-6 人小班',total:48,used:15,expire:'',injury:'',techScore:3,fitScore:3,goal:'技术晋级',status:'待考',note:'演示数据'},
@@ -1263,6 +1273,7 @@ document.addEventListener('click',e=>{
  }
  if(act==='print-plan'){if(!state.ui.lastPlan){toast('请先生成计划');return}window.print();return}
  if(act==='skill-score'){openSkillScoreModal(id);return}
+ if(act==='skill-progress'){openSkillProgressModal(id);return}
  if(act==='save-skill-scores'){saveSkillScores(id);return}
  if(act==='new-session'){sessionModal();return}
  if(act==='save-session'){
