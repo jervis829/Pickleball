@@ -742,7 +742,7 @@ function venuePlan(p){
  L.push('组织原则：教练 1 人统一发令，同一时刻全班做同一件事；移步时整队往返，设备只由教练操作。');
  return L;
 }
-function buildPlan(f){
+function buildPlan(f,trainingRecommendations){
  const students=(f.studentIds||[]).map(id=>state.students.find(x=>x.id===id)).filter(Boolean);
  const lesson=LESSONS.find(l=>l.n===Number(f.lesson));
  if(!students.length||!lesson)return null;
@@ -814,8 +814,37 @@ function buildPlan(f){
    'flick / roll 连击：先 roll volley 引对手上手，再 flick 打空档，各 '+paramVal('feedBalls',p)+' 球。'
   ];
  }
+ p.trainingReview=buildTrainingReview(p,trainingRecommendations);
+ if(p.trainingReview&&p.trainingReview.weak.length){
+  const names=p.trainingReview.weak.map(x=>x.skillName).join('、');
+  p.notes.push('动态复习建议：'+names+' 在最近两次评分均低于 3 分；将复习嵌入本课既有③分解练习的前 5 分钟，不增加总课时、不改变本课主题或48课次顺序。');
+ }
+ if(p.trainingReview&&p.trainingReview.safety.holdAdditionalLoad)p.notes.push('安全负荷保护：近期伤病 / 不适或高 RPE 信号触发保护；不增加球数、组数或训练强度，复习只做低强度动作校正，出现疼痛立即停止并按安全流程处理。');
  p.venue=venuePlan(p);
  return p;
+}
+
+
+function buildTrainingReview(p,recommendations){
+ if(!recommendations||!recommendations.available)return null;
+ const byKey=new Map(),parked=[],mastered=[],safetyReasons=[];
+ (recommendations.students||[]).forEach(rec=>{
+  const name=rec.student&&rec.student.name||'学员';
+  (rec.matchedWeakSkills||[]).forEach(x=>{
+   if(!byKey.has(x.skillKey))byKey.set(x.skillKey,{skillKey:x.skillKey,skillName:x.skillName,students:[],scores:x.history.slice(-2).map(h=>h.score)});
+   const item=byKey.get(x.skillKey);if(!item.students.includes(name))item.students.push(name);
+  });
+  (rec.parkedWeakSkills||[]).forEach(x=>parked.push({studentName:name,skillName:x.skillName}));
+  (rec.masteredSkills||[]).forEach(x=>mastered.push({studentName:name,skillName:x.skillName}));
+  (rec.safety&&rec.safety.reasons||[]).forEach(reason=>{if(!safetyReasons.includes(name+'：'+reason))safetyReasons.push(name+'：'+reason)});
+ });
+ const safety={
+  holdAdditionalLoad:(recommendations.students||[]).some(x=>x.safety&&x.safety.holdAdditionalLoad),
+  caution:(recommendations.students||[]).some(x=>x.safety&&x.safety.caution),
+  reasons:safetyReasons
+ };
+ return {available:true,weak:[...byKey.values()],parked,mastered,safety,lesson:p.lesson.n,
+  policy:'仅复习与本课次技术主题匹配的薄弱项；复习嵌入③分解练习，不延长总课时、不跳课或退课。'};
 }
 
 function planText(p){
@@ -825,6 +854,17 @@ function planText(p){
  L.push('训练目标 '+p.goal+' | 入班技术 '+p.techAvg+' / 5（A 匹克球 '+p.aAvg.toFixed(1)+' · B 挥拍类迁移 '+p.bAvg.toFixed(1)+'） | 入班体能 '+p.fitEff+' / 5');
  L.push('课堂结构：'+p.minutes+' 分钟 / '+(p.hasFit?'6 段（含 ④ 专项体能 / 步伐）':'5 段（不设 ④ 专项体能 / 步伐）'));
  L.push('体能段判定：'+p.fitReason);
+ if(p.trainingReview){
+  L.push('');
+  L.push('【动态训练调整】');
+  if(p.trainingReview.weak.length){
+   L.push('③分解练习前 5 分钟复习薄弱项（使用原有课时，不增加总时长）：');
+   p.trainingReview.weak.forEach(x=>L.push('  - '+x.skillName+'：'+x.students.join('、')+' 最近两次评分 '+x.scores.join('、')+' 分；先慢速定型，再按本课主题串联。'));
+  }else L.push('本课次没有与当前技术主题匹配的连续低分项，不额外插入其他主题练习。');
+  if(p.trainingReview.parked.length)L.push('暂不插入（与本课主题不匹配，留待对应主题复习）：'+p.trainingReview.parked.map(x=>x.studentName+'·'+x.skillName).join('；'));
+  if(p.trainingReview.mastered.length)L.push('稳定掌握（最近连续三次 ≥4 分，保留常规观察，不据此跳课）：'+p.trainingReview.mastered.map(x=>x.studentName+'·'+x.skillName).join('；'));
+  if(p.trainingReview.safety.reasons.length)L.push('负荷 / 安全提醒：'+p.trainingReview.safety.reasons.join('；'));
+ }
  L.push('');L.push('【当课次技术拆解】'+p.unit.tech);
  L.push('  本课次重点：'+p.lesson.focus);
  L.push('  3 个可观察判据：'+p.unit.kp.split('|').join(' / '));
@@ -997,6 +1037,17 @@ function segCardHTML(sg,p){
 /* 调整说明 / 高阶加练的共用渲染块（三种视图都显示） */
 function planExtraHTML(p){
  let h='';
+ if(p.trainingReview){
+  h+='<div class="block"><h3><span class="idx">04A</span>动态训练调整 · 技术复习与负荷保护</h3>';
+  if(p.trainingReview.weak.length){
+   h+='<div class="why"><b>复习位置：</b>嵌入③分解练习前 5 分钟，使用本课既有时长；不延长课程、不改变48课次顺序。</div>';
+   h+=p.trainingReview.weak.map(x=>'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)"><b>'+esc(x.skillName)+'</b> · '+esc(x.students.join('、'))+' · 最近两次评分 '+esc(x.scores.join(' / '))+' 分<br><span class="sec">先慢速定型和拍面 / 步法校正，再接回本课次主题。</span></div>').join('');
+  }else h+='<div class="notice">没有发现与第 '+p.lesson.n+' 课技术主题匹配的连续低分项，因此不把其他课次主题强行插入本课。</div>';
+  if(p.trainingReview.parked.length)h+='<div style="font-size:11.5px;color:var(--text-2);padding:8px 0">其他薄弱项暂存，待对应主题课次复习：'+p.trainingReview.parked.map(x=>esc(x.studentName)+' · '+esc(x.skillName)).join('；')+'</div>';
+  if(p.trainingReview.mastered.length)h+='<div style="font-size:11.5px;color:var(--ok);padding:8px 0">稳定掌握（连续三次 ≥4 分）：'+p.trainingReview.mastered.map(x=>esc(x.studentName)+' · '+esc(x.skillName)).join('；')+'。保留常规观察，不因此跳课。</div>';
+  if(p.trainingReview.safety.caution)h+='<div class="notice notice-warn" style="margin-top:8px"><b>负荷保护：</b>不增加球数、组数或强度；'+(p.trainingReview.safety.reasons.map(esc).join('；')||'近期 RPE 偏高，维持原负荷观察')+'。如出现疼痛立即停止。</div>';
+  h+='</div>';
+ }
  if(p.notes&&p.notes.length)h+='<div class="block"><h3><span class="idx">05</span>本课次调整说明</h3>'+p.notes.map((x,i)=>'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)">'+(i+1)+'. '+esc(x)+'</div>').join('')+'</div>';
  if(p.advanced&&p.advanced.length)h+='<div class="block"><h3><span class="idx">06</span>高阶加练 · 选修 <span class="chip chip-accent">技术 5 分 / 4.0+</span></h3><div class="why">本段不占用 48 课次主线时长，可在课后追加或转私教方案；教练按当天状态决定是否执行。</div>'+p.advanced.map((x,i)=>'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)">'+(i+1)+'. '+esc(x)+'</div>').join('')+'</div>';
  return h;
@@ -1192,13 +1243,24 @@ function generate(){
  f.age=$('#fAge').value;f.size=$('#fSize').value;f.minutes=Number($('#fMinutes').value);f.lesson=Number($('#fLesson').value);f.date=$('#fDate').value;f.focus=$('#fFocus').value;
  f.fitMode=$('#fFitMode').value;f.goal=$('#fGoal').value;
  if(f.size==='solo'&&f.studentIds.length>1){$('#planErr').textContent='私教仅能选 1 名学员，请取消多余勾选或改班型';return}
- const btn=$('#genBtn');btn.disabled=true;btn.textContent='生成中…';
- setTimeout(()=>{
-  const p=buildPlan(f);
+ const btn=$('#genBtn');btn.disabled=true;btn.textContent='读取训练历史…';
+ (async()=>{
+  let recs={available:false,students:[]};
+  if(window.PKB_API&&window.PKB_API.online()){
+   try{
+    const results=await Promise.all(f.studentIds.map(async id=>{
+     const data=await window.PKB_API.request('/students/'+encodeURIComponent(id)+'/training-recommendations?lesson='+encodeURIComponent(f.lesson));
+     return data;
+    }));
+    recs={available:true,students:results};
+   }catch(err){recs={available:false,students:[],reason:err.message};}
+  }else recs.reason='数据服务未连接，本次按原教案规则生成；连接数据库后可读取技术评分历史。';
+  const p=buildPlan(f,recs);
   if(!p){$('#planErr').textContent='学员或课次数据异常，请重新选择';btn.disabled=false;btn.textContent='生成详细教学计划';return}
   state.ui.lastPlan=p;save();$('#planOutput').innerHTML=renderPlanHTML(p);
-  btn.disabled=false;btn.textContent='生成详细教学计划';toast('已生成第 '+p.lesson.n+' 课详细教案（'+p.students.length+' 人 / '+p.ageName+'）');
- },220);
+  btn.disabled=false;btn.textContent='生成详细教学计划';
+  toast('已生成第 '+p.lesson.n+' 课教案'+(recs.available?'（已读取技术成长与负荷记录）':'（未读取历史评分）'));
+ })().catch(err=>{btn.disabled=false;btn.textContent='生成详细教学计划';$('#planErr').textContent='生成失败：'+err.message});
 }
 function assessJudge(stage,vals){
  if(!thresholdsReady())return {total:null,conclusion:'阈值未校准，无法判定'};
