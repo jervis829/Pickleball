@@ -127,14 +127,20 @@ if [ "${CI_DEPLOY_DRY_RUN:-0}" = "1" ] || ! command -v systemctl >/dev/null 2>&1
   log "    当前环境无 systemd，跳过服务重启（仅用于本地演练）"
   HEALTH_OK=0
   # 本地演练：直接用 node 拉起临时实例做健康检查
-  ( cd "$TARGET_DIR" && HOST="$APP_HOST" PORT="$APP_PORT" DB_FILE="$DB_REL" \
-      "$NODE_BIN" backend/src/index.js >/tmp/pkb-ci-deploy-test.log 2>&1 & echo $! >/tmp/pkb-ci-deploy-test.pid )
+  # 必须用 exec 让 node 取代 subshell —— 否则 $! 是 subshell 的 pid，
+  # node 会变成 ppid=1 的孤儿进程留在系统里（实测每次演练泄漏一个，占用 8891 等端口）
+  ( cd "$TARGET_DIR" && exec env HOST="$APP_HOST" PORT="$APP_PORT" DB_FILE="$DB_REL" \
+      "$NODE_BIN" backend/src/index.js ) >/tmp/pkb-ci-deploy-test.log 2>&1 &
+  TEST_PID=$!
   sleep 5
   if [ "$(curl -s -o /dev/null -w '%{http_code}' -m 5 "http://127.0.0.1:${APP_PORT}/api/v1/health" 2>/dev/null || echo 000)" = "200" ]; then
     HEALTH_OK=1
     ok "临时实例健康检查通过"
   fi
-  if [ -f /tmp/pkb-ci-deploy-test.pid ]; then kill "$(cat /tmp/pkb-ci-deploy-test.pid)" 2>/dev/null || true; rm -f /tmp/pkb-ci-deploy-test.pid; fi
+  kill "$TEST_PID" 2>/dev/null || true
+  wait "$TEST_PID" 2>/dev/null || true
+  # 兜底：按端口再清一次，确保不残留
+  pkill -f "backend/src/index.js" 2>/dev/null || true
   if [ "$HEALTH_OK" != "1" ]; then
     log "    临时实例健康检查未通过，执行回滚"
     if [ -d "$BAK_DIR" ]; then mv "$TARGET_DIR" "${TARGET_DIR}.failed.${TS}" 2>/dev/null || true; mv "$BAK_DIR" "$TARGET_DIR"; fi

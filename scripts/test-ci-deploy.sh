@@ -77,6 +77,16 @@ chk "退出码非 0（实际 ${RC}）" "$([ "$RC" != "0" ] && echo 1 || echo 0)"
 chk "已回滚到上一版本" "$([ -f "$ROOT/target/GOOD_MARKER.txt" ] && echo 1 || echo 0)"
 chk "未误报成功" "$(grep -q 'CI_DEPLOY_OK' "$ROOT/out4.log" && echo 0 || echo 1)"
 
+echo "== 清理：确保没有演练遗留的临时实例 =="
+pkill -f "backend/src/index.js" 2>/dev/null || true
+sleep 1
+LEFT=$(pgrep -fc "backend/src/index.js" 2>/dev/null || echo 0)
+if [ "$LEFT" -gt 0 ] 2>/dev/null; then
+  echo "  WARN 仍有 $LEFT 个临时实例残留"
+else
+  echo "  ok 无残留临时实例"
+fi
+
 echo
 printf 'ci-deploy 回归：\033[32mpass=%d\033[0m fail=%d\n' "$PASS" "$FAIL"
 [ "$FAIL" = "0" ] || exit 1

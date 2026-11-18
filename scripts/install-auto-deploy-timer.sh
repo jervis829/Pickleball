@@ -50,7 +50,13 @@ After=network.target
 [Service]
 Type=oneshot
 WorkingDirectory=${INSTALL_DIR}
+# 显式给环境：systemd 默认不带 HOME，git 会因找不到凭据助手而挂起等输入
+Environment=HOME=/root
+Environment=PATH=/opt/node22/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=GIT_TERMINAL_PROMPT=0
+Environment=GIT_ASKPASS=/bin/true
 ExecStart=/bin/bash ${SCRIPT_SRC}
+TimeoutStartSec=900
 EOF
 
 cat > "$TIMER" <<EOF
