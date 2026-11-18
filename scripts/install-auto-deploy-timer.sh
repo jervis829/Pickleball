@@ -31,8 +31,8 @@ SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 log "[1] 检查运行环境"
 [ -x /opt/node22/bin/node ] || fail "缺少 /opt/node22/bin/node"
-curl -fsS -m 15 https://api.github.com/repos/jervis829/Pickleball -o /dev/null \
-  || fail "服务器访问不到 api.github.com，定时轮询方案不可用"
+git ls-remote https://github.com/jervis829/Pickleball.git refs/heads/main >/dev/null 2>&1 \
+  || fail "服务器访问不到 github.com，定时轮询方案不可用"
 ok "环境检查通过"
 
 log "[2] 安装脚本到 ${INSTALL_DIR}"
@@ -71,8 +71,7 @@ ok "已写入 $UNIT 与 $TIMER"
 log "[4] 记录当前已部署版本（避免首次空转）"
 STATE_FILE="${INSTALL_DIR}/state"
 if [ ! -f "$STATE_FILE" ]; then
-  SHA="$(curl -fsS -m 20 https://api.github.com/repos/jervis829/Pickleball/commits/main \
-        | /opt/node22/bin/node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).sha)}catch(e){console.log('')}})")"
+  SHA="$(git ls-remote https://github.com/jervis829/Pickleball.git refs/heads/main 2>/dev/null | awk 'NR==1{print $1}')"
   if [ -n "$SHA" ]; then
     printf '%s' "$SHA" > "$STATE_FILE"
     ok "已记录基线 SHA ${SHA:0:7}（首次轮询不会重复部署）"

@@ -44,14 +44,16 @@ exec 9>"$LOCK_FILE"
 if ! flock -n 9; then log "已有部署在进行，跳过本次轮询"; exit 0; fi
 
 # ---------- [1] 连通性 ----------
-if ! curl -fsS -m 15 "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}" -o /dev/null; then
-  log "无法访问 api.github.com，本次跳过（不影响线上服务）"
+# 用 git ls-remote 判活：它走 git 协议端点，**不受 GitHub REST API 匿名配额限制**
+# （匿名 core 配额只有 60 次/小时，而本定时器每分钟就要查 1 次，用 REST API 必然被限流 403）
+if ! git ls-remote "https://github.com/${REPO_OWNER}/${REPO_NAME}.git" "refs/heads/${BRANCH}" >/dev/null 2>&1; then
+  log "无法访问 github.com，本次跳过（不影响线上服务）"
   exit 0
 fi
 
-# ---------- [2] 取 main 最新 SHA ----------
-REMOTE_SHA="$(curl -fsS -m 20 "https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits/${BRANCH}" \
-  | "$NODE_BIN" -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).sha||'')}catch(e){console.log('')}})")"
+# ---------- [2] 取 main 最新 SHA（git ls-remote，无限额）----------
+REMOTE_SHA="$(git ls-remote "https://github.com/${REPO_OWNER}/${REPO_NAME}.git" "refs/heads/${BRANCH}" 2>/dev/null \
+  | awk 'NR==1{print $1}')"
 [ -n "$REMOTE_SHA" ] || { log "未能取得远端 SHA，跳过"; exit 0; }
 
 LOCAL_SHA=""
