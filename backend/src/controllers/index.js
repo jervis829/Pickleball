@@ -5,6 +5,7 @@ const catalog = require('../services/catalog');
 const stateSvc = require('../services/state');
 const insights = require('../services/insights');
 const { curriculum } = require('../repositories/misc');
+const skillScoring = require('../services/skill-scoring');
 
 function crud(entity) {
   return {
@@ -34,5 +35,10 @@ module.exports = {
   stats: ctx => ok(ctx.res, insights.overview()),
   studentRecords: ctx => ok(ctx.res, insights.studentRecords(ctx.params.id)),
   curriculum: ctx => ok(ctx.res, { units: curriculum.list(), lesson_count: curriculum.list().length * 2 }),
+  lessonSkillPoints: ctx => ok(ctx.res, { items: skillScoring.lessonSkillPoints(ctx.params.lesson) }),
+  planSkillPoints: ctx => ok(ctx.res, { items: skillScoring.planSkillPoints(ctx.params.id) }),
+  sessionSkillScores: ctx => ok(ctx.res, skillScoring.sessionScores(ctx.params.id)),
+  saveSessionSkillScores: ctx => ok(ctx.res, skillScoring.saveSessionScores(ctx.params.id, ctx.body.scores, ctx.user)),
+  studentSkillProgress: ctx => ok(ctx.res, skillScoring.studentProgress(ctx.params.id)),
   students, plans, sessions, assessments
 };
