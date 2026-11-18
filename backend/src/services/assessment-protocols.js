@@ -82,11 +82,11 @@ function getAttempt(id) {
     protocolSnapshot:json(a.protocol_snapshot_json), assessmentDate:a.assessment_date,
     lessonNumber:a.lesson_number, sessionId:a.session_id, assessorId:a.assessor_id,
     assessorName:a.assessor_name, status:a.status, conclusion:a.conclusion,
-    retestOfId:a.retest_of_id, notes:a.notes,
+    retestOfId:a.retest_of_id, notes:a.notes, criteriaScope:json(a.criteria_scope_json, null),
     results:results.map(r=>({id:r.id,criterionId:r.criterion_id,criterionCode:r.criterion_code,
       criterionSnapshot:json(r.criterion_snapshot_json),rawTrials:json(r.raw_trials_json,[]),
       score:r.score,achieved:r.achieved===null?null:Boolean(r.achieved),
-      observations:r.observations,evidenceRef:r.evidence_ref}))
+      observations:r.observations,evidenceRef:r.evidence_ref,coachReviewStatus:r.coach_review_status||'pending',coachDecisionNote:r.coach_decision_note||''}))
   };
 }
 function saveResults(attemptId, input) {
@@ -96,6 +96,10 @@ function saveResults(attemptId, input) {
   if (attempt.status === 'cancelled' || attempt.status === 'submitted') throw new HttpError(409,'ATTEMPT_LOCKED','已提交或取消的评估不可修改');
   const protocol = json(attempt.protocol_snapshot_json);
   const criteria = new Map((protocol.criteria || []).map(c=>[c.id,c]));
+  const scope = json(attempt.criteria_scope_json, null);
+  if (Array.isArray(scope) && input.some(x => !scope.includes(String(x?.criterionCode || criteria.get(String(x?.criterionId || ''))?.code || '')))) {
+    throw new HttpError(422,'RETEST_SCOPE_VIOLATION','本次复测只能录入创建时指定的能力项');
+  }
   const normalized = input.map((x,i)=>{
     const c = criteria.get(String(x?.criterionId || ''));
     if (!c) throw new HttpError(422,'INVALID_CRITERION','第'+(i+1)+'项不属于该评估协议快照');
