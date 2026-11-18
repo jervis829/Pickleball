@@ -71,7 +71,63 @@ curl -X POST http://127.0.0.1:8787/api/v1/auth/login \
 | DELETE | `/students/:id` | 软删除 |
 | GET/POST/GET/PATCH/DELETE | `/plans`、`/sessions`、`/assessments` | 同上四组 CRUD |
 
+### 3.1 身体素质测评（P6）
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/fitness-battery` | 9 项实测定义：测试协议、安全提示、5 档锚点、变异与年龄组系数、维度权重、免责声明 |
+| POST | `/fitness-assessments` | 为学员开一份测评 `{ studentId, sex?, heightCm?, weightKg?, ageGroupCode?, testDate? }`；创建时固化测评表快照 |
+| GET | `/fitness-assessments/:id` | 完整报告：9 维指数、雷达图数据源、强项/补强、计划适配建议、与教练自评的对照 |
+| PUT | `/fitness-assessments/:id/results` | 录入单项 `{ results:[{ itemCode, rawValue, variantCode?, status?, note? }] }`；`status` 取 `measured/aborted/skipped/contraindicated`，非 `measured` 不计分 |
+| POST | `/fitness-assessments/:id/finalize` | 生成报告并锁定；需 ≥6 项且覆盖 ≥4 个维度，否则 422 `INCOMPLETE_BATTERY` |
+| POST | `/fitness-assessments/:id/apply-to-student` | 教练确认后把换算体能分写入 `students.fit_score`；可选 `{ fitScore }` 覆盖（0–5 整数） |
+| GET | `/students/:id/fitness-assessments` | 该学员历史测评列表 + 趋势点 |
+| GET | `/students/:id/fitness-latest` | 最新一份已完成报告（教案生成时用于 ④ 段适配） |
+
+计分口径（`backend/src/services/fitness-scoring.js`，纯函数可单测）：
+
+1. **变体 / 性别折算**先作用于原始值：`higher` 类（次数、距离、保持时间）用 `实测 ÷ 系数`，`lower` 类（计时、心率、反应距离）用 `实测 × 系数`；系数 >1 表示该版本更容易或该群体标准更低。
+2. **查 5 档锚点**得 0-100 基础指数（10 / 35 / 60 / 80 / 100 五档线性插值）。
+3. **年龄组让步在指数空间**：`index′ = 100 − (100 − index) × e`，`e` 取该维度的 `dimensionFactor`。e<1 放宽、e>1 收紧；对负值项目（坐位体前屈）与两个方向都一致。
+4. **未测不当作 0 分**：只对测到的维度重新归一权重；中止/禁忌项 `indexValue = null`。
+
+常见错误码：`UNKNOWN_ITEM`（项目不在测评表）、`INVALID_VALUE`（实测值非数字）、`INCOMPLETE_BATTERY`（项目/维度不足）、`ASSESSMENT_LOCKED`（已完成不可改写）、`NOT_COMPLETED` / `NO_SCORE`（未完成或无法换算就写入档案）。
+
 列表统一返回 `{ items, total, page, pageSize }`，最大 `pageSize = 200`。
+
+### 3.2 课程包 / 课程大纲 / 执行 / 点评（P7）
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/curriculum-difficulty` | 24 单元的难度、并列新授点数、建议课次、放行判据、拆分建议，以及剂量模型与已知缺口 |
+| POST | `/enrollments` | 登记课程包并生成大纲 `{ studentId, totalLessons, packageType?, lessonsPerWeek?, minutesPerLesson?, startDate?, startStage?, startUnit?, techLevel?, fitLevel?, ageGroup?, paceMode? }`；单事务写入课程包 + N 节大纲 |
+| GET | `/enrollments` | 课程包列表（含大纲），支持 `studentId` / `status` 过滤 |
+| GET | `/enrollments/:id` | 课程包详情 + 学员快照 + 逐节状态 |
+| PATCH | `/enrollments/:id` | 改 `status`（active/completed/paused/cancelled）、`paceMode`（fixed/adaptive）、频次、时长、备注 |
+| POST | `/enrollments/:id/lessons` | **执行一节课** `{ outlineLessonId?, planId?, date?, judge?, rpe?, attend? }`；不传 `outlineLessonId` 时取第一个待上课次 |
+| POST | `/sessions/:id/review` | 课后点评 `{ judge, attend?, rpe?, note?, homework?, nextFocus?, judgeVals? }`；判据非「达标」时按节奏模式调整大纲 |
+| GET | `/today` | 今日视图 `?date=YYYY-MM-DD`：当天待上课 / 待点评 / 已过期未上 |
+
+关键口径：
+
+1. **课次数量由难度与剂量推出，不由频次倒推。** 单节实球触球 = `32 × 技术系数 × 体能/年龄系数 × 时长系数`（成人技术 3 体能 3 满 90 分钟 = 32 次）；单节并列新授点上限 3 个；难度 5 的单元至少 3 节；单单元最多 4 节。课时不够覆盖时返回 `generated.truncated = true` 并说明排到了第几个单元，**不假装排完**。
+2. **执行是单事务**：`sessions` 插入（`review_status = pending`）+ `outline_lessons.status = taught` + `enrollments.used_lessons + 1` + `students.used + 1`。任一步失败整体回滚。
+3. **执行幂等**：同一 `outlineLessonId` 重复调用返回同一 `session`，`duplicated = true`，不会重复扣课时。
+4. **点评会自动调大纲**：`paceMode = adaptive` 且判据非「达标」→ 下一个 `planned` 课次改为同单元 `R` 补强课，**不新增课时、不改单次时长**；`paceMode = fixed` → 不动大纲，返回 `adjust.action = 'hold'`。
+5. `GET /state` 同时下发 `enrollments`（含 `outline`），离线也能看今天上哪节、哪节还没点评。
+
+返回示例（执行一节课）：
+
+```json
+{
+  "session": { "id": "R2F1...", "lesson": 1, "reviewStatus": "pending", "date": "2026-11-18" },
+  "outlineLesson": { "id": "OL...", "seq": 1, "status": "taught" },
+  "duplicated": false,
+  "nextStep": { "action": "insert_r", "text": "自适应节奏：建议在第 2 节插入 1 节「第 1 单元补强（R）」…" }
+}
+```
+
+常见错误码：`STUDENT_NOT_FOUND`（404）、`ENROLLMENT_NOT_FOUND`（404）、`OUTLINE_NOT_FOUND`（404，防止执行不属于该课程包的大纲课次）、`NO_PLANNED_LESSON`（409，课已上完）、`ENROLLMENT_CANCELLED`（409）、`VALIDATION_ERROR`（422，`totalLessons` 非 1–200 整数、`judge` 不在三档内）。
 
 ## 4. 字段映射（前端 state ↔ 数据库列）
 

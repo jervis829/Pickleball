@@ -2,7 +2,7 @@
 const fs = require('fs'), vm = require('vm');
 const path = require('path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'index.html'), 'utf8');
-const code = (html.match(/<script>([\s\S]*?)<\/script>/) || [])[1] + '\n;globalThis.__X={UNITS,LESSONS,SEGMENTS,PARAMS,GOALS,SCORE_MATRIX,TECH_A,RACKET_B,FIT_ANCHOR,STAGES,AGE_GROUPS,ZONES,state};';
+const code = (html.match(/<script>([\s\S]*?)<\/script>/) || [])[1] + '\n;globalThis.__X={UNITS,LESSONS,SEGMENTS,PARAMS,GOALS,SCORE_MATRIX,TECH_A,RACKET_B,FIT_ANCHOR,STAGES,AGE_GROUPS,ZONES,state,fitPreview,fitRadarSVG,fitBarsHTML,fitLevelOf,buildFitnessBridge,FIT_LEVEL_LABEL_LOCAL};';
 if (!code) { console.error('NO SCRIPT'); process.exit(1); }
 
 function el() {
@@ -72,10 +72,10 @@ ok('所有 {p:key} 都有默认值', undef.length === 0, undef.join(','));
 
 // ---- 生成引擎：造学员 ----
 function mk(o) { return Object.assign({ id: 'X' + Math.random(), name: '测试', age: 'adult', stage: 1, used: 0, total: 48, techScore: 3, fitScore: 3, pkLevel: 3, racketBase: 0, goal: '技术晋级', injury: '', status: '在训' }, o); }
-function gen(students, form) {
+function gen(students, form, fitnessReports) {
   vm.runInContext('state.students = ' + JSON.stringify(students) + ';', ctx);
   const f = Object.assign({ studentIds: students.map(s => s.id), lesson: 13, minutes: 90, age: 'adult', size: 'small', date: '2026-11-14', fitMode: 'auto', focus: 'tech', goal: '技术晋级' }, form || {});
-  const p = ctx.buildPlan(f);
+  const p = ctx.buildPlan(f, undefined, fitnessReports);
   return { p, text: p ? ctx.planText(p) : '' };
 }
 const base = gen([mk({})]);
@@ -165,6 +165,77 @@ ok('功能区最多 1 处', (spread.p.venue.filter(x => /可选替代/.test(x)).
 ok('全员同一场地声明', spread.p.venue[0].includes('不分组、不分区轮转'));
 const goals2 = gen([mk({ goal: '技术晋级' }), mk({ goal: '兴趣体验' })], { goal: '技术晋级' });
 ok('目标不一致有提示', goals2.p.notes.some(x => /目标不一致/.test(x)));
+
+// ---- 体能测评 → 教案桥接 ----
+const battery = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'database', 'seeds', 'fitness-battery.json'), 'utf8'));
+const scoring = require('../backend/src/services/fitness-scoring');
+ok('体能测评表 9 项 / 9 维度', battery.items.length === 9 && Object.keys(battery.weights).length === 9);
+ok('每项都有分档锚点与安全说明', battery.items.every(i => Array.isArray(i.anchors) && i.anchors.length === 5 && i.safety && i.protocol));
+ok('维度权重合计 = 1', Math.abs(Object.values(battery.weights).reduce((a, b) => a + b, 0) - 1) < 1e-9);
+
+// 前端即时预览必须与后端计分完全一致（避免「录入看到的分」和「保存后的分」不一致）
+let parity = 0, parityBad = 0;
+for (const item of battery.items) {
+  for (const ag of battery.ageGroups) {
+    for (const sex of ['', 'male', 'female']) {
+      for (const raw of [item.code === 'sit_reach' ? -8 : 5, item.code === 'step_hr' ? 120 : 25, item.code === 'agility_5_10_5' ? 6.4 : 18]) {
+        for (const vc of [''].concat((item.variants || []).map(v => v.code))) {
+          const fe = X.fitPreview(battery, ag.code, sex, item, raw, vc || '');
+          let be = null;
+          try {
+            be = scoring.scoreItem(battery, { itemCode: item.code, rawValue: raw, variantCode: vc || undefined }, { ageGroup: ag, sex: sex || null }).indexValue;
+          } catch (e) { be = 'ERR'; }
+          parity++;
+          const fi = fe ? fe.index : null;
+          if (fi === null && be === null) continue;
+          if (fi === null || be === null || Math.abs(fi - be) > 0.2) parityBad++;
+        }
+      }
+    }
+  }
+}
+ok('前端即时指数与后端计分一致', parityBad === 0, parity + ' 例中不一致 ' + parityBad);
+ok('年龄组下发含 dimensionFactor（否则前端会静默丢失让步）', battery.ageGroups.filter(g => g.code !== 'a18').every(g => g.dimensionFactor && Object.keys(g.dimensionFactor).length === 9));
+
+// 未测不当作 0 分
+const partial = scoring.computeReport(battery, {
+  age: 30, sex: 'male', results: [
+    scoring.scoreItem(battery, { itemCode: 'plank', rawValue: 90 }, { ageGroup: scoring.findAgeGroup(battery, 30), sex: 'male' }),
+    scoring.scoreItem(battery, { itemCode: 'sit_reach', rawValue: 10, status: 'aborted' }, { ageGroup: scoring.findAgeGroup(battery, 30), sex: 'male' })
+  ]
+});
+ok('未测维度不计入总分', partial.totalIndex != null && partial.coverage.measured === 1);
+ok('中止项不计 0 分', partial.results.find(r => r.itemCode === 'sit_reach').indexValue === null);
+ok('缺失项单列 missing', partial.missing.length === 7 && partial.notMeasured.length === 1);
+
+// 雷达图 / 条形图可渲染且无脏值
+const svg = X.fitRadarSVG(partial.dimensions);
+ok('雷达图 SVG 渲染正常', svg.includes('<polygon') && !/NaN|undefined/.test(svg));
+ok('条形图渲染正常', !/NaN|undefined/.test(X.fitBarsHTML(partial.dimensions)));
+
+// 报告 → 教案
+const sens = scoring.computeReport(battery, {
+  age: 30, sex: 'male', results: battery.items.map(i => scoring.scoreItem(battery, {
+    itemCode: i.code, rawValue: i.direction === 'higher' ? i.anchors[0] + 1 : i.anchors[0] - 1
+  }, { ageGroup: scoring.findAgeGroup(battery, 30), sex: 'male' }))
+});
+const fitRec = { available: true, students: [{ assessment: {
+  studentId: 'X1', student: { name: '测试' }, testDate: '2026-11-18', ageGroup: { name: '成人 18-39 岁' },
+  report: sens, advice: scoring.planAdvice(battery, sens)
+} }] };
+const withFit = gen([mk({})], {}, fitRec);
+ok('体测报告进入教案', withFit.p.fitness && withFit.p.fitness.available === true);
+ok('体测报告在教案文本中可见', /体能测评|体测/.test(ctx.planText(withFit.p) + ctx.renderPlanHTML(withFit.p)));
+ok('体测不改变课次与时长', withFit.p.lesson.n === base.p.lesson.n && withFit.p.struct.reduce((a, b) => a + b.end - b.start, 0) === 90);
+ok('未接入体测时教案不变', base.p.fitness === null && !/体能补强（来自入班体能测评）/.test(base.text));
+ok('低分体能触发负荷保护说明', (() => {
+  const lowFit = Object.assign({}, sens, { totalIndex: 20, ageGroup: Object.assign({}, sens.ageGroup, { rpeCap: 4 }) });
+  const low = gen([mk({})], {}, { available: true, students: [{ assessment: {
+    studentId: 'X1', student: { name: '测试' }, testDate: '2026-11-18', report: lowFit,
+    advice: scoring.planAdvice(battery, lowFit)
+  } }] });
+  return low.p && low.p.fitness && low.p.fitness.loadGuard === true && low.p.notes.some(x => /体能负荷保护/.test(x));
+})());
 
 // ---- 全 48 课次 × 多组合批量 ----
 let combos = 0, errs = [];

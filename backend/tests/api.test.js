@@ -524,3 +524,297 @@ test('27 P5-D：教练复核后生成补训计划，并仅复测指定未达标�
     '复测不得覆盖原评估原始成绩');
   assert.equal(original.body.data.conclusion, null, '补训闭环不得自动晋级');
 });
+
+test('28 P6：体能测评表 9 项 / 9 维，分档与免责说明齐全', async () => {
+  const r = await api('/api/v1/fitness-battery');
+  assert.equal(r.status, 200);
+  const b = r.body.data;
+  assert.equal(b.items.length, 9, '应为 9 个实测项目');
+  assert.equal(b.dimensions.length, 9, '应为 9 个身体维度');
+  assert.ok(b.ageGroups.length >= 5, '应覆盖少儿到常青的年龄组');
+  assert.ok(b.calibrationNote && /不是官方常模/.test(b.calibrationNote), '必须声明分档不是官方常模');
+  for (const item of b.items) {
+    assert.ok(item.protocol && item.safety, item.code + ' 必须有测试协议与安全说明');
+    assert.equal(item.anchors.length, 5, item.code + ' 应有 5 档锚点');
+  }
+  assert.ok(b.items.every(i => (i.sexFactor && i.sexFactor.male != null) || i.code === 'step_hr'));
+});
+
+test('29 P6：录入实测值生成报告，未测项不当作 0 分，完成前不可写入档案', async () => {
+  const created = await api('/api/v1/fitness-assessments', {
+    method: 'POST',
+    body: JSON.stringify({ studentId: 'S001', sex: 'male', ageGroupCode: 'a18', testDate: '2026-11-18' })
+  });
+  assert.equal(created.status, 201);
+  const id = created.body.data.id;
+  assert.equal(created.body.data.status, 'draft');
+  assert.equal(created.body.data.report.coverage.measured, 0);
+  assert.equal(created.body.data.report.fitScore, null, '无实测时不得给出体能分');
+
+  const partial = await api('/api/v1/fitness-assessments/' + id + '/results', {
+    method: 'PUT',
+    body: JSON.stringify({ results: [{ itemCode: 'plank', rawValue: 90 }] })
+  });
+  assert.equal(partial.status, 200);
+  assert.equal(partial.body.data.report.coverage.measured, 1);
+  assert.equal(partial.body.data.report.totalIndex, partial.body.data.report.dimensions.find(d => d.code === 'core').index,
+    '只测一个维度时总分应等于该维度指数，而不是被其余维度当 0 分拉低');
+  const aborted = await api('/api/v1/fitness-assessments/' + id + '/results', {
+    method: 'PUT',
+    body: JSON.stringify({ results: [{ itemCode: 'step_hr', rawValue: 120, status: 'aborted' }] })
+  });
+  assert.equal(aborted.body.data.report.results.find(r => r.itemCode === 'step_hr').indexValue, null, '中止项不计分');
+
+  const early = await api('/api/v1/fitness-assessments/' + id + '/apply-to-student', { method: 'POST' });
+  assert.equal(early.status, 409, '未完成的测评不能写入学员档案');
+  const tooFew = await api('/api/v1/fitness-assessments/' + id + '/finalize', { method: 'POST' });
+  assert.equal(tooFew.status, 422, '项目不足时不能生成报告');
+  assert.match(tooFew.body.error.message, /未测项目不会被当作 0 分/);
+});
+
+test('30 P6：完整测评生成图文报告并写入入班体能，完成后锁定且不改写历史', async () => {
+  const created = await api('/api/v1/fitness-assessments', {
+    method: 'POST',
+    body: JSON.stringify({ studentId: 'S001', sex: 'male', ageGroupCode: 'a18', heightCm: 176, weightKg: 72 })
+  });
+  const id = created.body.data.id;
+  const results = [
+    ['reaction_ruler', 16], ['sit_reach', 8], ['single_leg', 28], ['wall_rally', 22],
+    ['slj', 182], ['agility_5_10_5', 6.3], ['pushup_30s', 20], ['plank', 80], ['step_hr', 140]
+  ].map(([itemCode, rawValue]) => ({ itemCode, rawValue, status: 'measured' }));
+  const saved = await api('/api/v1/fitness-assessments/' + id + '/results', { method: 'PUT', body: JSON.stringify({ results }) });
+  assert.equal(saved.status, 200);
+  const rep = saved.body.data.report;
+  assert.equal(rep.coverage.measured, 9);
+  assert.ok(rep.totalIndex > 0 && rep.totalIndex <= 100);
+  assert.equal(rep.dimensions.length, 9);
+  assert.ok(rep.strongest.length === 2 && rep.weakest.length === 2, '应给出强项与补强项');
+  assert.ok(saved.body.data.advice.suggestions.length > 0, '应给出计划适配建议');
+
+  const finalized = await api('/api/v1/fitness-assessments/' + id + '/finalize', { method: 'POST', body: JSON.stringify({ notes: '首次入班测评' }) });
+  assert.equal(finalized.status, 200);
+  assert.equal(finalized.body.data.status, 'completed');
+  const fitScore = finalized.body.data.report.fitScore;
+  assert.ok(Number.isInteger(fitScore) && fitScore >= 0 && fitScore <= 5);
+
+  const applied = await api('/api/v1/fitness-assessments/' + id + '/apply-to-student', { method: 'POST', body: JSON.stringify({}) });
+  assert.equal(applied.status, 200);
+  assert.equal(applied.body.data.fitScore, fitScore);
+  const student = await api('/api/v1/students/S001');
+  assert.equal(student.body.data.fitScore, fitScore, '入班体能应写入学员档案');
+
+  const locked = await api('/api/v1/fitness-assessments/' + id + '/results', {
+    method: 'PUT', body: JSON.stringify({ results: [{ itemCode: 'plank', rawValue: 200 }] })
+  });
+  assert.equal(locked.status, 409, '完成后不可改写');
+  const reread = await api('/api/v1/fitness-assessments/' + id);
+  assert.equal(reread.body.data.report.results.find(r => r.itemCode === 'plank').rawValue, 80, '历史原始值不被覆盖');
+
+  const latest = await api('/api/v1/students/S001/fitness-latest');
+  assert.equal(latest.body.data.assessment.id, id);
+  const list = await api('/api/v1/students/S001/fitness-assessments');
+  assert.ok(list.body.data.items.length >= 2);
+  assert.ok(list.body.data.trend.length >= 1);
+});
+
+test('31 P6：常青与少儿按年龄组让步，替代变体按分档折算，异常输入返回 422', async () => {
+  const battery = (await api('/api/v1/fitness-battery')).body.data;
+  const adult = battery.ageGroups.find(g => g.code === 'a18');
+  const senior = battery.ageGroups.find(g => g.code === 'a55');
+  const youth = battery.ageGroups.find(g => g.code === 'u12');
+  const scoring = require('../src/services/fitness-scoring');
+  const spec = JSON.parse(JSON.stringify(battery));
+  const raw = 120; // 3 分钟台阶后 1 分钟心率
+  const adultIdx = scoring.scoreItem(spec, { itemCode: 'step_hr', rawValue: raw }, { ageGroup: adult, sex: 'male' }).indexValue;
+  const seniorIdx = scoring.scoreItem(spec, { itemCode: 'step_hr', rawValue: raw }, { ageGroup: senior, sex: 'male' }).indexValue;
+  assert.ok(seniorIdx > adultIdx, '同样心率下常青应按年龄让步得到更高指数');
+  // 年龄组让步方向必须分维度：常青在有氧上让步，少儿在爆发上让步、在柔韧上执行更高标准
+  const youthFlex = scoring.scoreItem(spec, { itemCode: 'sit_reach', rawValue: 6 }, { ageGroup: youth, sex: 'male' }).indexValue;
+  const adultFlex = scoring.scoreItem(spec, { itemCode: 'sit_reach', rawValue: 6 }, { ageGroup: adult, sex: 'male' }).indexValue;
+  assert.ok(youthFlex < adultFlex, '少儿柔韧应执行更高标准，而不是被统一折扣压低');
+  const youthPower = scoring.scoreItem(spec, { itemCode: 'slj', rawValue: 150 }, { ageGroup: youth, sex: 'male' }).indexValue;
+  const adultPower = scoring.scoreItem(spec, { itemCode: 'slj', rawValue: 150 }, { ageGroup: adult, sex: 'male' }).indexValue;
+  assert.ok(youthPower > adultPower, '同样跳 150cm，少儿应按发育让步得到更高指数');
+  assert.ok(Math.abs(youthFlex - adultFlex) < Math.abs(youthPower - adultPower) + 20, '让步幅度应可解释，不应出现极端放大');
+  const knee = scoring.scoreItem(spec, { itemCode: 'pushup_30s', rawValue: 20, variantCode: 'knee' }, { ageGroup: adult, sex: 'male' }).indexValue;
+  const std = scoring.scoreItem(spec, { itemCode: 'pushup_30s', rawValue: 20 }, { ageGroup: adult, sex: 'male' }).indexValue;
+  assert.ok(knee < std, '跪姿俯卧撑必须折算，不能与标准俯卧撑同分');
+
+  const bad = await api('/api/v1/fitness-assessments', { method: 'POST', body: JSON.stringify({ studentId: 'S001', sex: 'x' }) });
+  assert.equal(bad.status, 422);
+  const missing = await api('/api/v1/fitness-assessments', { method: 'POST', body: JSON.stringify({ studentId: 'NOPE' }) });
+  assert.equal(missing.status, 404);
+  const fresh = await api('/api/v1/fitness-assessments', { method: 'POST', body: JSON.stringify({ studentId: 'S001', ageGroupCode: 'a18' }) });
+  const invalid = await api('/api/v1/fitness-assessments/' + fresh.body.data.id + '/results', {
+    method: 'PUT', body: JSON.stringify({ results: [{ itemCode: 'plank', rawValue: 'abc' }] })
+  });
+  assert.equal(invalid.status, 422);
+  const unknown = await api('/api/v1/fitness-assessments/' + fresh.body.data.id + '/results', {
+    method: 'PUT', body: JSON.stringify({ results: [{ itemCode: 'no_such_item', rawValue: 1 }] })
+  });
+  assert.equal(unknown.status, 422);
+  assert.equal(unknown.body.error.code, 'UNKNOWN_ITEM');
+});
+
+/* ============================================================
+   P7 · 课程包 → 课程大纲 → 备课 → 执行 → 点评
+   ============================================================ */
+
+test('32 P7：难度表下发 24 单元，且明确声明为教练估算、非官方校准', async () => {
+  const r = await api('/api/v1/curriculum-difficulty');
+  assert.equal(r.status, 200);
+  const d = r.body.data;
+  assert.equal(d.units.length, 24);
+  assert.ok(d.calibrationNote && /未经实验校准|教练经验/.test(d.calibrationNote), '必须声明难度表不是实验数据');
+  assert.equal(d.doseModel.maxNewPointsPerLesson, 3, '单课并列新授点上限必须是硬约束');
+  assert.ok(d.units.every(u => u.difficulty >= 1 && u.difficulty <= 5 && u.tech), '每个单元要有难度与主题');
+  assert.ok(d.missingCoverage.some(m => /单打/.test(m.name)), '必须如实记录「没有单打模块」');
+});
+
+test('33 P7：登记课程包 → 生成 N 节大纲（课次受难度与剂量驱动，且不改变单次时长）', async () => {
+  await api('/api/v1/students', {
+    method: 'POST',
+    body: JSON.stringify({ id: 'S-P7-01', name: '课程包学员 · 甲', age: 'adult', stage: 1, techScore: 2, fitScore: 2, total: 48, used: 0 })
+  });
+  const r = await api('/api/v1/enrollments', {
+    method: 'POST',
+    body: JSON.stringify({ studentId: 'S-P7-01', totalLessons: 10, lessonsPerWeek: 2, minutesPerLesson: 90, startDate: '2026-11-18', paceMode: 'adaptive' })
+  });
+  assert.equal(r.status, 201);
+  const e = r.body.data;
+  assert.equal(e.outline.length, 10, '买 10 节就排 10 节');
+  assert.equal(e.usedLessons, 0);
+  assert.ok(e.outline.every(o => o.minutes === 90), '单次时长不得被难度改动');
+  assert.ok(e.outline.every(o => o.lessonNo >= 1 && o.lessonNo <= 48), '课次必须落在 48 课次内');
+  assert.equal(e.outline[0].lessonType, 'A', '第一节必须是新授课');
+  assert.deepEqual(e.outline.map(o => o.seq), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert.ok(e.outline.every(o => /^\d{4}-\d{2}-\d{2}$/.test(o.plannedDate)), '每节都要有排课日期');
+  assert.ok(e.generated.truncated === true && /不足以覆盖/.test(e.generated.truncatedReason),
+    '10 节不可能覆盖 24 单元，必须如实提示而不是装作排完了');
+  assert.ok(e.generated.byUnit.every(u => u.reason && /实球触球/.test(u.reason)), '每个单元要能解释为什么排这么多节');
+});
+
+test('34 P7：执行一节课 = 一个事务（授课记录 + 大纲状态 + 课程包已用 + 学员已耗），且幂等', async () => {
+  const list = await api('/api/v1/enrollments?studentId=S-P7-01');
+  const enroll = list.body.data.items[0];
+  const first = enroll.outline[0];
+
+  const before = await api('/api/v1/students/S-P7-01');
+  const usedBefore = before.body.data.used;
+
+  const r = await api(`/api/v1/enrollments/${enroll.id}/lessons`, {
+    method: 'POST', body: JSON.stringify({ outlineLessonId: first.id, date: '2026-11-18', judge: '部分达标', rpe: 5 })
+  });
+  assert.equal(r.status, 201);
+  assert.equal(r.body.data.duplicated, false);
+  assert.equal(r.body.data.session.lesson, first.lessonNo);
+  assert.equal(r.body.data.session.reviewStatus, 'pending', '执行后必须是待点评');
+  assert.equal(r.body.data.outlineLesson.status, 'taught');
+  assert.ok(r.body.data.nextStep && /补强|复习/.test(r.body.data.nextStep.text), '执行完必须给出下一步建议');
+
+  const after = await api(`/api/v1/enrollments/${enroll.id}`);
+  assert.equal(after.body.data.usedLessons, 1, '课程包已用课时 +1');
+  const studentAfter = await api('/api/v1/students/S-P7-01');
+  assert.equal(studentAfter.body.data.used, usedBefore + 1, '学员已耗课次同步 +1');
+
+  // 幂等：重复点执行不会产生第二条记录
+  const again = await api(`/api/v1/enrollments/${enroll.id}/lessons`, {
+    method: 'POST', body: JSON.stringify({ outlineLessonId: first.id, date: '2026-11-18' })
+  });
+  assert.equal(again.body.data.duplicated, true);
+  assert.equal(again.body.data.session.id, r.body.data.session.id, '必须返回同一份记录');
+  const againEnroll = await api(`/api/v1/enrollments/${enroll.id}`);
+  assert.equal(againEnroll.body.data.usedLessons, 1, '重复执行不得重复扣课时');
+});
+
+test('35 P7：课后点评写入 3 要点达成，并把未达标的大纲顺延为同单元补强课', async () => {
+  const list = await api('/api/v1/enrollments?studentId=S-P7-01');
+  const enroll = list.body.data.items[0];
+  const taught = enroll.outline.find(o => o.status === 'taught');
+  const nextSeq = enroll.outline.find(o => o.seq === taught.seq + 1);
+
+  const r = await api(`/api/v1/sessions/${taught.sessionId}/review`, {
+    method: 'POST',
+    body: JSON.stringify({
+      judge: '部分达标', attend: '出勤', rpe: 5, note: '拍面稳定；回中偏慢',
+      homework: '对墙 30 次 × 2 组', nextFocus: '击球点前移 10 cm',
+      judgeVals: { kp1: true, kp2: false, kp3: false }
+    })
+  });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.data.session.reviewStatus, 'done');
+  assert.equal(r.body.data.session.judge, '部分达标');
+  assert.equal(r.body.data.session.homework, '对墙 30 次 × 2 组');
+  assert.deepEqual(r.body.data.session.judgeVals, { kp1: true, kp2: false, kp3: false });
+  assert.equal(r.body.data.adjust.action, 'insert_r', '未达标应把下一节改成补强课');
+
+  const after = await api(`/api/v1/enrollments/${enroll.id}`);
+  const changed = after.body.data.outline.find(o => o.seq === nextSeq.seq);
+  assert.equal(changed.lessonType, 'R', '下一节应变为 R 补强');
+  assert.equal(changed.unitNo, taught.unitNo, '补强课必须在同一单元，不能跳到新单元');
+  assert.equal(after.body.data.outline.length, enroll.outline.length, '不得偷偷增加课时');
+  assert.equal(after.body.data.progress.reviewed, 1);
+
+  // 非法判据被拒
+  const bad = await api(`/api/v1/sessions/${taught.sessionId}/review`, {
+    method: 'POST', body: JSON.stringify({ judge: '完美' })
+  });
+  assert.equal(bad.status, 422);
+});
+
+test('36 P7：固定节奏不插入补强课；今日视图只返回当天待上课次', async () => {
+  await api('/api/v1/students', {
+    method: 'POST', body: JSON.stringify({ id: 'S-P7-02', name: '课程包学员 · 乙', age: 'senior', stage: 1, techScore: 2, fitScore: 2 })
+  });
+  const created = await api('/api/v1/enrollments', {
+    method: 'POST',
+    body: JSON.stringify({ studentId: 'S-P7-02', totalLessons: 4, lessonsPerWeek: 2, startDate: '2026-12-01', paceMode: 'fixed' })
+  });
+  const e = created.body.data;
+  assert.ok(e.outline.every(o => o.lessonType !== 'R'), '固定节奏不得排 R 课');
+
+  const ex = await api(`/api/v1/enrollments/${e.id}/lessons`, {
+    method: 'POST', body: JSON.stringify({ outlineLessonId: e.outline[0].id, date: '2026-12-01', judge: '未达标' })
+  });
+  assert.equal(ex.status, 201);
+  assert.equal(ex.body.data.nextStep.action, 'hold', '固定节奏未达标只做 hold，不加课');
+
+  const rv = await api(`/api/v1/sessions/${ex.body.data.session.id}/review`, {
+    method: 'POST', body: JSON.stringify({ judge: '未达标', homework: '徒手 20 次' })
+  });
+  assert.equal(rv.body.data.adjust.action, 'hold');
+  const after = await api(`/api/v1/enrollments/${e.id}`);
+  assert.ok(after.body.data.outline.every(o => o.lessonType !== 'R'), '点评后也不得擅自插入补强课');
+
+  const board = await api('/api/v1/today?date=2026-12-05');
+  assert.equal(board.status, 200);
+  assert.ok(Array.isArray(board.body.data.lessons));
+  assert.ok(board.body.data.lessons.every(o => o.plannedDate === '2026-12-05'), '今日视图只能返回当天');
+  assert.ok(board.body.data.unreviewed.some(x => x.id === ex.body.data.session.id) === false,
+    '已点评的记录不应再出现在待点评里');
+  assert.ok(board.body.data.counts && typeof board.body.data.counts.unreviewed === 'number');
+});
+
+test('37 P7：课程包与大纲随 state 下发（离线也能看今天上哪节），且异常输入被拒', async () => {
+  const st = await api('/api/v1/state');
+  assert.equal(st.status, 200);
+  assert.ok(Array.isArray(st.body.data.enrollments));
+  const e = st.body.data.enrollments.find(x => x.studentName === '课程包学员 · 甲');
+  assert.ok(e && e.outline.length === 10, 'state 必须带大纲，供离线查看');
+  assert.ok(e.outline.every(o => o.lessonNo >= 1 && o.unitNo >= 1));
+
+  const noStudent = await api('/api/v1/enrollments', { method: 'POST', body: JSON.stringify({ totalLessons: 5 }) });
+  assert.equal(noStudent.status, 422);
+  const badTotal = await api('/api/v1/enrollments', {
+    method: 'POST', body: JSON.stringify({ studentId: 'S-P7-01', totalLessons: 0 })
+  });
+  assert.equal(badTotal.status, 422);
+  const ghost = await api('/api/v1/enrollments', {
+    method: 'POST', body: JSON.stringify({ studentId: 'NO-SUCH', totalLessons: 5 })
+  });
+  assert.equal(ghost.status, 404);
+  const wrongOutline = await api(`/api/v1/enrollments/${e.id}/lessons`, {
+    method: 'POST', body: JSON.stringify({ outlineLessonId: 'OL-NOT-EXIST' })
+  });
+  assert.equal(wrongOutline.status, 404, '不能执行不属于该课程包的大纲课次');
+});

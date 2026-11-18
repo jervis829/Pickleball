@@ -55,6 +55,26 @@ add('GET', '/api/v1/assessment-remediation-plans/:id', C.getAssessmentRemediatio
 add('POST', '/api/v1/assessment-remediation-plans/:id/confirm', C.confirmAssessmentRemediationPlan);
 add('POST', '/api/v1/assessment-retests', C.createScopedAssessmentRetest);
 
+/* ---------- 身体素质测评（入班体能量化 + 图文报告） ---------- */
+add('GET', '/api/v1/fitness-battery', C.fitnessBattery, { write: false });
+add('POST', '/api/v1/fitness-assessments', C.createFitnessAssessment);
+add('GET', '/api/v1/fitness-assessments/:id', C.getFitnessAssessment, { write: false });
+add('PUT', '/api/v1/fitness-assessments/:id/results', C.saveFitnessResults);
+add('POST', '/api/v1/fitness-assessments/:id/finalize', C.finalizeFitnessAssessment);
+add('POST', '/api/v1/fitness-assessments/:id/apply-to-student', C.applyFitnessToStudent);
+add('GET', '/api/v1/students/:id/fitness-assessments', C.studentFitnessAssessments, { write: false });
+add('GET', '/api/v1/students/:id/fitness-latest', C.studentFitnessLatest, { write: false });
+
+/* ---------- P7 课程包 / 课程大纲 / 今日课 / 课后点评 ---------- */
+add('GET', '/api/v1/curriculum-difficulty', C.curriculumDifficulty, { write: false });
+add('POST', '/api/v1/enrollments', C.createEnrollment);
+add('GET', '/api/v1/enrollments', C.listEnrollments, { write: false });
+add('GET', '/api/v1/enrollments/:id', C.getEnrollment, { write: false });
+add('PATCH', '/api/v1/enrollments/:id', C.updateEnrollment);
+add('POST', '/api/v1/enrollments/:id/lessons', C.startLesson);
+add('GET', '/api/v1/today', C.todayBoard, { write: false });
+add('POST', '/api/v1/sessions/:id/review', C.saveSessionReview);
+
 /* ---------- 各实体 RESTful CRUD ---------- */
 for (const [name, h] of Object.entries({
   students: C.students, plans: C.plans, sessions: C.sessions, assessments: C.assessments

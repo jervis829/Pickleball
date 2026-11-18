@@ -209,7 +209,7 @@
 
   window.PKB_API = {
     bootstrap, scheduleSync, status, exportAll, importAll,
-    changePassword, logout, request,
+    changePassword, logout, request, promptLogin,
     online: () => online,
     syncNow: (s) => flush(s)
   };

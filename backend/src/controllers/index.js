@@ -8,6 +8,8 @@ const { curriculum } = require('../repositories/misc');
 const skillScoring = require('../services/skill-scoring');
 const assessmentProtocols = require('../services/assessment-protocols');
 const assessmentRemediation = require('../services/assessment-remediation');
+const fitness = require('../services/fitness-assessment');
+const outline = require('../services/course-outline');
 
 function crud(entity) {
   return {
@@ -55,5 +57,22 @@ module.exports = {
   getAssessmentRemediationPlan: ctx => ok(ctx.res, assessmentRemediation.getPlan(ctx.params.id)),
   confirmAssessmentRemediationPlan: ctx => ok(ctx.res, assessmentRemediation.confirmPlan(ctx.params.id, ctx.user)),
   createScopedAssessmentRetest: ctx => created(ctx.res, assessmentRemediation.createScopedRetest(ctx.body, ctx.user)),
+  fitnessBattery: ctx => ok(ctx.res, fitness.battery()),
+  createFitnessAssessment: ctx => created(ctx.res, fitness.createAssessment(ctx.body, ctx.user)),
+  getFitnessAssessment: ctx => ok(ctx.res, fitness.getAssessment(ctx.params.id)),
+  saveFitnessResults: ctx => ok(ctx.res, fitness.saveResults(ctx.params.id, ctx.body.results, ctx.user)),
+  finalizeFitnessAssessment: ctx => ok(ctx.res, fitness.finalizeAssessment(ctx.params.id, ctx.body, ctx.user)),
+  studentFitnessAssessments: ctx => ok(ctx.res, fitness.listStudentAssessments(ctx.params.id)),
+  applyFitnessToStudent: ctx => ok(ctx.res, fitness.applyToStudentProfile(ctx.params.id, ctx.body, ctx.user)),
+  studentFitnessLatest: ctx => ok(ctx.res, { assessment: fitness.latestCompleted(ctx.params.id) }),
+  /* ---------- P7 课程包 / 大纲 / 今日课 / 课后点评 ---------- */
+  curriculumDifficulty: ctx => ok(ctx.res, outline.difficulty()),
+  createEnrollment: ctx => created(ctx.res, outline.createEnrollment(ctx.body, ctx.user)),
+  listEnrollments: ctx => ok(ctx.res, { items: outline.listEnrollments(ctx.query) }),
+  getEnrollment: ctx => ok(ctx.res, outline.getEnrollment(ctx.params.id)),
+  updateEnrollment: ctx => ok(ctx.res, outline.updateEnrollment(ctx.params.id, ctx.body)),
+  startLesson: ctx => created(ctx.res, outline.startLesson(ctx.params.id, ctx.body || {}, ctx.user)),
+  saveSessionReview: ctx => ok(ctx.res, outline.saveReview(ctx.params.id, ctx.body || {}, ctx.user)),
+  todayBoard: ctx => ok(ctx.res, outline.today(ctx.query.date)),
   students, plans, sessions, assessments
 };

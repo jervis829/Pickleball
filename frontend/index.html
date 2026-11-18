@@ -240,11 +240,14 @@ pre.card{white-space:pre-wrap;word-break:break-word;font-family:'IBM Plex Mono',
       <button class="nav-item" data-nav="dash" aria-current="page"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>总览<span class="key">1</span></button>
       <button class="nav-item" data-nav="students"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 5.2a3.2 3.2 0 010 6M18.5 20c0-2.4-1-4.2-2.6-5.2"/></svg>学员档案<span class="key">2</span></button>
       <div class="nav-label">教学</div>
-      <button class="nav-item" data-nav="plan"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="1.5"/><path d="M3 9h18M8 2v4M16 2v4M8 13h3M8 17h7"/></svg>计划生成<span class="key">3</span></button>
-      <button class="nav-item" data-nav="tracking"><svg viewBox="0 0 24 24"><path d="M3 5h18M3 12h18M3 19h18"/><circle cx="7" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="13" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="18" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg>教学追踪<span class="key">4</span></button>
-      <button class="nav-item" data-nav="assess"><svg viewBox="0 0 24 24"><path d="M4 20V9M10 20V4M16 20v-7M22 20H2"/></svg>考核与晋级<span class="key">5</span></button>
+      <button class="nav-item" data-nav="today"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="1.5"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="M8 13l2.4 2.4L15 11"/></svg>今日<span class="key">3</span></button>
+      <button class="nav-item" data-nav="enroll"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h5"/><circle cx="18" cy="17" r="2.6"/></svg>课程包<span class="key">4</span></button>
+      <button class="nav-item" data-nav="plan"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="1.5"/><path d="M3 9h18M8 2v4M16 2v4M8 13h3M8 17h7"/></svg>备课<span class="key">5</span></button>
+      <button class="nav-item" data-nav="tracking"><svg viewBox="0 0 24 24"><path d="M3 5h18M3 12h18M3 19h18"/><circle cx="7" cy="5" r="1.6" fill="currentColor" stroke="none"/><circle cx="13" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="18" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg>教学追踪<span class="key">6</span></button>
+      <button class="nav-item" data-nav="assess"><svg viewBox="0 0 24 24"><path d="M4 20V9M10 20V4M16 20v-7M22 20H2"/></svg>考核与晋级<span class="key">7</span></button>
+      <button class="nav-item" data-nav="fitness"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="6.4"/><path d="M12 8.4V12l2.6 1.7"/></svg>体能测评<span class="key">7</span></button>
       <div class="nav-label">配置</div>
-      <button class="nav-item" data-nav="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>体系与设置<span class="key">6</span></button>
+      <button class="nav-item" data-nav="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>体系与设置<span class="key">8</span></button>
     </nav>
     <div class="sidebar-foot"><span class="dot"></span><span id="storageNote">本地存储 · 未录入数据</span></div>
   </aside>
@@ -260,16 +263,57 @@ pre.card{white-space:pre-wrap;word-break:break-word;font-family:'IBM Plex Mono',
       <div id="demoBanner"></div>
       <div class="kpi-grid" id="kpiGrid"></div>
       <div class="two-col">
-        <div class="panel"><div class="panel-head"><h2>近期教学计划</h2><span class="sub">按授课日期排序</span><div class="right"><button class="btn btn-sm no-print" data-go="plan">新建计划</button></div></div><div id="dashPlans"></div></div>
+        <div class="panel"><div class="panel-head"><h2>下一节课</h2><span class="sub">来自课程大纲</span><div class="right"><button class="btn btn-sm no-print" data-go="today">今日</button></div></div><div id="dashPlans"></div></div>
         <div class="stack">
           <div class="panel"><div class="panel-head"><h2>需处理</h2><span class="sub">规则触发，非人工判断</span></div><div id="dashAlerts"></div></div>
           <div class="panel"><div class="panel-head"><h2>使用路径</h2><span class="sub">三步跑通</span></div><div class="panel-body" style="font-size:12px;line-height:1.9;color:var(--text-2)">
-            <div><span class="mono" style="color:var(--accent)">01</span> 学员档案 → 新增学员（含年龄段、入班评估、已耗课次）</div>
-            <div><span class="mono" style="color:var(--accent)">02</span> 计划生成 → 选 1 名或多名学员 + 年龄段 + 课次 + 课时</div>
-            <div><span class="mono" style="color:var(--accent)">03</span> 教学追踪 → 保存计划并补录出勤 / 判据 / 反馈 → 考核晋级</div>
+            <div><span class="mono" style="color:var(--accent)">01</span> 学员档案 → 新增学员（年龄段、入班技术 / 体能）</div>
+            <div><span class="mono" style="color:var(--accent)">02</span> 课程包 → 登记「买了多少节课」→ 自动生成 N 节课程大纲</div>
+            <div><span class="mono" style="color:var(--accent)">03</span> 今日 → 备课 → 生成教案 → <b>执行此计划</b> → 课后点评</div>
           </div></div>
         </div>
       </div>
+    </section>
+
+    <section class="view" id="view-today" hidden>
+      <div class="section-title"><h2>今日</h2><span class="note">今天上哪几节 · 哪几节还没点评</span></div>
+      <div id="todayBoard"></div>
+    </section>
+
+    <section class="view" id="view-enroll" hidden>
+      <div class="section-title"><h2>课程包与课程大纲</h2><span class="note">学员买了 N 节课 → 按难度与剂量排出 N 节大纲 → 逐节备课</span></div>
+      <div id="enrollNotice"></div>
+      <div class="plan-layout">
+        <div class="panel plan-form no-print">
+          <div class="panel-head"><h2>登记课程包</h2><span class="sub">私教 / 小班 / 团课</span></div>
+          <div class="panel-body">
+            <div class="field"><label>学员 <span class="req">*</span></label><select id="eStudent"></select></div>
+            <div class="grid-2">
+              <div class="field"><label>课程类型</label><select id="ePackage"><option value="solo">私教 1 人</option><option value="small" selected>4-6 人小班</option><option value="large">8-12 人团课</option></select></div>
+              <div class="field"><label>购买课数 <span class="req">*</span></label><input type="number" id="eTotal" min="1" max="200" value="10"></div>
+            </div>
+            <div class="grid-2">
+              <div class="field"><label>每周频次</label><select id="ePerWeek"><option value="1">每周 1 次</option><option value="2" selected>每周 2 次</option><option value="3">每周 3 次</option></select></div>
+              <div class="field"><label>单次时长</label><select id="eMinutes"><option value="90" selected>90 分钟</option><option value="60">60 分钟</option></select></div>
+            </div>
+            <div class="grid-2">
+              <div class="field"><label>开始日期</label><input type="date" id="eStart"></div>
+              <div class="field"><label>起始阶段</label><select id="eStage"><option value="1" selected>阶段一</option><option value="2">阶段二</option><option value="3">阶段三</option></select></div>
+            </div>
+            <div class="field"><label>节奏模式</label><select id="ePace"><option value="adaptive" selected>自适应（未达标自动插入补强课）</option><option value="fixed">固定（严格按购买课数排满）</option></select>
+              <div class="hint" style="margin-top:6px">自适应：难点单元多排 1-2 节同单元补强（R），总课时不变。固定：课数已售出、不加课，未达标只在下一节复习。</div></div>
+            <div class="err-text" id="eErr"></div>
+            <button class="btn btn-primary" style="width:100%;padding:11px" data-act="create-enrollment">生成课程大纲</button>
+          </div>
+        </div>
+        <div class="panel" id="enrollPanel"><div id="enrollOutput"></div></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-lesson" hidden>
+      <div class="section-title"><h2>本次课</h2><span class="note">照着教案带课 · 下课后点「点评本次课」</span></div>
+      <div id="lessonActionBar"></div>
+      <div class="panel" id="lessonPanel"><div id="lessonOutput"></div></div>
     </section>
 
     <section class="view" id="view-students" hidden>
@@ -291,7 +335,7 @@ pre.card{white-space:pre-wrap;word-break:break-word;font-family:'IBM Plex Mono',
     </section>
 
     <section class="view" id="view-plan" hidden>
-      <div class="section-title"><h2>教学计划生成</h2><span class="note">选学员 + 年龄段 + 课次 + 课时 → 教练可直接带课的详细教案</span></div>
+      <div class="section-title"><h2>备课</h2><span class="note">通常从「课程包」的大纲进来；也可临时为某个学员单独生成一节课</span></div>
       <div class="plan-layout">
         <div class="panel plan-form no-print">
           <div class="panel-head"><h2>生成参数</h2><span class="sub">课次 1–48</span></div>
@@ -321,10 +365,11 @@ pre.card{white-space:pre-wrap;word-break:break-word;font-family:'IBM Plex Mono',
             <div class="field">
               <label>专项体能 / 步伐段</label>
               <select id="fFitMode"><option value="auto">按课次自动（推荐）</option><option value="yes">本课安排</option><option value="no">本课不安排</option></select>
-              <div class="hint" style="margin-top:6px">A 新授课自动安排、B 巩固课与考核课自动不安排；热身里的 2-3 分钟步伐激活始终保留。功能区无需选择，教案会按本课次内容自动写明何时整队移步。</div>
+              <div class="hint" style="margin-top:6px">A 新授课自动安排、B 巩固课与考核课自动不安排；热身里的 2-3 分钟步伐激活始终保留。若要按实测体能安排 ④ 段，请先在「体能测评」完成 9 项实测并写入档案——教案会自动追加「体能测评 → 本课 ④ 段适配」。</div>
             </div>
             <div class="err-text" id="planErr"></div>
             <button class="btn btn-primary" style="width:100%;padding:11px" data-act="generate" id="genBtn">生成详细教学计划</button>
+            <div class="hint" style="margin-top:8px">生成后右侧是这节课的教案预览；下方（或右侧顶部）会出现「执行此计划 →」，点了才落地为一次授课。</div>
             <div style="display:flex;gap:8px;margin-top:8px">
               <button class="btn btn-sm" style="flex:1" data-act="save-plan">保存计划</button>
               <button class="btn btn-sm" style="flex:1" data-act="copy-plan">复制文本</button>
@@ -332,7 +377,7 @@ pre.card{white-space:pre-wrap;word-break:break-word;font-family:'IBM Plex Mono',
             </div>
           </div>
         </div>
-        <div class="panel" id="planPanel"><div id="planOutput"></div></div>
+        <div><div id="execBar"></div><div class="panel" id="planPanel"><div id="planOutput"></div></div></div>
       </div>
     </section>
 
@@ -351,6 +396,18 @@ pre.card{white-space:pre-wrap;word-break:break-word;font-family:'IBM Plex Mono',
           <div class="panel"><div class="panel-head"><h2>晋级判定</h2><span class="sub">总分 + 单项门槛</span></div><div class="panel-body" id="assessResult"></div></div>
           <div class="panel"><div class="panel-head"><h2>考核记录</h2></div><div id="assessList"></div></div>
         </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-fitness" hidden>
+      <div class="section-title"><h2>身体素质测评</h2><span class="note">9 项实测 → 0-100 指数 → 图文报告 → 回写入班体能 → 影响教案 ④ 段</span></div>
+      <div id="fitnessNotice"></div>
+      <div class="plan-layout">
+        <div class="panel plan-form no-print">
+          <div class="panel-head"><h2>测评工位</h2><span class="sub" id="fitBatteryMeta">9 项 · 约 28 分钟</span></div>
+          <div class="panel-body" id="fitnessForm"></div>
+        </div>
+        <div class="panel" id="fitnessPanel"><div id="fitnessOutput"></div></div>
       </div>
     </section>
 
@@ -679,13 +736,336 @@ const MGMT_ROWS=[
 ];
 
 /* ============================================================
+   P7 · 课程包 → 课程大纲 → 备课 → 执行 → 点评
+   设计目的：把「生成一份教案」这个孤立的动作，接成一条有下一步的流水线。
+   入口三个，出口一致：课程包（排课）/ 今日（今天上什么）/ 教学追踪（补点评）。
+   ============================================================ */
+const ENR_STATE = { difficulty: null, busy: false, err: '', adjust: '' };
+
+async function loadDifficulty() {
+  if (ENR_STATE.difficulty) return ENR_STATE.difficulty;
+  if (!(window.PKB_API && window.PKB_API.online())) return null;
+  try { ENR_STATE.difficulty = await window.PKB_API.request('/curriculum-difficulty'); } catch (e) { ENR_STATE.difficulty = null; }
+  return ENR_STATE.difficulty;
+}
+
+const enrollments = () => (state.enrollments || []);
+const packageName = t => t === 'solo' ? '私教 1 人' : t === 'large' ? '8-12 人团课' : '4-6 人小班';
+const outlineTypeName = t => t === 'A' ? 'A 新授' : t === 'B' ? 'B 巩固' : 'R 补强';
+const outlineStatusChip = s => s === 'planned' ? '<span class="chip">待上课</span>'
+  : s === 'taught' ? '<span class="chip chip-warn">待点评</span>'
+    : s === 'reviewed' ? '<span class="chip chip-ok">已点评</span>'
+      : '<span class="chip">已跳过</span>';
+
+/* ---------- 课程包页 ---------- */
+function renderEnroll() {
+  const sel = $('#eStudent');
+  if (sel) {
+    const cur = sel.value || (state.ui.enrollStudent || '');
+    sel.innerHTML = state.students.length
+      ? state.students.map(s => '<option value="' + s.id + '"' + (s.id === cur ? ' selected' : '') + '>' + esc(s.name) + ' · 阶段 ' + s.stage + ' · 已耗 ' + esc(s.used) + '/' + esc(s.total) + '</option>').join('')
+      : '<option value="">— 请先在学员档案新增 —</option>';
+  }
+  if ($('#eStart') && !$('#eStart').value) $('#eStart').value = today();
+
+  const online = !!(window.PKB_API && window.PKB_API.online());
+  $('#enrollNotice').innerHTML = online ? '' :
+    '<div class="notice notice-warn" style="margin-bottom:16px"><strong>课程包需要连接数据服务。</strong>大纲要落库、要按课次追踪，离线模式下只保留教案生成。启动 <code>npm start</code> 并登录后即可登记课程包。</div>';
+
+  const list = enrollments();
+  if (state.ui.enrollId && !list.some(e => e.id === state.ui.enrollId)) state.ui.enrollId = null;
+  if (!state.ui.enrollId && list.length) state.ui.enrollId = list[0].id;
+
+  const rows = list.map(e => {
+    const ol = e.outline || [];
+    const taught = ol.filter(x => x.status === 'taught' || x.status === 'reviewed').length;
+    const pct = Math.round(taught / Math.max(1, ol.length || e.totalLessons) * 100);
+    const on = e.id === state.ui.enrollId;
+    return '<div class="list-row" style="cursor:pointer;' + (on ? 'background:var(--surface-3)' : '') + '" data-act="pick-enrollment" data-id="' + e.id + '">' +
+      '<div><div class="main-txt">' + esc(e.studentName || '—') + ' · ' + packageName(e.packageType) + ' · ' + ol.length + ' 节</div>' +
+      '<div class="sub-txt">' + esc(e.startDate || '') + ' 起 · 每周 ' + e.lessonsPerWeek + ' 次 · ' + e.minutesPerLesson + ' min · ' + (e.paceMode === 'fixed' ? '固定节奏' : '自适应节奏') +
+      ' · 已上 ' + taught + '/' + ol.length + '</div>' +
+      '<div style="height:3px;background:var(--hairline);border-radius:2px;margin-top:7px"><div style="height:3px;width:' + pct + '%;background:var(--accent);border-radius:2px"></div></div></div>' +
+      '<div class="right"><span class="chip ' + (e.status === 'active' ? 'chip-ok' : '') + '">' + esc(e.status) + '</span></div></div>';
+  }).join('');
+
+  const cur = list.find(e => e.id === state.ui.enrollId);
+  let detail = '';
+  if (cur) {
+    const ol = cur.outline || [];
+    const nextPlanned = ol.find(o => o.status === 'planned');
+    const unreviewed = ol.filter(o => o.status === 'taught');
+    detail = '<div class="panel-head" style="padding:0 0 12px"><h2>' + esc(cur.studentName || '') + ' · 课程大纲</h2><span class="sub">' + ol.length + ' 节 · ' + (cur.paceMode === 'fixed' ? '固定节奏' : '自适应节奏') + '</span></div>' +
+      (ENR_STATE.adjust ? '<div class="notice" style="margin-bottom:12px">' + esc(ENR_STATE.adjust) + '</div>' : '') +
+      (unreviewed.length ? '<div class="notice notice-warn" style="margin-bottom:12px"><strong>' + unreviewed.length + ' 节课还没点评。</strong>点名后不点评，这节课就等于没记录 —— <button class="btn btn-sm btn-primary" data-act="review-first-taught" data-id="' + cur.id + '">现在点评</button></div>' : '') +
+      (nextPlanned ? '<div class="notice" style="margin-bottom:12px">下一节：第 ' + nextPlanned.seq + ' 节 · 第 ' + nextPlanned.lessonNo + ' 课 · 第 ' + nextPlanned.unitNo + ' 单元（' + outlineTypeName(nextPlanned.lessonType) + '）· ' + esc(nextPlanned.plannedDate || '未排日期') +
+        ' <button class="btn btn-sm btn-primary" data-act="prep-lesson" data-enroll="' + cur.id + '" data-id="' + nextPlanned.id + '">备课</button></div>' : '') +
+      '<div class="table-wrap"><table><thead><tr><th>#</th><th>课次</th><th>单元</th><th>类型</th><th>日期</th><th>状态</th><th></th></tr></thead><tbody>' +
+      ol.map(o => {
+        const act = o.status === 'planned'
+          ? '<button class="btn btn-sm btn-primary" data-act="prep-lesson" data-enroll="' + cur.id + '" data-id="' + o.id + '">备课</button>'
+          : (o.status === 'taught'
+            ? '<button class="btn btn-sm btn-primary" data-act="open-lesson" data-id="' + (o.sessionId || '') + '">去点评</button>'
+            : '<button class="btn btn-sm" data-act="open-lesson" data-id="' + (o.sessionId || '') + '">查看</button>');
+        return '<tr' + (o.status === 'planned' && nextPlanned && o.id === nextPlanned.id ? ' style="background:var(--surface-2)"' : '') + '><td class="num">' + o.seq + '</td><td class="num">第 ' + o.lessonNo + ' 课</td><td class="num">U' + o.unitNo + '</td><td><span class="chip' + (o.lessonType === 'A' ? ' chip-accent' : o.lessonType === 'R' ? ' chip-warn' : '') + '">' + outlineTypeName(o.lessonType) + '</span></td><td class="num">' + esc(o.plannedDate || '—') + '</td><td>' + outlineStatusChip(o.status) + '</td><td style="white-space:nowrap">' + act + '</td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<div class="hint" style="margin-top:10px">课次数量由「技术难度 × 单节课实球剂量」估算：难度 5 的单元（U13/U14/U17/U19/U20/U22/U23）会自动多排 1 节补强课（R）。未达标时，自适应节奏会把下一节改成同单元补强，<b>不新增课时、不改单次时长</b>。</div>';
+  }
+
+  $('#enrollOutput').innerHTML = (list.length ? rows : '<div class="empty" style="border:0"><div class="mark">[ 00 ]</div><h3>还没有课程包</h3><p>左侧登记「学员买了多少节课」，系统按难度与剂量排出 N 节大纲。</p></div>')
+    + (detail ? '<div style="margin-top:18px">' + detail + '</div>' : '');
+}
+
+/* ---------- 生成课程包 ---------- */
+async function createEnrollment() {
+  ENR_STATE.err = '';
+  const studentId = $('#eStudent') ? $('#eStudent').value : '';
+  if (!studentId) { $('#eErr').textContent = '请先在学员档案新增学员'; return; }
+  if (!(window.PKB_API && window.PKB_API.online())) { $('#eErr').textContent = '未连接数据服务，课程包不能落库'; return; }
+  const body = {
+    studentId,
+    packageType: $('#ePackage').value,
+    totalLessons: Number($('#eTotal').value),
+    lessonsPerWeek: Number($('#ePerWeek').value),
+    minutesPerLesson: Number($('#eMinutes').value),
+    startDate: $('#eStart').value,
+    paceMode: $('#ePace').value,
+    startStage: Number($('#eStage').value)
+  };
+  if (!Number.isInteger(body.totalLessons) || body.totalLessons < 1) { $('#eErr').textContent = '购买课数必须是正整数'; return; }
+  const btn = $('[data-act="create-enrollment"]');
+  if (btn) { btn.disabled = true; btn.textContent = '正在排课…'; }
+  try {
+    const r = await window.PKB_API.request('/enrollments', { method: 'POST', body: JSON.stringify(body) });
+    await refreshState();
+    state.ui.enrollId = r.id;
+    ENR_STATE.adjust = r.generated && r.generated.truncated ? r.generated.truncatedReason : '';
+    renderEnroll();
+    toast('已生成 ' + r.outline.length + ' 节课程大纲');
+  } catch (e) {
+    $('#eErr').textContent = '生成失败：' + e.message;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '生成课程大纲'; }
+  }
+}
+
+/* ---------- 备课：把大纲里的一节带入计划生成 ---------- */
+function prepLesson(enrollId, outlineId) {
+  const e = enrollments().find(x => x.id === enrollId);
+  if (!e) return;
+  const ol = (e.outline || []).find(o => o.id === outlineId);
+  if (!ol) return;
+  const s = state.students.find(x => x.id === e.studentId);
+  state.ui.planForm = {
+    studentIds: [e.studentId], lesson: ol.lessonNo, minutes: ol.minutes || e.minutesPerLesson || 90,
+    date: ol.plannedDate || today(), size: e.packageType, age: (s && s.age) || 'adult',
+    focus: 'tech', fitMode: 'auto', goal: e.goal || (s && s.goal) || '技术晋级'
+  };
+  state.ui.lastPlan = null;
+  state.ui.execCtx = {
+    enrollmentId: enrollId, outlineLessonId: ol.id, studentId: e.studentId,
+    lessonNo: ol.lessonNo, minutes: ol.minutes || e.minutesPerLesson, seq: ol.seq,
+    unitNo: ol.unitNo, lessonType: ol.lessonType, planId: null
+  };
+  navigate('plan');
+  setTimeout(() => { try { generate(); } catch (e2) { /* 生成失败已由 generate 内部提示 */ } }, 20);
+}
+
+/* ---------- 计划生成页的「执行此计划」条 ---------- */
+function renderExecBar() {
+  const host = $('#execBar');
+  if (!host) return;
+  const c = state.ui.execCtx;
+  if (!c) { host.innerHTML = ''; return; }
+  const p = state.ui.lastPlan;
+  const typeTxt = outlineTypeName(c.lessonType);
+  host.innerHTML = '<div class="panel" style="margin-bottom:18px;border-color:var(--accent)"><div class="panel-body" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">' +
+    '<div style="flex:1;min-width:220px"><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)">来自课程大纲 · 第 ' + c.seq + ' 节</div>' +
+    '<div style="font-size:13px;margin-top:6px">第 ' + c.lessonNo + ' 课 · 第 ' + c.unitNo + ' 单元 · ' + typeTxt + (p ? ' · ' + esc(p.unit.tech) : '') + '</div>' +
+    '<div style="font-size:11.5px;color:var(--text-3);margin-top:4px">' + (p ? ('右侧是这节课的教案预览（' + p.minutes + ' 分钟 / ' + p.struct.length + ' 段）。确认无误后点右侧按钮开始上课。') : '先点左侧「生成详细教学计划」，右侧会出现这节课的教案预览。') + '</div></div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+    '<button class="btn btn-sm" data-act="cancel-exec">取消</button>' +
+    '<button class="btn btn-primary" id="execBtn" data-act="execute-plan"' + (p ? '' : ' disabled') + ' style="padding:11px 18px">执行此计划 →</button>' +
+    '</div></div></div>';
+}
+
+async function executePlan() {
+  const c = state.ui.execCtx;
+  const p = state.ui.lastPlan;
+  if (!c) { toast('请先从「课程包」的大纲里选一节课'); return; }
+  if (!p) { toast('请先生成教案'); return; }
+  if (!(window.PKB_API && window.PKB_API.online())) { toast('执行计划需要连接数据服务'); return; }
+  const btns = $$('[data-act="execute-plan"]');
+  btns.forEach(b => { b.disabled = true; b.textContent = '正在写入…'; });
+  try {
+    // 1) 教案先落库（Session 有 plan_id 外键，必须先有教案）
+    if (!c.planId) {
+      const pid = uid();
+      state.plans.push({
+        id: pid, studentIds: p.students.map(s => s.id), studentNames: p.students.map(s => s.name),
+        lesson: p.lesson.n, stage: p.lesson.s, tech: p.unit.tech, minutes: p.minutes,
+        date: p.date, ageName: p.ageName, text: planText(p)
+      });
+      c.planId = pid;
+      save();
+      await window.PKB_API.syncNow(state);
+    }
+    // 2) 一次事务：建授课记录 + 大纲标已授课 + 课程包已用 +1 + 学员已耗 +1
+    const r = await window.PKB_API.request('/enrollments/' + c.enrollmentId + '/lessons', {
+      method: 'POST',
+      body: JSON.stringify({ outlineLessonId: c.outlineLessonId, planId: c.planId, date: p.date })
+    });
+    await refreshState();
+    state.ui.sessionId = r.session.id;
+    state.ui.adjust = r.nextStep ? r.nextStep.text : '';
+    state.ui.execCtx = null;
+    navigate('lesson');
+    toast(r.duplicated ? '这节课之前已执行过，已打开同一份记录' : '已开始上课 · 课后记得点评');
+  } catch (e) {
+    toast('执行失败：' + e.message);
+    btns.forEach(b => { b.disabled = false; b.textContent = '执行此计划 →'; });
+  }
+}
+
+/* ---------- 课次页（教案 + 点评入口） ---------- */
+function planForSession(s) {
+  const st = state.students.find(x => x.id === s.studentId);
+  const enr = enrollments().find(e => e.id === s.enrollmentId);
+  const L = LESSONS.find(l => l.n === Number(s.lesson)) || LESSONS[0];
+  if (!st) return null;
+  const f = {
+    studentIds: [st.id], lesson: L.n, minutes: s.minutes || 90, date: s.date || today(),
+    size: enr ? enr.packageType : 'small', age: st.age || 'adult', focus: 'tech', fitMode: 'auto',
+    goal: (enr && enr.goal) || st.goal || '技术晋级'
+  };
+  return buildPlan(f, null, null);
+}
+
+function renderLesson() {
+  const host = $('#lessonOutput');
+  const bar = $('#lessonActionBar');
+  const s = state.sessions.find(x => x.id === state.ui.sessionId);
+  if (!s) {
+    bar.innerHTML = '';
+    host.innerHTML = '<div class="empty"><div class="mark">[ 404 ]</div><h3>未找到这节课</h3><p>可能记录已被删除，或尚未执行。</p><div class="actions"><button class="btn btn-sm" data-go="enroll">回到课程包</button><button class="btn btn-sm" data-go="tracking">教学追踪</button></div></div>';
+    return;
+  }
+  const st = state.students.find(x => x.id === s.studentId);
+  const p = planForSession(s);
+  const reviewed = s.reviewStatus === 'done';
+  bar.innerHTML = '<div class="panel" style="margin-bottom:18px"><div class="panel-body" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">' +
+    '<div style="flex:1;min-width:220px"><div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)">' + (reviewed ? '已点评 · ' : '待点评 · ') + esc(s.date || '') + '</div>' +
+    '<div style="font-size:15px;margin-top:6px">' + esc(s.studentName || (st && st.name) || '') + ' · 第 ' + s.lesson + ' 课 · ' + (s.minutes || 90) + ' 分钟</div>' +
+    (state.ui.adjust ? '<div style="font-size:11.5px;color:var(--text-2);margin-top:6px">' + esc(state.ui.adjust) + '</div>' : '') + '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+    '<button class="btn btn-sm" data-go="enroll">课程大纲</button>' +
+    '<button class="btn btn-sm" data-act="print-plan">打印</button>' +
+    '<button class="btn ' + (reviewed ? 'btn-sm' : 'btn-primary') + '" data-act="open-review" data-id="' + s.id + '">' + (reviewed ? '修改点评' : '点评本次课') + '</button>' +
+    '</div></div></div>';
+  host.innerHTML = (p ? renderPlanHTML(p) : '<div class="notice">该课次缺少教案快照，可直接点评（3 个要点从课程体系读取）。</div>')
+    + (reviewed ? reviewSummaryHTML(s, p) : '');
+}
+
+function reviewSummaryHTML(s, p) {
+  const kp = p ? String(p.unit.kp).split('|') : [];
+  const jv = s.judgeVals || {};
+  return '<div class="panel" style="margin-top:18px"><div class="panel-head"><h2>本次课点评</h2><span class="sub">' + esc(s.reviewedAt || '') + '</span></div><div class="panel-body">' +
+    '<div class="kv"><div class="item"><div class="k">总体判据</div><div class="v">' + esc(s.judge || '—') + '</div></div>' +
+    '<div class="item"><div class="k">出勤</div><div class="v">' + esc(s.attend || '—') + '</div></div>' +
+    '<div class="item"><div class="k">RPE</div><div class="v">' + esc(s.rpe || '—') + '</div></div>' +
+    '<div class="item"><div class="k">家庭作业</div><div class="v">' + esc(s.homework || '—') + '</div></div>' +
+    '<div class="item"><div class="k">下节重点</div><div class="v">' + esc(s.nextFocus || '—') + '</div></div></div>' +
+    (kp.length ? '<div style="margin-top:12px">' + kp.map((k, i) => {
+      const v = jv['kp' + (i + 1)];
+      const chip = v === true ? '<span class="chip chip-ok">达标</span>' : v === false ? '<span class="chip chip-danger">未达标</span>' : '<span class="chip">未记录</span>';
+      return '<div style="font-size:12px;padding:6px 0;border-bottom:1px dashed var(--hairline)"><span class="mono" style="color:var(--accent)">0' + (i + 1) + '</span>　' + esc(k) + '　' + chip + '</div>';
+    }).join('') + '</div>' : '') +
+    (s.note ? '<div class="notice" style="margin-top:12px">' + esc(s.note) + '</div>' : '') + '</div></div>';
+}
+
+/* ---------- 点评弹窗 ---------- */
+function reviewModal(sessionId) {
+  const s = state.sessions.find(x => x.id === sessionId);
+  if (!s) { toast('未找到这节课'); return; }
+  const p = planForSession(s);
+  const kp = p ? String(p.unit.kp).split('|') : [];
+  const jv = s.judgeVals || {};
+  const judgeOpt = v => '<option value="' + v + '"' + ((s.judge || '部分达标') === v ? ' selected' : '') + '>' + v + '</option>';
+  openModal('<div class="modal-head"><h3>课后点评 · 第 ' + s.lesson + ' 课</h3><button class="x" data-act="close-modal">×</button></div><div class="modal-body">' +
+    '<div class="notice" style="margin-bottom:12px">60 秒内完成：3 个要点打勾 → 一句话反馈 → 作业与下节重点。判据未达标时，自适应节奏会自动把下一节改成同单元补强课。</div>' +
+    (kp.length ? '<div class="field"><label>本课 3 个可观察判据</label>' + kp.map((k, i) => {
+      const cur = jv['kp' + (i + 1)];
+      return '<div style="display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--hairline)"><div style="flex:1;font-size:12px">' + esc(k) + '</div>' +
+        '<select data-jv="kp' + (i + 1) + '" style="max-width:120px"><option value="yes"' + (cur === true ? ' selected' : '') + '>达标</option><option value="no"' + (cur === false ? ' selected' : '') + '>未达标</option></select></div>';
+    }).join('') + '</div>' : '') +
+    '<div class="grid-3"><div class="field"><label>总体判据</label><select id="rvJudge">' + judgeOpt('达标') + judgeOpt('部分达标') + judgeOpt('未达标') + '</select></div>' +
+    '<div class="field"><label>出勤</label><select id="rvAttend">' + ['出勤', '请假', '缺勤'].map(v => '<option' + ((s.attend || '出勤') === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>' +
+    '<div class="field"><label>RPE 1-10</label><input type="number" min="1" max="10" id="rvRpe" value="' + esc(s.rpe || 5) + '"></div></div>' +
+    '<div class="field"><label>一句话反馈（1 条优点 + 1 条改进点）</label><textarea id="rvNote" rows="2" placeholder="例：分腿垫步时机改善；击球后回中仍偏慢">' + esc(s.note || '') + '</textarea></div>' +
+    '<div class="grid-2"><div class="field"><label>家庭作业</label><input type="text" id="rvHw" value="' + esc(s.homework || '') + '" placeholder="对墙 30 次 × 2 组"></div>' +
+    '<div class="field"><label>下节重点</label><input type="text" id="rvNext" value="' + esc(s.nextFocus || '') + '" placeholder="击球点前移 10 cm"></div></div>' +
+    '</div><div class="modal-foot"><button class="btn" data-act="close-modal">取消</button><button class="btn btn-primary" data-act="save-review" data-id="' + s.id + '">保存点评</button></div>');
+}
+
+async function saveSessionReview(sessionId) {
+  if (!(window.PKB_API && window.PKB_API.online())) { toast('点评需要连接数据服务'); return; }
+  const jv = {};
+  $('[data-jv]').forEach(el => { jv[el.dataset.jv] = el.value === 'yes'; });
+  const body = {
+    judge: $('#rvJudge').value, attend: $('#rvAttend').value, rpe: $('#rvRpe').value,
+    note: $('#rvNote').value, homework: $('#rvHw').value, nextFocus: $('#rvNext').value, judgeVals: jv
+  };
+  const btn = $('[data-act="save-review"]');
+  if (btn) { btn.disabled = true; btn.textContent = '保存中…'; }
+  try {
+    const r = await window.PKB_API.request('/sessions/' + sessionId + '/review', { method: 'POST', body: JSON.stringify(body) });
+    closeModal();
+    await refreshState();
+    state.ui.adjust = r.adjust ? r.adjust.text : '';
+    renderView(state.ui.view);
+    toast('点评已保存' + (r.adjust && r.adjust.action === 'insert_r' ? ' · 下一节已改为补强课' : ''));
+  } catch (e) {
+    toast('保存失败：' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '保存点评'; }
+  }
+}
+
+/* ---------- 今日视图（离线也能算：数据来自本地 state 的课程包） ---------- */
+function renderTodayBoard() {
+  const host = $('#todayBoard');
+  if (!host) return;
+  const d = today();
+  const all = [];
+  enrollments().forEach(e => (e.outline || []).forEach(o => {
+    if (o.status !== 'planned') return;
+    const st = state.students.find(x => x.id === e.studentId);
+    all.push({ e, o, name: (st && st.name) || e.studentName || '—', age: (st && st.age) || 'adult' });
+  }));
+  const todays = all.filter(x => x.o.plannedDate === d);
+  const overdue = all.filter(x => x.o.plannedDate && x.o.plannedDate < d);
+  const pending = state.sessions.filter(x => x.lessonDate !== undefined ? false : true); // 兼容旧数据
+  const unreviewed = state.sessions.filter(x => !x.reviewStatus || x.reviewStatus === 'pending');
+
+  const rowHTML = (x, tag) => '<div class="list-row"><div><div class="main-txt">' + esc(x.name) + ' · 第 ' + x.o.lessonNo + ' 课 · U' + x.o.unitNo + ' ' + outlineTypeName(x.o.lessonType) + '</div>' +
+    '<div class="sub-txt">' + esc(x.o.plannedDate || '') + ' · ' + (x.o.minutes || 90) + ' 分钟 · ' + esc(packageName(x.e.packageType)) + (tag ? ' · <span style="color:var(--warn)">' + tag + '</span>' : '') + '</div></div>' +
+    '<div class="right" style="display:flex;gap:6px"><button class="btn btn-sm btn-primary" data-act="prep-lesson" data-enroll="' + x.e.id + '" data-id="' + x.o.id + '">备课</button></div></div>';
+
+  host.innerHTML = '<div class="panel" style="margin-bottom:18px"><div class="panel-head"><h2>今天要上的课</h2><span class="sub">' + d + ' · 按课程大纲</span><div class="right"><button class="btn btn-sm" data-go="enroll">课程包与大纲</button></div></div>' +
+    (todays.length ? todays.map(x => rowHTML(x)).join('') : '<div class="list-row"><div class="main-txt" style="color:var(--text-3)">今天没有排课</div><div class="sub-txt">要临时加课，去「课程包」看下一节，或直接登记新课程包。</div></div>') +
+    (overdue.length ? '<div class="panel-head" style="border-top:1px solid var(--hairline)"><h2>已过期未上</h2><span class="sub">' + overdue.length + ' 节</span></div>' + overdue.slice(0, 6).map(x => rowHTML(x, '已过期')).join('') : '') +
+    '<div class="panel-head" style="border-top:1px solid var(--hairline)"><h2>待点评</h2><span class="sub">' + unreviewed.length + ' 节</span><div class="right">' + (unreviewed.length ? '<button class="btn btn-sm btn-primary" data-go="tracking">逐条点评</button>' : '') + '</div></div>' +
+    (unreviewed.length ? unreviewed.slice(0, 5).map(x => '<div class="list-row"><div><div class="main-txt">' + esc(x.studentName || '—') + ' · 第 ' + x.lesson + ' 课</div><div class="sub-txt">' + esc(x.date || '') + ' · 判据 ' + esc(x.judge || '—') + '</div></div><div class="right"><button class="btn btn-sm btn-primary" data-act="open-review" data-id="' + x.id + '">点评</button></div></div>').join('') : '<div class="list-row"><div class="main-txt" style="color:var(--text-3)">全部已点评</div></div>') +
+    '</div>';
+}
+
+/* ============================================================
    2. STATE
    ============================================================ */
 const KEY='pkbmgr.v2';
 const defaultState=()=>({
  students:[],plans:[],sessions:[],assessments:[],demo:false,
  thresholds:{},params:{},defaults:{minutes:90,size:'small',age:'adult',freq:2,unitsPerStage:8,courts:1,renewWarn:3},
- ui:{view:'dash',planview:'timeline',planForm:null,lastPlan:null,detailId:null},
+ ui:{view:'dash',planview:'timeline',planForm:null,lastPlan:null,detailId:null,enrollId:null,enrollStudent:null,execCtx:null,sessionId:null,adjust:''},
  prefs:{theme:'dark',accent:'lime',density:'comfortable',motion:'on'}
 });
 function normalize(p){
@@ -746,7 +1126,7 @@ function venuePlan(p){
  L.push('组织原则：教练 1 人统一发令，同一时刻全班做同一件事；移步时整队往返，设备只由教练操作。');
  return L;
 }
-function buildPlan(f,trainingRecommendations){
+function buildPlan(f,trainingRecommendations,fitnessReports){
  const students=(f.studentIds||[]).map(id=>state.students.find(x=>x.id===id)).filter(Boolean);
  const lesson=LESSONS.find(l=>l.n===Number(f.lesson));
  if(!students.length||!lesson)return null;
@@ -819,6 +1199,8 @@ function buildPlan(f,trainingRecommendations){
   ];
  }
  p.trainingReview=buildTrainingReview(p,trainingRecommendations);
+ /* 体能测评报告 → ④ 段重点与负荷上限（不改变 48 课次主线） */
+ p.fitness=buildFitnessBridge(p,fitnessReports);
  if(p.trainingReview&&p.trainingReview.safety.caution){
   p.profile.loadGuard=true;
   p.advanced=[];
@@ -826,6 +1208,10 @@ function buildPlan(f,trainingRecommendations){
  if(p.trainingReview&&p.trainingReview.weak.length){
   const names=p.trainingReview.weak.map(x=>x.skillName).join('、');
   p.notes.push('动态复习建议：'+names+' 在最近两次评分均低于 3 分；将复习嵌入本课既有③分解练习的前 5 分钟，不增加总课时、不改变本课主题或48课次顺序。');
+ }
+ if(p.fitness&&p.fitness.available){
+  if(p.fitness.weak.length)p.notes.push('体能补强（来自入班体能测评）：「'+p.fitness.weak.map(x=>x.name).join('、')+'」指数低于 52，本课 ④ 段优先安排对应练习，并沿用报告给出的适配建议。');
+  if(p.fitness.loadGuard)p.notes.push('体能负荷保护：入班体测触发保护（综合指数 <36 或年龄段 RPE 上限 ≤4），④ 段不加量、RPE 封 '+p.fitness.rpeCap+'，不安排跳跃与急停。');
  }
  if(p.trainingReview&&p.trainingReview.safety.holdAdditionalLoad)p.notes.push('安全负荷保护：近期伤病 / 不适或高 RPE 信号触发保护；不增加球数、组数或训练强度，复习只做低强度动作校正，出现疼痛立即停止并按安全流程处理。');
  p.venue=venuePlan(p);
@@ -853,6 +1239,36 @@ function buildTrainingReview(p,recommendations){
  };
  return {available:true,weak:[...byKey.values()],parked,mastered,safety,lesson:p.lesson.n,
   policy:'仅复习与本课次技术主题匹配的薄弱项；复习嵌入③分解练习，不延长总课时、不跳课或退课。'};
+}
+
+/* ============================================================
+   体能测评 → 教案：只改 ④ 段重点与负荷上限，不改技术主线
+   ============================================================ */
+function buildFitnessBridge(p,fitnessReports){
+ if(!fitnessReports||!fitnessReports.available||!fitnessReports.students||!fitnessReports.students.length)return null;
+ const rows=[];
+ (fitnessReports.students||[]).forEach(x=>{
+  const a=x&&x.assessment;if(!a||!a.report)return;
+  const name=(a.student&&a.student.name)||'学员';
+  const weak=(a.report.weakest||[]).filter(d=>d.index!=null&&d.index<52);
+  rows.push({
+   studentId:a.studentId,studentName:name,testDate:a.testDate,
+   totalIndex:a.report.totalIndex,fitScore:a.report.fitScore,fitScoreLabel:a.report.fitScoreLabel,
+   ageGroupName:a.ageGroup&&a.ageGroup.name,
+   weak:weak.map(d=>({code:d.code,name:d.name,index:d.index,pickleball:d.pickleball})),
+   suggestions:(a.advice&&a.advice.suggestions||[]).filter(x=>x.priority==='首要补强'),
+   loadGuard:Boolean(a.advice&&a.advice.loadGuard),rpeCap:a.advice?a.advice.rpeCap:null
+  });
+ });
+ if(!rows.length)return {available:false};
+ const weakAll=[];const seen=new Set();
+ rows.forEach(r=>r.weak.forEach(d=>{if(!seen.has(d.code)){seen.add(d.code);weakAll.push({code:d.code,name:d.name,students:[r.studentName],index:d.index});}else{weakAll.find(w=>w.code===d.code).students.push(r.studentName);}}));
+ const loadGuard=rows.some(r=>r.loadGuard);
+ return {
+  available:true,rows,weak:weakAll,loadGuard,
+  rpeCap:loadGuard?Math.min.apply(null,rows.filter(r=>r.rpeCap).map(r=>r.rpeCap).concat([p.rpeCap])):p.rpeCap,
+  policy:'体检报告只决定 ④ 段的重点与 RPE 上限；不缩短 48 课次、不替换技术主题、不因体能好而跳课。'
+ };
 }
 
 function planText(p){
@@ -909,7 +1325,7 @@ function planText(p){
 /* ============================================================
    4. RENDER
    ============================================================ */
-const TITLES={dash:['01 / OVERVIEW','总览'],students:['02 / LEARNERS','学员档案'],detail:['02 / LEARNER RECORD','学员学习记录'],plan:['03 / PLAN BUILDER','计划生成'],tracking:['04 / TRACKING','教学追踪'],assess:['05 / ASSESSMENT','考核与晋级'],settings:['06 / SYSTEM','体系与设置']};
+const TITLES={today:['03 / TODAY','今日'],enroll:['04 / PACKAGES','课程包与大纲'],lesson:['05 / SESSION','本次课'],dash:['01 / OVERVIEW','总览'],students:['02 / LEARNERS','学员档案'],detail:['02 / LEARNER RECORD','学员学习记录'],plan:['06 / PLAN BUILDER','备课'],tracking:['07 / TRACKING','教学追踪'],assess:['08 / ASSESSMENT','考核与晋级'],fitness:['09 / FITNESS LAB','体能测评'],settings:['10 / SYSTEM','体系与设置']};
 function navigate(v,opt){
  state.ui.view=v;if(opt&&opt.detailId)state.ui.detailId=opt.detailId;save();
  $$('.view').forEach(x=>x.hidden=x.id!=='view-'+v);
@@ -919,7 +1335,8 @@ function navigate(v,opt){
 }
 function renderView(v){
  if(v==='dash')renderDash();if(v==='students')renderStudents();if(v==='detail')renderDetail();
- if(v==='plan')renderPlanPage();if(v==='tracking')renderTracking();if(v==='assess')renderAssess();if(v==='settings')renderSettings();
+ if(v==='today')renderTodayBoard();if(v==='enroll')renderEnroll();if(v==='lesson')renderLesson();
+ if(v==='plan')renderPlanPage();if(v==='tracking')renderTracking();if(v==='assess')renderAssess();if(v==='fitness')renderFitness();if(v==='settings')renderSettings();
  renderTop();renderStorageNote();
 }
 function renderTop(){
@@ -955,15 +1372,23 @@ function renderDash(){
  const k=countKPI();
  const cells=[['在训学员',k.active,'人','状态 ≠ 结业的学员数'],['近 7 日计划',k.wk,'份','计划日期落在近 7 日'],['出勤率',k.attend==null?'—':k.attend,k.attend==null?'':'%','出勤记录 ÷ 授课记录 × 100'],['待考人数',k.due,'人','已耗课次 ≥ 8 且未结业'],['续费预警',k.warn,'人','剩余课次 ≤ '+esc(state.defaults.renewWarn||3)+'']];
  $('#kpiGrid').innerHTML=cells.map(c=>'<div class="kpi"><div class="label"><span class="sq"></span>'+c[0]+'</div><div class="value">'+c[1]+(c[2]?'<small>'+c[2]+'</small>':'')+'</div><div class="formula">'+c[3]+'</div></div>').join('');
- const plans=state.plans.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,5);
- $('#dashPlans').innerHTML=plans.length?plans.map(p=>'<div class="list-row"><div><div class="main-txt">第 '+p.lesson+' 课 · '+(p.studentNames||[]).join(' / ')+' · '+esc(p.tech||'')+'</div><div class="sub-txt">'+esc(p.date||'未设日期')+' · '+p.minutes+' 分钟 · '+STAGES[p.stage].name+' · '+esc(p.ageName||'成人')+'</div></div><div class="right"><button class="btn btn-sm" data-go="plan" data-open-plan="'+p.id+'">查看</button></div></div>').join(''):
-  '<div class="empty" style="border:0;background:none"><div class="mark">[ 00 ]</div><h3>还没有教学计划</h3><p>先新增学员，再到「计划生成」选课次与课时，系统自动产出可带课的详细教案。</p><div class="actions"><button class="btn btn-sm btn-primary" data-act="new-student">新增学员</button><button class="btn btn-sm" data-go="plan">去生成计划</button></div></div>';
+  // 下一节课：优先取课程大纲里最近的一节待上课；没有课程包时给正确入口
+  const upcoming=[];
+  (state.enrollments||[]).forEach(e=>(e.outline||[]).forEach(o=>{
+    if(o.status!=='planned')return;
+    const st=state.students.find(x=>x.id===e.studentId);
+    upcoming.push({e,o,name:(st&&st.name)||e.studentName||'—',date:o.plannedDate||''});
+  }));
+  upcoming.sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999'));
+  $('#dashPlans').innerHTML=upcoming.length?upcoming.slice(0,5).map(x=>'<div class="list-row"><div><div class="main-txt">'+esc(x.name)+' · 第 '+x.o.lessonNo+' 课 · U'+x.o.unitNo+' '+outlineTypeName(x.o.lessonType)+'</div><div class="sub-txt">'+esc(x.date||'未排日期')+' · '+(x.o.minutes||90)+' 分钟 · '+esc(packageName(x.e.packageType))+'</div></div><div class="right"><button class="btn btn-sm btn-primary" data-act="prep-lesson" data-enroll="'+x.e.id+'" data-id="'+x.o.id+'">备课</button></div></div>').join('')
+   :'<div class="empty" style="border:0;background:none"><div class="mark">[ 00 ]</div><h3>还没有排课</h3><p>先在「课程包」登记学员买了多少节课，系统按难度与剂量排出 N 节大纲；之后从「今日」逐节走「备课 → 执行此计划 → 点评」。</p><div class="actions"><button class="btn btn-sm btn-primary" data-act="new-student">新增学员</button><button class="btn btn-sm" data-go="enroll">去登记课程包</button></div></div>';
  const alerts=[];
  if(!state.students.length)alerts.push(['未录入学员','先建立档案才能生成计划','danger']);
  if(state.students.some(s=>s.injury))alerts.push(['伤病 / 疼痛记录','生成教案前须先经医生或专业人员评估，并启用退阶','danger']);
  if(!Object.keys(state.thresholds).length)alerts.push(['考核阈值未校准','晋级判定暂不可用，请填入本馆实测阈值','warn']);
  if(k.warn)alerts.push([k.warn+' 人进入续费预警','剩余课次 ≤ '+esc(state.defaults.renewWarn||3)+'，按管理动作清单联系','warn']);
  if(!state.sessions.length)alerts.push(['尚无授课记录','生成计划后点「保存计划」并补录出勤','danger']);
+ if(state.students.length&&!state.students.some(s=>s.fitScore))alerts.push(['学员尚未做体能测评','入班体能目前靠主观打分；做一次 9 项实测可自动生成图文报告并驱动 ④ 段安排','warn']);
  $('#dashAlerts').innerHTML=alerts.length?alerts.map(a=>'<div class="list-row"><span class="chip '+a[2]+'">'+a[2].toUpperCase()+'</span><div><div class="main-txt">'+a[0]+'</div><div class="sub-txt">'+a[1]+'</div></div></div>').join(''):'<div class="list-row"><span class="chip chip-ok">OK</span><div class="main-txt">当前无待处理项</div></div>';
 }
 function renderStudents(){
@@ -988,7 +1413,7 @@ function renderDetail(){
  exams.forEach(x=>items.push({d:x.date||'—',t:'阶段 '+x.stage+' 考核',c:esc(x.conclusion||'')+' · '+(x.total==null?'未校准':x.total+' 分')+' <span class="chip chip-warn">考核</span>'}));
  items.sort((a,b)=>(b.d||'').localeCompare(a.d||''));
  $('#detailContent').innerHTML=
- '<div class="panel"><div class="detail-hero"><div class="avatar">'+esc(s.name.slice(0,1))+'</div><div style="flex:1"><h2>'+esc(s.name)+'</h2><div style="display:flex;flex-wrap:wrap;gap:7px"><span class="chip mono">'+esc(s.id)+'</span><span class="chip">'+esc(AGE_GROUPS[s.age||'adult'].name)+'</span><span class="chip">阶段 '+s.stage+' '+STAGES[s.stage].name+'</span><span class="chip chip-accent">第 '+esc(s.used)+' / '+esc(s.total)+' 课</span><span class="chip">出勤 '+at+'</span><span class="chip">'+esc(s.status||'在训')+'</span></div><div style="margin-top:10px;font-size:11.5px;color:var(--text-3)">入班技术 '+esc(s.techScore==null?'—':s.techScore)+' / 5（A '+esc(s.pkLevel==null?'—':s.pkLevel)+' · B '+esc(s.racketBase==null?'0':s.racketBase)+'） · 入班体能 '+esc(s.fitScore==null?'—':s.fitScore)+' / 5 · 目标 '+esc(s.goal||'技术晋级')+'</div></div><div class="no-print" style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-sm btn-primary" data-act="plan-for" data-id="'+s.id+'">生成下一课次计划</button><button class="btn btn-sm" data-act="skill-progress" data-id="'+s.id+'">技术成长</button><button class="btn btn-sm" data-act="export-student" data-id="'+s.id+'">导出该学员记录</button></div></div>'+
+ '<div class="panel"><div class="detail-hero"><div class="avatar">'+esc(s.name.slice(0,1))+'</div><div style="flex:1"><h2>'+esc(s.name)+'</h2><div style="display:flex;flex-wrap:wrap;gap:7px"><span class="chip mono">'+esc(s.id)+'</span><span class="chip">'+esc(AGE_GROUPS[s.age||'adult'].name)+'</span><span class="chip">阶段 '+s.stage+' '+STAGES[s.stage].name+'</span><span class="chip chip-accent">第 '+esc(s.used)+' / '+esc(s.total)+' 课</span><span class="chip">出勤 '+at+'</span><span class="chip">'+esc(s.status||'在训')+'</span></div><div style="margin-top:10px;font-size:11.5px;color:var(--text-3)">入班技术 '+esc(s.techScore==null?'—':s.techScore)+' / 5（A '+esc(s.pkLevel==null?'—':s.pkLevel)+' · B '+esc(s.racketBase==null?'0':s.racketBase)+'） · 入班体能 '+esc(s.fitScore==null?'—':s.fitScore)+' / 5（可在「体能测评」用 9 项实测替换） · 目标 '+esc(s.goal||'技术晋级')+'</div></div><div class="no-print" style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-sm btn-primary" data-act="plan-for" data-id="'+s.id+'">生成下一课次计划</button><button class="btn btn-sm" data-act="skill-progress" data-id="'+s.id+'">技术成长</button><button class="btn btn-sm" data-act="fit-for" data-id="'+s.id+'">体能测评 / 报告</button><button class="btn btn-sm" data-act="export-student" data-id="'+s.id+'">导出该学员记录</button></div></div>'+
  (s.injury?'<div class="panel-body" style="padding-bottom:0"><div class="notice notice-danger"><strong>安全标记：</strong>'+esc(s.injury)+' — 须先经医生或专业人员评估，训练全程启用退阶动作；本系统不做医疗诊断。</div></div>':'')+
  '<div class="panel-body"><div class="section-title" style="margin-bottom:8px"><h2 style="font-size:15px">学习记录时间线</h2><span class="note">按日期倒序 · 计划 / 授课 / 考核合并</span></div>'+
  (items.length?items.map(i=>'<div class="timeline-item"><div class="d">'+esc(i.d)+'</div><div><div class="t">'+i.t+'</div><div class="c">'+i.c+'</div></div></div>').join(''):'<div class="empty" style="border:0"><div class="mark">[ 00 ]</div><h3>暂无学习记录</h3><p>生成并保存计划、补录授课记录后，这里会自动汇总该学员的进度与反馈。</p></div>')+
@@ -997,6 +1422,7 @@ function renderDetail(){
  '<div class="panel"><div class="panel-head"><h2>考核与晋级</h2></div><div>'+(exams.length?exams.map(x=>'<div class="list-row"><div><div class="main-txt">阶段 '+x.stage+' · '+esc(x.conclusion||'')+'</div><div class="sub-txt">'+esc(x.date||'')+' · '+(x.total==null?'阈值未校准':x.total+' 分')+'</div></div></div>').join(''):'<div class="list-row"><span class="muted" style="font-size:12px">暂无考核记录</span></div>')+'</div></div></div>';
 }
 function renderPlanPage(){
+ renderExecBar();
  const f=state.ui.planForm||{studentIds:[],lesson:1,minutes:state.defaults.minutes||90,date:today(),size:state.defaults.size||'small',age:state.defaults.age||'adult',focus:'tech',fitMode:'auto'};
  state.ui.planForm=f;
  renderPicker();
@@ -1061,16 +1487,34 @@ function planExtraHTML(p){
   if(p.trainingReview.safety.caution)h+='<div class="notice notice-warn" style="margin-top:8px"><b>负荷保护：</b>不增加球数、组数或强度；'+(p.trainingReview.safety.reasons.map(esc).join('；')||'近期 RPE 偏高，维持原负荷观察')+'。如出现疼痛立即停止。</div>';
   h+='</div>';
  }
+ if(p.fitness&&p.fitness.available){
+  h+='<div class="block"><h3><span class="idx">04B</span>体能测评 → 本课 ④ 段适配 <span class="chip chip-accent">来自 9 项实测</span></h3>'+
+   '<div class="why">'+esc(p.fitness.policy)+'</div>'+
+   p.fitness.rows.map(r=>'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)"><b>'+esc(r.studentName)+'</b> · '+esc(r.testDate)+' · 综合指数 '+(r.totalIndex==null?'—':r.totalIndex)+' · 换算体能 '+(r.fitScore==null?'—':r.fitScore)+'/5'+(r.loadGuard?' <span class="chip chip-warn">负荷保护</span>':'')+
+    (r.weak.length?'<br><span class="sec">补强：'+r.weak.map(d=>esc(d.name)+'（'+d.index+'）').join('、')+'</span>':'<br><span class="sec">无低于 52 的维度，按常规 ④ 段执行。</span>')+
+    (r.suggestions.length?'<br><span class="sec">具体做法：'+r.suggestions.map(x=>esc(x.text)).join('；')+'</span>':'')+
+   '</div>').join('')+'</div>';
+ }
  if(p.notes&&p.notes.length)h+='<div class="block"><h3><span class="idx">05</span>本课次调整说明</h3>'+p.notes.map((x,i)=>'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)">'+(i+1)+'. '+esc(x)+'</div>').join('')+'</div>';
  if(p.advanced&&p.advanced.length)h+='<div class="block"><h3><span class="idx">06</span>高阶加练 · 选修 <span class="chip chip-accent">技术 5 分 / 4.0+</span></h3><div class="why">本段不占用 48 课次主线时长，可在课后追加或转私教方案；教练按当天状态决定是否执行。</div>'+p.advanced.map((x,i)=>'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)">'+(i+1)+'. '+esc(x)+'</div>').join('')+'</div>';
  return h;
+}
+
+/* 教案预览右上角的「执行此计划」：让「生成了教案」和「真的上了一节课」之间有个明确的动作 */
+function execInlineHTML(p){
+ const c=state.ui.execCtx;
+ if(!c)return '';
+ return '<div class="no-print" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px dashed var(--hairline)">'+
+  '<div style="flex:1;min-width:180px;font-size:11.5px;color:var(--text-2)">这节课属于「第 '+c.seq+' 节 · 第 '+c.lessonNo+' 课 · 第 '+c.unitNo+' 单元 '+outlineTypeName(c.lessonType)+'」。点执行后：写入授课记录 → 大纲标记已授课 → 课程包已用 +1 → 跳到本次课页面等待点评。</div>'+
+  '<button class="btn btn-sm" data-act="cancel-exec">取消</button>'+
+  '<button class="btn btn-primary" data-act="execute-plan">执行此计划 →</button></div>';
 }
 
 function renderPlanHTML(p){
  const v=state.ui.planview||'timeline';
  const names=p.students.map(s=>esc(s.name)).join(' / ');
  const sizeName=p.size==='large'?'8-12 人团课':p.size==='solo'?'私教 1 人':'4-6 人小班';
- const head='<div class="plan-head no-print"><div class="eyebrow">AUTO-GENERATED · 第 '+p.lesson.n+' 课 · '+p.lessonType+' 课</div><h2>'+esc(p.unit.tech)+'</h2><div style="font-size:12px;color:var(--text-2)">阶段 '+p.lesson.s+' '+STAGES[p.lesson.s].name+' · 本课次重点：'+esc(p.lesson.focus)+'</div><div class="meta"><span class="chip chip-accent">'+esc(p.date)+'</span><span class="chip">'+p.minutes+' 分钟</span><span class="chip chip-accent">'+esc(p.ageName)+'</span><span class="chip">'+sizeName+'</span><span class="chip">'+p.students.length+' 名学员</span><span class="chip">'+(p.hasFit?'含 ④ 体能段':'不设 ④ 体能段')+'</span><span class="chip">教练 1 人 · 统一带练</span><span class="chip chip-accent">目标 '+esc(p.goal)+'</span><span class="chip">技术 '+p.techAvg+' / 体能 '+p.fitEff+'</span></div><div class="students"><strong>学员名单：</strong>'+names+(p.autoMixed?' <span class="chip chip-warn">混合年龄段 · 已按最保守负荷处理</span>':'')+'</div></div>';
+ const head='<div class="plan-head no-print"><div class="eyebrow">AUTO-GENERATED · 第 '+p.lesson.n+' 课 · '+p.lessonType+' 课</div><h2>'+esc(p.unit.tech)+'</h2><div style="font-size:12px;color:var(--text-2)">阶段 '+p.lesson.s+' '+STAGES[p.lesson.s].name+' · 本课次重点：'+esc(p.lesson.focus)+'</div><div class="meta"><span class="chip chip-accent">'+esc(p.date)+'</span><span class="chip">'+p.minutes+' 分钟</span><span class="chip chip-accent">'+esc(p.ageName)+'</span><span class="chip">'+sizeName+'</span><span class="chip">'+p.students.length+' 名学员</span><span class="chip">'+(p.hasFit?'含 ④ 体能段':'不设 ④ 体能段')+'</span><span class="chip">教练 1 人 · 统一带练</span><span class="chip chip-accent">目标 '+esc(p.goal)+'</span><span class="chip">技术 '+p.techAvg+' / 体能 '+p.fitEff+'</span>'+(p.fitness&&p.fitness.available?'<span class="chip chip-accent">体测报告已接入</span>':'')+'</div><div class="students"><strong>学员名单：</strong>'+names+(p.autoMixed?' <span class="chip chip-warn">混合年龄段 · 已按最保守负荷处理</span>':'')+'</div>'+execInlineHTML(p)+'</div>';
  if(v==='print')return head+'<div class="plan-body"><div class="block"><h3>打印稿（含全部详细动作）</h3><pre class="card">'+esc(planText(p))+'</pre></div>'+planExtraHTML(p)+'</div>';
  if(v==='table'){
   let rows='';
@@ -1090,7 +1534,7 @@ function renderPlanHTML(p){
 }
 function renderTracking(){
  $('#sessionCount').textContent=state.sessions.length+' 条记录';
- $('#sessionTable').innerHTML=state.sessions.length?'<table><thead><tr><th>日期</th><th>学员</th><th>课次</th><th>时长</th><th>出勤</th><th>判据</th><th>RPE</th><th>反馈</th><th></th></tr></thead><tbody>'+state.sessions.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(x=>'<tr><td class="num">'+esc(x.date)+'</td><td>'+esc(x.studentName)+'</td><td class="num">第 '+x.lesson+' 课</td><td class="num">'+x.minutes+' min</td><td><span class="chip '+(x.attend==='出勤'?'chip-ok':'chip-warn')+'">'+esc(x.attend)+'</span></td><td>'+esc(x.judge||'—')+'</td><td class="num">'+esc(x.rpe||'—')+'</td><td class="sec">'+esc(x.note||'—')+'</td><td style="white-space:nowrap">'+(x.planId?'<button class="btn btn-sm btn-primary" data-act="skill-score" data-id="'+x.id+'">技术评分</button> ':'<span class="muted">未关联教案</span> ')+'<button class="btn btn-sm" data-act="del-session" data-id="'+x.id+'">删除</button></td></tr>').join('')+'</tbody></table>':'<div class="empty" style="border:0"><div class="mark">[ 00 ]</div><h3>还没有授课记录</h3><p>生成教案后点「保存计划」，或在上方补录一条记录。</p></div>';
+ $('#sessionTable').innerHTML=state.sessions.length?'<table><thead><tr><th>日期</th><th>学员</th><th>课次</th><th>时长</th><th>出勤</th><th>判据</th><th>RPE</th><th>反馈</th><th></th></tr></thead><tbody>'+state.sessions.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(x=>'<tr><td class="num">'+esc(x.date)+'</td><td>'+esc(x.studentName)+'</td><td class="num">第 '+x.lesson+' 课</td><td class="num">'+x.minutes+' min</td><td><span class="chip '+(x.attend==='出勤'?'chip-ok':'chip-warn')+'">'+esc(x.attend)+'</span></td><td>'+esc(x.judge||'—')+'</td><td class="num">'+esc(x.rpe||'—')+'</td><td class="sec">'+esc(x.note||'—')+((x.homework||x.nextFocus)?'<div class="sub-txt">作业 '+esc(x.homework||'—')+' · 下节 '+esc(x.nextFocus||'—')+'</div>':'')+'</td><td style="white-space:nowrap">'+((!x.reviewStatus||x.reviewStatus==='pending')?'<button class="btn btn-sm btn-primary" data-act="open-review" data-id="'+x.id+'">点评</button> ':'<span class="chip chip-ok">已点评</span> ')+(x.planId?'<button class="btn btn-sm" data-act="skill-score" data-id="'+x.id+'">技术评分</button> ':'<span class="muted">未关联教案</span> ')+'<button class="btn btn-sm" data-act="del-session" data-id="'+x.id+'">删除</button></td></tr>').join('')+'</tbody></table>':'<div class="empty" style="border:0"><div class="mark">[ 00 ]</div><h3>还没有授课记录</h3><p>先到「课程包」排课，从「今日」点「备课 → 执行此计划」；也可以在右上角补录一条历史记录。</p></div>';
  $('#mgmtTable').innerHTML='<table><thead><tr><th>动作</th><th>责任人</th><th>频率</th><th>判据 / 阈值</th><th>交付物</th></tr></thead><tbody>'+MGMT_ROWS.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td class="sec">'+resolve(r[3],null)+'</td><td class="sec">'+r[4]+'</td></tr>').join('')+'</tbody></table>';
 }
 function thresholdsReady(){const t=state.thresholds||{};return ['t1','t2','t3','line2','line3','w'].every(k=>t[k]!==undefined&&t[k]!=='')}
@@ -1358,7 +1802,7 @@ function generate(){
  if(f.size==='solo'&&f.studentIds.length>1){$('#planErr').textContent='私教仅能选 1 名学员，请取消多余勾选或改班型';return}
  const btn=$('#genBtn');btn.disabled=true;btn.textContent='读取训练历史…';
  (async()=>{
-  let recs={available:false,students:[]};
+  let recs={available:false,students:[]},fits={available:false,students:[]};
   if(window.PKB_API&&window.PKB_API.online()){
    try{
     const results=await Promise.all(f.studentIds.map(async id=>{
@@ -1367,12 +1811,19 @@ function generate(){
     }));
     recs={available:true,students:results};
    }catch(err){recs={available:false,students:[],reason:err.message};}
-  }else recs.reason='数据服务未连接，本次按原教案规则生成；连接数据库后可读取技术评分历史。';
-  const p=buildPlan(f,recs);
+   try{
+    const fitsRes=await Promise.all(f.studentIds.map(async id=>{
+     const data=await window.PKB_API.request('/students/'+encodeURIComponent(id)+'/fitness-latest');
+     return data;
+    }));
+    fits={available:true,students:fitsRes};
+   }catch(err){fits={available:false,students:[],reason:err.message};}
+  }else{recs.reason='数据服务未连接，本次按原教案规则生成；连接数据库后可读取技术评分历史。'}
+  const p=buildPlan(f,recs,fits);
   if(!p){$('#planErr').textContent='学员或课次数据异常，请重新选择';btn.disabled=false;btn.textContent='生成详细教学计划';return}
   state.ui.lastPlan=p;save();$('#planOutput').innerHTML=renderPlanHTML(p);
   btn.disabled=false;btn.textContent='生成详细教学计划';
-  toast('已生成第 '+p.lesson.n+' 课教案'+(recs.available?'（已读取技术成长与负荷记录）':'（未读取历史评分）'));
+  toast('已生成第 '+p.lesson.n+' 课教案'+(recs.available?'（已读取技术成长与负荷记录）':'（未读取历史评分）')+(p.fitness&&p.fitness.available?'（已接入体测报告）':''));
  })().catch(err=>{btn.disabled=false;btn.textContent='生成详细教学计划';$('#planErr').textContent='生成失败：'+err.message});
 }
 function assessJudge(stage,vals){
@@ -1382,6 +1833,303 @@ function assessJudge(stage,vals){
  // 旧七项指标缺少统一测试协议与经验证的标准参照线，不能安全地产生自动晋级结论。
  return {total:null,conclusion:'已记录实测 · 待教练复核',missing:[],model:'legacy_pending_review'};
 }
+
+/* ============================================================
+   7. 身体素质测评（Fitness Lab）
+   9 项实测 → 0-100 指数 → 雷达图 / 条形图报告 → 回写入班体能 → 影响教案 ④ 段
+   数据全部来自后端 /api/v1/fitness-*；离线时明确提示，不伪造数据。
+   ============================================================ */
+const FIT_STATE={battery:null,studentId:'',assessment:null,list:[],loading:false,err:''};
+const FIT_STATUS_LABEL={measured:'已测',aborted:'中途停止',skipped:'未测',contraindicated:'禁忌 / 未做'};
+const FIT_LEVEL_COLOR=['var(--text-3)','var(--danger)','var(--warn)','var(--accent)','var(--ok)'];
+const FIT_LEVEL_LABEL_LOCAL=['待建立','偏弱','一般','良好','优秀'];
+
+function fitAgeGroup(spec,age){
+  const n=Number(age);
+  if(!isFinite(n))return spec.ageGroups.find(g=>g.code==='a18');
+  return spec.ageGroups.find(g=>n>=g.minAge&&n<=g.maxAge)||spec.ageGroups[spec.ageGroups.length-1];
+}
+function fitIndexFromAnchors(value,anchors,direction){
+  const AI=[10,35,60,80,100];
+  if(value==null||!anchors)return null;
+  const v=direction==='higher'?value:-value;
+  const a=anchors.map(x=>direction==='higher'?x:-x);
+  if(v<=a[0])return AI[0];
+  if(v>=a[4])return AI[4];
+  for(let i=0;i<4;i++){
+    if(v<=a[i+1]){
+      const span=a[i+1]-a[i],t=span===0?0:(v-a[i])/span;
+      return AI[i]+t*(AI[i+1]-AI[i]);
+    }
+  }
+  return AI[4];
+}
+function fitLevelOf(v){
+  if(v==null)return null;
+  if(v<35)return 0;if(v<60)return 1;if(v<80)return 2;if(v<100)return 3;return 4;
+}
+/** 本地即时预览：录入时立刻给出指数。规则与后端 fitness-scoring.js 完全一致（变体/性别折算原始值 → 查锚点 → 指数空间年龄让步）。 */
+const FIT_AGE_SENS={reaction:0.85,agility:0.85,power:0.9,strength:0.8,core:0.78,endurance:0.92,flexibility:0.5,balance:0.65,coordination:0.65};
+function fitPreview(b,ageGroupCode,sex,item,raw,variantCode){
+  const n=Number(raw);
+  if(!isFinite(n)||raw==='')return null;
+  const ag=b.ageGroups.find(g=>g.code===ageGroupCode)||fitAgeGroup(b,30);
+  const alt=item.altAnchorsByVariant&&variantCode?item.altAnchorsByVariant[variantCode]:null;
+  const anchors=alt?alt.anchors:item.anchors;
+  const direction=alt?alt.direction:item.direction;
+  const variant=(item.variants||[]).find(v=>v.code===variantCode);
+  const vf=(!alt&&variant&&variant.factor!=null)?Number(variant.factor):1;
+  const sf=(item.sexFactor&&item.sexFactor[sex])||1;
+  const f=vf*sf;
+  const norm=direction==='higher'?n/f:n*f;
+  let idx=fitIndexFromAnchors(norm,anchors,direction);
+  if(idx==null)return null;
+  let e;
+  if(ag.dimensionFactor&&ag.dimensionFactor[item.dimension]!=null)e=Number(ag.dimensionFactor[item.dimension]);
+  else e=1-(1-Number(ag.factor||1))*(FIT_AGE_SENS[item.dimension]!=null?FIT_AGE_SENS[item.dimension]:0.8);
+  e=Math.max(0.4,Math.min(1.4,e));
+  idx=Math.max(0,Math.min(100,100-(100-idx)*e));
+  return {index:Math.round(idx*10)/10,level:fitLevelOf(idx)};
+}
+
+/** 雷达图（纯 SVG，无依赖，可打印） */
+function fitRadarSVG(dims,size){
+  const S=size||340,cx=S/2,cy=S/2+4,R=S*0.34;
+  const n=dims.length;
+  const pt=(i,r)=>[cx+r*Math.cos(-Math.PI/2+i*2*Math.PI/n),cy+r*Math.sin(-Math.PI/2+i*2*Math.PI/n)];
+  let g='';
+  [0.25,0.5,0.75,1].forEach(k=>{
+    const pts=dims.map((_,i)=>pt(i,R*k).map(v=>v.toFixed(1)).join(',')).join(' ');
+    g+='<polygon points="'+pts+'" fill="none" stroke="var(--hairline-2)" stroke-width="1"/>';
+  });
+  dims.forEach((d,i)=>{
+    const p=pt(i,R);
+    g+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'" stroke="var(--hairline)" stroke-width="1"/>';
+    const lp=pt(i,R+22);
+    g+='<text x="'+lp[0].toFixed(1)+'" y="'+lp[1].toFixed(1)+'" fill="var(--text-2)" font-size="10.5" text-anchor="middle" dominant-baseline="middle">'+esc(d.name)+'</text>';
+    const vp=pt(i,R+34);
+    g+='<text x="'+vp[0].toFixed(1)+'" y="'+vp[1].toFixed(1)+'" fill="'+(d.index==null?'var(--text-3)':FIT_LEVEL_COLOR[d.level])+'" font-size="10" font-family="IBM Plex Mono,monospace" text-anchor="middle" dominant-baseline="middle">'+(d.index==null?'—':d.index)+'</text>';
+  });
+  const measured=dims.map((d,i)=>d.index==null?null:pt(i,R*Math.max(0.06,d.index/100)));
+  g+='<polygon points="'+measured.map(p=>p?p.map(v=>v.toFixed(1)).join(','):cx+','+cy).join(' ')+'" fill="color-mix(in srgb,var(--accent) 18%,transparent)" stroke="var(--accent)" stroke-width="1.6"/>';
+  measured.forEach((p,i)=>{if(p)g+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.6" fill="var(--accent)"/>'});
+  return '<svg viewBox="0 0 '+S+' '+S+'" width="100%" style="max-width:420px;display:block;margin:0 auto" role="img" aria-label="身体素质雷达图">'+g+'</svg>';
+}
+
+/** 横向条形图：9 个维度 + 指数刻度 */
+function fitBarsHTML(dims){
+  const rows=dims.map(d=>{
+    const w=d.index==null?0:Math.max(2,Math.min(100,d.index));
+    return '<div style="display:grid;grid-template-columns:96px minmax(0,1fr) 74px;gap:10px;align-items:center;padding:5px 0">'+
+      '<div style="font-size:11.5px;color:var(--text-2)">'+esc(d.name)+'</div>'+
+      '<div style="height:9px;border-radius:99px;background:var(--surface-3);overflow:hidden"><div style="height:100%;width:'+w+'%;background:'+(d.index==null?'transparent':FIT_LEVEL_COLOR[d.level])+'"></div></div>'+
+      '<div class="mono" style="font-size:10.5px;text-align:right;color:'+(d.index==null?'var(--text-3)':FIT_LEVEL_COLOR[d.level])+'">'+(d.index==null?'未测':d.index+' · '+esc(d.levelLabel))+'</div>'+
+    '</div>';
+  }).join('');
+  return '<div>'+rows+'<div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--text-3);padding:6px 0 0 106px" class="mono"><span>0 待建立</span><span>35 偏弱</span><span>60 一般</span><span>80 良好</span><span>100 优秀</span></div></div>';
+}
+
+function renderFitness(){
+  const host=$('#fitnessNotice');
+  if(host)host.innerHTML='<div class="notice notice-warn" style="margin-bottom:16px"><strong>安全前提：</strong>测评前须询问当日身体状况并完成统一热身；有心血管、骨关节病史或伤病记录者须先经医生或专业人员评估。本模块只做训练分层与负荷参考，<strong>不做医疗诊断</strong>；未测项目一律记为「未测」，不当作 0 分。</div>';
+  if(!window.PKB_API||!window.PKB_API.online()){
+    const form=$('#fitnessForm');
+    if(form)form.innerHTML='<div class="notice notice-warn">请先连接数据服务并登录。身体素质测评需要保存原始实测值到 SQLite；离线模式下不提供该功能，避免报告与档案不一致。<div style="margin-top:10px"><button class="btn btn-sm btn-primary" data-act="fit-login">登录数据服务</button></div></div>';
+    const out=$('#fitnessOutput');
+    if(out)out.innerHTML='<div class="empty" style="border:0"><div class="mark">[ OFF ]</div><h3>数据服务未连接</h3><p>登录后可完成 9 项实测录入、生成图文报告并回写入班体能。</p></div>';
+    return;
+  }
+  if(!FIT_STATE.battery){loadFitnessBattery();return;}
+  renderFitnessForm();
+  renderFitnessOutput();
+}
+
+async function loadFitnessBattery(){
+  const form=$('#fitnessForm');
+  if(form)form.innerHTML='<div class="notice">正在载入测评表…</div>';
+  try{
+    FIT_STATE.battery=await window.PKB_API.request('/fitness-battery');
+    const meta=$('#fitBatteryMeta');
+    if(meta)meta.textContent=FIT_STATE.battery.items.length+' 项 · 约 '+FIT_STATE.battery.durationMinutes+' 分钟 · v'+FIT_STATE.battery.version;
+    renderFitnessForm();renderFitnessOutput();
+  }catch(e){
+    if(form)form.innerHTML='<div class="notice notice-danger">测评表载入失败：'+esc(e.message)+'</div>';
+  }
+}
+
+function renderFitnessForm(){
+  const b=FIT_STATE.battery;
+  if(!b)return;
+  const students=state.students||[];
+  if(!FIT_STATE.studentId&&students.length)FIT_STATE.studentId=students[0].id;
+  const st=students.find(s=>s.id===FIT_STATE.studentId);
+  const defAge=b.ageGroups.find(g=>g.code===(st&&st.age==='senior'?'a55':st&&st.age==='youth'?'u17':'a18'));
+  const a=FIT_STATE.assessment;
+  const head='<div class="grid-3">'+
+    '<div class="field"><label>学员 <span class="req">*</span></label><select id="fitStudent">'+
+      (students.length?students.map(s=>'<option value="'+esc(s.id)+'" '+(s.id===FIT_STATE.studentId?'selected':'')+'>'+esc(s.name)+' · '+esc(AGE_GROUPS[s.age||'adult'].name)+'</option>').join(''):'<option value="">— 暂无学员 —</option>')+
+      '</select><div class="hint">先在「学员档案」建档，再回来做测评。</div></div>'+
+    '<div class="field"><label>年龄组</label><select id="fitAgeGroup">'+b.ageGroups.map(g=>'<option value="'+g.code+'" '+((a?a.ageGroup.code:(defAge&&defAge.code))===g.code?'selected':'')+'>'+esc(g.name)+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label>性别（用于分档折算，可留空）</label><select id="fitSex">'+
+      '<option value="" '+(a&&!a.sex?'selected':'')+'>不填</option>'+
+      '<option value="male" '+(a&&a.sex==='male'?'selected':'')+'>男</option>'+
+      '<option value="female" '+(a&&a.sex==='female'?'selected':'')+'>女</option></select></div>'+
+  '</div>'+
+  '<div class="grid-3"><div class="field"><label>身高 cm</label><input type="number" min="80" max="230" id="fitHeight" value="'+(a&&a.heightCm?a.heightCm:'')+'"></div>'+
+  '<div class="field"><label>体重 kg</label><input type="number" min="20" max="250" id="fitWeight" value="'+(a&&a.weightKg?a.weightKg:'')+'"></div>'+
+  '<div class="field"><label>测试日期</label><input type="date" id="fitDate" value="'+(a?a.testDate:today())+'"></div></div>';
+
+  if(!a){
+    $('#fitnessForm').innerHTML=head+
+      '<div class="notice" style="margin-bottom:12px">测试顺序固定：反应 → 柔韧 → 平衡 → 协调 → 爆发 → 灵敏 → 上肢 → 核心 → 有氧（有氧最后）。每项之间休息 60–90 秒；中途不适可标记「中途停止」，不计 0 分。</div>'+
+      '<button class="btn btn-primary" style="width:100%;padding:11px" data-act="fit-create">开始测评（建立 {{n}} 项测试卡）</button>'.replace('{{n}}',b.items.length);
+    return;
+  }
+
+  const label=a.status==='completed'?'已完成 · 只读':(a.status==='draft'?'进行中':'已作废');
+  let rows='';
+  b.items.forEach(item=>{
+    const r=(a.report.results||[]).find(x=>x.itemCode===item.code)||{status:'skipped'};
+    const pv=r.status==='measured'?{index:r.indexValue,level:r.level}:null;
+    const variants=(item.variants||[]).map(v=>'<option value="'+v.code+'" '+(r.variantCode===v.code?'selected':'')+'>'+esc(v.name)+'</option>').join('');
+    rows+='<details style="border:1px solid var(--hairline);border-radius:8px;padding:10px 12px;margin-bottom:8px" '+(r.status==='measured'?'':'open')+'>'+
+      '<summary style="cursor:pointer;font-size:12.5px"><span class="mono" style="color:var(--accent)">'+String(item.no).padStart(2,'0')+'</span> '+esc(item.name)+
+      ' <span class="chip">'+esc(item.unit)+' · '+(item.direction==='higher'?'越高越好':'越低越好')+'</span>'+
+      (pv?' <span class="chip" style="color:'+FIT_LEVEL_COLOR[pv.level]+'">指数 '+pv.index+'</span>':' <span class="chip chip-warn">未测</span>')+'</summary>'+
+      '<div style="margin-top:10px"><div style="font-size:11px;color:var(--text-2);line-height:1.7"><b>怎么做：</b>'+esc(item.protocol)+'</div>'+
+      '<div style="font-size:10.5px;color:var(--warn);line-height:1.6;margin-top:5px"><b>安全：</b>'+esc(item.safety)+'</div>'+
+      '<div class="grid-3" style="margin-top:10px">'+
+        '<div class="field"><label>实测值（'+esc(item.unit)+'）</label><input type="number" step="any" data-fit-raw="'+item.code+'" value="'+(r.rawValue==null?'':r.rawValue)+'" '+(a.status==='completed'?'disabled':'')+'></div>'+
+        '<div class="field"><label>版本</label><select data-fit-variant="'+item.code+'" '+(a.status==='completed'?'disabled':'')+'><option value="">标准</option>'+variants+'</select></div>'+
+        '<div class="field"><label>状态</label><select data-fit-status="'+item.code+'" '+(a.status==='completed'?'disabled':'')+'>'+
+          Object.keys(FIT_STATUS_LABEL).map(k=>'<option value="'+k+'" '+(r.status===k?'selected':'')+'>'+FIT_STATUS_LABEL[k]+'</option>').join('')+'</select></div>'+
+      '</div>'+
+      '<div style="font-size:10.5px;color:var(--text-3)">试次要求：'+esc(item.trials)+'；参考分档锚点：'+item.anchors.join(' / ')+'</div>'+
+      '<div data-fit-preview="'+item.code+'" style="font-size:11px;color:var(--accent);margin-top:6px"></div>'+
+      (r.note?'<div class="hint" style="margin-top:6px">记录：'+esc(r.note)+'</div>':'')+
+      '</div></details>';
+  });
+
+  const measured=(a.report.results||[]).filter(r=>r.status==='measured').length;
+  $('#fitnessForm').innerHTML='<div class="notice" style="margin-bottom:12px"><b>'+esc((a.student&&a.student.name)||'学员')+'</b> · '+esc(a.ageGroup.name)+' · '+esc(a.testDate)+' · <span class="chip">'+label+'</span> <span class="chip">已测 '+measured+' / '+b.items.length+'</span><div style="margin-top:6px;font-size:10.5px;color:var(--text-3)">录入即自动保存；至少完成 6 项且覆盖 4 个维度才能生成报告。</div></div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+
+      '<button class="btn btn-sm btn-primary" data-act="fit-save" '+(a.status==='completed'?'disabled':'')+'>保存本页录入</button>'+
+      '<button class="btn btn-sm" data-act="fit-finalize" '+(a.status==='completed'?'disabled':'')+'>生成报告并锁定</button>'+
+      '<button class="btn btn-sm" data-act="fit-apply" '+(a.status==='completed'?'':'disabled')+'>写入档案入班体能</button>'+
+      '<button class="btn btn-sm" data-act="fit-new">新建复测</button>'+
+      '<button class="btn btn-sm" data-act="fit-print">打印报告</button>'+
+    '</div>'+rows+
+    '<details style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;color:var(--accent)">测评说明与年龄组让步规则</summary>'+
+    '<div style="font-size:11px;color:var(--text-2);line-height:1.8;margin-top:8px">'+esc(b.calibrationNote)+'<br>'+esc(b.factorNote||'')+'<br>'+esc(b.sexFactorNote||'')+'</div>'+
+    '<div style="margin-top:8px">'+b.ageGroups.map(g=>'<div style="font-size:11px;padding:4px 0;border-bottom:1px dashed var(--hairline)"><b>'+esc(g.name)+'</b> · RPE 上限 '+g.rpeCap+' · '+esc(g.note||'')+'</div>').join('')+'</div></details>';
+}
+
+function renderFitnessOutput(){
+  const out=$('#fitnessOutput');
+  if(!out)return;
+  const a=FIT_STATE.assessment;
+  if(!a){
+    out.innerHTML='<div class="empty" style="border:0"><div class="mark">[ FIT ]</div><h3>还没有体测报告</h3><p>左侧选择学员 →「开始测评」→ 按测试卡逐项录入 → 生成报告。报告会给出 9 个维度的指数、强项与补强项，并直接对应到教案 ④ 段的重点。</p></div>';
+    return;
+  }
+  const r=a.report;
+  const total=r.totalIndex;
+  const cmp=a.comparison;
+  let head='<div class="panel-head"><h2>身体素质图文报告</h2><span class="sub">'+esc(a.batteryCode)+' v'+a.batteryVersion+' · 快照固化</span></div>'+
+    '<div class="panel-body">'+
+    '<div class="kpi-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:16px">'+
+      '<div class="kpi"><div class="label"><span class="sq"></span>综合体能指数</div><div class="value">'+(total==null?'—':total)+'<small>/100</small></div><div class="formula">9 维加权；未测维度不计入</div></div>'+
+      '<div class="kpi"><div class="label"><span class="sq"></span>换算入班体能</div><div class="value">'+(r.fitScore==null?'—':r.fitScore)+'<small>/5</small></div><div class="formula">'+esc(r.fitScoreLabel||'项目不足，暂不换算')+'</div></div>'+
+      '<div class="kpi"><div class="label"><span class="sq"></span>覆盖项目</div><div class="value">'+r.coverage.measured+'<small>/'+r.coverage.total+'</small></div><div class="formula">未测不当作 0 分</div></div>'+
+      '<div class="kpi"><div class="label"><span class="sq"></span>年龄段</div><div class="value" style="font-size:18px">'+esc(a.ageGroup.name)+'</div><div class="formula">RPE 上限 '+r.ageGroup.rpeCap+'</div></div>'+
+    '</div>'+
+    (a.status!=='completed'?'<div class="notice notice-warn" style="margin-bottom:14px">本报告为<strong>草稿预览</strong>：可继续录入。点「生成报告并锁定」后才可写入学员档案。</div>':'')+
+    '<div class="two-col" style="margin-top:0">'+
+      '<div class="panel"><div class="panel-head"><h2>九维雷达</h2><span class="sub">0-100 指数</span></div><div class="panel-body">'+fitRadarSVG(r.dimensions)+'</div></div>'+
+      '<div class="panel"><div class="panel-head"><h2>维度明细</h2><span class="sub">对匹克球的意义</span></div><div class="panel-body">'+fitBarsHTML(r.dimensions)+'</div></div>'+
+    '</div>';
+
+  let middle='<div class="panel" style="margin-top:16px"><div class="panel-head"><h2>强项与补强</h2><span class="sub">按指数排序</span></div><div class="panel-body">'+
+    '<div class="grid-2">'+
+      '<div><div style="font-size:10px;letter-spacing:.1em;color:var(--text-3);text-transform:uppercase;margin-bottom:6px">可用优势</div>'+
+      (r.strongest.length?r.strongest.map(d=>'<div style="padding:6px 0;border-bottom:1px dashed var(--hairline);font-size:12px"><b>'+esc(d.name)+'</b> <span class="mono" style="color:var(--ok)">'+d.index+'</span><div class="sub-txt">'+esc(d.pickleball)+'</div></div>').join(''):'<div class="muted" style="font-size:11.5px">数据不足</div>')+'</div>'+
+      '<div><div style="font-size:10px;letter-spacing:.1em;color:var(--text-3);text-transform:uppercase;margin-bottom:6px">首要补强</div>'+
+      (r.weakest.length?r.weakest.map(d=>'<div style="padding:6px 0;border-bottom:1px dashed var(--hairline);font-size:12px"><b>'+esc(d.name)+'</b> <span class="mono" style="color:var(--warn)">'+d.index+'</span><div class="sub-txt">'+esc(d.pickleball)+'</div></div>').join(''):'<div class="muted" style="font-size:11.5px">数据不足</div>')+'</div>'+
+    '</div></div></div>';
+
+  let advice='<div class="panel" style="margin-top:16px"><div class="panel-head"><h2>计划适配建议</h2><span class="sub">只影响 ④ 段与负荷上限</span></div><div class="panel-body">'+
+    a.advice.suggestions.map(x=>'<div style="padding:7px 0;border-bottom:1px dashed var(--hairline);font-size:12px"><span class="chip '+(x.priority==='首要补强'?'chip-warn':x.priority==='可作为优势'?'chip-ok':'')+'">'+esc(x.priority)+'</span> '+(x.dimensionName?'<b>'+esc(x.dimensionName)+'</b> · ':'')+esc(x.text)+'</div>').join('')+
+    '<div class="notice" style="margin-top:12px">'+esc(a.advice.note)+(a.advice.loadGuard?' <b>本次判定触发负荷保护：</b>④ 段不加量、RPE 封 '+a.advice.rpeCap+'。':'')+'</div>'+
+    (cmp?'<div class="notice '+(Math.abs(cmp.diff)>1?'notice-warn':'')+'" style="margin-top:10px">教练自评 '+cmp.coachScore+' 分 vs 实测换算 '+cmp.measuredScore+' 分 → <b>'+esc(cmp.verdict)+'</b>。系统不自动改写档案分数，需教练在「写入档案入班体能」时确认。</div>':'')+
+    '</div></div>';
+
+  let table='<div class="panel" style="margin-top:16px"><div class="panel-head"><h2>逐项实测记录</h2><span class="sub">原始值 → 折算 → 指数</span></div><div class="table-wrap"><table><thead><tr><th>#</th><th>项目</th><th>维度</th><th>版本</th><th>原始值</th><th>折算值</th><th>指数</th><th>等级</th><th>状态</th></tr></thead><tbody>'+
+    r.results.slice().sort((x,y)=>(FIT_STATE.battery.items.find(i=>i.code===x.itemCode).no)-(FIT_STATE.battery.items.find(i=>i.code===y.itemCode).no)).map(x=>{
+      const dim=(FIT_STATE.battery.dimensions.find(d=>d.code===x.dimension)||{}).name||x.dimension;
+      const item=FIT_STATE.battery.items.find(i=>i.code===x.itemCode)||{};
+      return '<tr><td class="num">'+String(item.no||'—').padStart(2,'0')+'</td><td>'+esc(x.itemName)+'</td><td class="sec">'+esc(dim)+'</td><td class="sec">'+esc(x.variantName||'标准')+'</td><td class="num">'+(x.rawValue==null?'—':x.rawValue+' '+esc(x.unit))+'</td><td class="num">'+(x.normalizedValue==null?'—':x.normalizedValue)+'</td><td class="num">'+(x.indexValue==null?'—':x.indexValue)+'</td><td class="sec">'+(x.level==null?'—':FIT_LEVEL_LABEL_LOCAL[x.level])+'</td><td><span class="chip '+(x.status==='measured'?'chip-ok':x.status==='aborted'?'chip-warn':'')+'">'+FIT_STATUS_LABEL[x.status]+'</span></td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+
+  let foot='<div class="notice" style="margin-top:14px">'+esc(r.disclaimer)+'</div>'+
+    (r.missing.length?'<div class="notice" style="margin-top:8px">未测项目（不当作 0 分）：'+r.missing.map(m=>esc(m.itemName)).join('、')+'</div>':'')+
+    (r.notMeasured.length?'<div class="notice notice-warn" style="margin-top:8px">非实测状态：'+r.notMeasured.map(m=>esc(m.itemName)+'（'+FIT_STATUS_LABEL[m.status]+'）').join('、')+'</div>':'');
+
+  out.innerHTML=head+middle+advice+table+foot;
+  // 补上 normalizedValue：后端报告结果里带，兜底空值
+}
+
+async function fitCreate(){
+  const studentId=$('#fitStudent')?$('#fitStudent').value:'';
+  if(!studentId){toast('请先新增学员');return}
+  try{
+    const a=await window.PKB_API.request('/fitness-assessments',{method:'POST',body:JSON.stringify({
+      studentId,ageGroupCode:$('#fitAgeGroup').value,sex:$('#fitSex').value||null,
+      heightCm:$('#fitHeight').value||null,weightKg:$('#fitWeight').value||null,testDate:$('#fitDate').value||today()
+    })});
+    FIT_STATE.studentId=studentId;FIT_STATE.assessment=a;
+    toast('测评已建立，请按测试卡逐项录入');renderFitnessForm();renderFitnessOutput();
+  }catch(e){toast('建立测评失败：'+e.message)}
+}
+async function fitSave(silent){
+  const a=FIT_STATE.assessment;if(!a)return false;
+  const results=[];
+  $$('[data-fit-status]').forEach(sel=>{
+    const code=sel.dataset.fitStatus;
+    const rawEl=$('[data-fit-raw="'+code+'"]'),varEl=$('[data-fit-variant="'+code+'"]');
+    const status=sel.value;
+    if(status!=='measured'&&(rawEl.value===''||rawEl.value==null)){results.push({itemCode:code,status});return;}
+    if(rawEl.value===''||rawEl.value==null){return;}
+    results.push({itemCode:code,rawValue:Number(rawEl.value),variantCode:varEl.value||null,status});
+  });
+  if(!results.length){if(!silent)toast('没有新的录入');return false;}
+  try{
+    FIT_STATE.assessment=await window.PKB_API.request('/fitness-assessments/'+a.id+'/results',{method:'PUT',body:JSON.stringify({results})});
+    if(!silent)toast('已保存 '+results.length+' 项');
+    renderFitnessForm();renderFitnessOutput();return true;
+  }catch(e){toast('保存失败：'+e.message);return false}
+}
+async function fitFinalize(){
+  const a=FIT_STATE.assessment;if(!a)return;
+  const saved=await fitSave(true);
+  try{
+    FIT_STATE.assessment=await window.PKB_API.request('/fitness-assessments/'+a.id+'/finalize',{method:'POST',body:JSON.stringify({})});
+    toast('报告已生成并锁定；如需修改请新建复测');renderFitnessForm();renderFitnessOutput();
+  }catch(e){toast('生成报告失败：'+e.message)}
+}
+async function fitApply(){
+  const a=FIT_STATE.assessment;if(!a)return;
+  if(!confirm('把本次实测换算的入班体能写入学员档案？这会覆盖档案中的入班体能分（历史测评报告不受影响）。'))return;
+  try{
+    const r=await window.PKB_API.request('/fitness-assessments/'+a.id+'/apply-to-student',{method:'POST',body:JSON.stringify({})});
+    const s=(state.students||[]).find(x=>x.id===r.studentId);
+    if(s)s.fitScore=r.fitScore;
+    save();
+    toast('已写入入班体能 '+r.fitScore+' 分'+(r.overridden?'（含教练覆盖）':''));
+    renderFitnessOutput();
+  }catch(e){toast('写入失败：'+e.message)}
+}
+function fitPrint(){window.print()}
+
 document.addEventListener('click',e=>{
  const nav=e.target.closest('[data-nav]');if(nav){navigate(nav.dataset.nav);return}
  const go=e.target.closest('[data-go]');if(go){navigate(go.dataset.go);if(go.dataset.openPlan){const p=state.plans.find(x=>x.id===go.dataset.openPlan);if(p){state.ui.planForm=Object.assign({},state.ui.planForm||{},{studentIds:p.studentIds||[],lesson:p.lesson,minutes:p.minutes,date:p.date,age:p.age==='混合班'?'mixed':'adult',fitMode:'auto',focus:'tech',size:'small'});state.ui.lastPlan=buildPlan(state.ui.planForm);renderPlanPage()}}return}
@@ -1427,6 +2175,15 @@ document.addEventListener('click',e=>{
   state.ui.planForm=Object.assign({},state.ui.planForm||{},{studentIds:[id],lesson:Math.min(Number(s.used)+1,STAGES[Number(s.stage)].to),date:today(),age:s.age||'adult',fitMode:'auto',goal:(GOALS.includes(s.goal)?s.goal:'技术晋级')});
   state.ui.lastPlan=null;navigate('plan');toast('已带入 '+s.name+' 的推荐课次');return;
  }
+ if(act==='create-enrollment'){createEnrollment();return}
+ if(act==='pick-enrollment'){state.ui.enrollId=id;ENR_STATE.adjust='';save();renderEnroll();return}
+ if(act==='prep-lesson'){prepLesson(btn.dataset.enroll,id);return}
+ if(act==='execute-plan'){executePlan();return}
+ if(act==='cancel-exec'){state.ui.execCtx=null;save();renderExecBar();toast('已取消执行，教案仍在预览里');return}
+ if(act==='open-lesson'){state.ui.sessionId=id;state.ui.adjust='';navigate('lesson');return}
+ if(act==='open-review'){reviewModal(id);return}
+ if(act==='save-review'){saveSessionReview(id);return}
+ if(act==='review-first-taught'){const e=enrollments().find(x=>x.id===id);const o=e&&(e.outline||[]).find(x=>x.status==='taught');if(o&&o.sessionId){state.ui.sessionId=o.sessionId;navigate('lesson');setTimeout(()=>reviewModal(o.sessionId),60)}else toast('没有待点评的课次');return}
  if(act==='generate'){generate();return}
  if(act==='save-plan'){
   const p=state.ui.lastPlan;if(!p){toast('请先生成计划');return}
@@ -1440,6 +2197,14 @@ document.addEventListener('click',e=>{
   else fallbackCopy(txt);return;
  }
  if(act==='print-plan'){if(!state.ui.lastPlan){toast('请先生成计划');return}window.print();return}
+ if(act==='fit-login'){if(window.PKB_API)window.PKB_API.promptLogin?window.PKB_API.promptLogin():location.reload();return}
+ if(act==='fit-for'){const st=(state.students||[]).find(x=>x.id===id);FIT_STATE.studentId=id;FIT_STATE.assessment=null;navigate('fitness');if(st)toast('已带入 '+st.name+'，可开始体能测评');return}
+ if(act==='fit-create'){fitCreate();return}
+ if(act==='fit-save'){fitSave();return}
+ if(act==='fit-finalize'){fitFinalize();return}
+ if(act==='fit-apply'){fitApply();return}
+ if(act==='fit-print'){fitPrint();return}
+ if(act==='fit-new'){FIT_STATE.assessment=null;renderFitnessForm();renderFitnessOutput();toast('可新建一份复测（历史报告保留）');return}
  if(act==='create-stage-attempt'){createStageAttempt(btn.dataset.protocol);return}
  if(act==='save-stage-results'){saveStageResults(btn.dataset.attempt);return}
  if(act==='review-stage-result'){reviewStageResult(btn.dataset.attempt,btn.dataset.code);return}
@@ -1498,6 +2263,19 @@ document.addEventListener('click',e=>{
   const prefs=state.prefs;state=defaultState();state.prefs=prefs;save();applyPrefs();navigate('dash');toast('已清空全部数据');return;
  }
 });
+async function refreshState(){
+  if(!(window.PKB_API&&window.PKB_API.online()))return null;
+  const remote=await window.PKB_API.bootstrap();
+  if(!remote)return null;
+  const localUi=state.ui,localPrefs=state.prefs,d=defaultState();
+  state=Object.assign(d,normalize(remote));
+  state.ui=Object.assign(d.ui,localUi);
+  state.prefs=Object.assign(d.prefs,localPrefs);
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(err){}
+  renderStorageNote();
+  return state;
+}
+
 function fallbackCopy(txt){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('教案文本已复制')}catch(e){toast('复制失败，请切换到打印稿手动选取')}ta.remove()}
 document.addEventListener('change',e=>{
  if(e.target.id==='importFile'&&e.target.files[0]){
@@ -1532,6 +2310,15 @@ document.addEventListener('change',e=>{
  }
  if(e.target.id==='stageFilter'||e.target.id==='ageFilter')renderStudents();
  if(e.target.id==='stageView')renderCurriculumTable(Number(e.target.value));
+ if(e.target.id==='fitStudent'){
+  FIT_STATE.studentId=e.target.value;FIT_STATE.assessment=null;
+  const st=(state.students||[]).find(x=>x.id===FIT_STATE.studentId);
+  const ag=(FIT_STATE.battery&&FIT_STATE.battery.ageGroups||[]).find(g=>g.code===(st&&st.age==='senior'?'a55':st&&st.age==='youth'?'u17':'a18'));
+  if(ag&&$('#fitAgeGroup'))$('#fitAgeGroup').value=ag.code;
+  renderFitnessForm();renderFitnessOutput();return;
+ }
+ if(e.target.dataset&&e.target.dataset.fitVariant!==undefined){return;}
+ if(e.target.dataset&&e.target.dataset.fitStatus!==undefined){return;}
  if(e.target.id==='stageAssessStudent'||e.target.id==='stageAssessStage'){
   const host=$('#stageAssessmentPanel');if(host){if(e.target.id==='stageAssessStudent')host.dataset.student=e.target.value;else host.dataset.stage=e.target.value;renderStageAssessmentPanel();}
  }
@@ -1539,10 +2326,20 @@ document.addEventListener('change',e=>{
 document.addEventListener('input',e=>{
  if(e.target.id==='studentSearch')renderStudents();
  if(e.target.id==='pickerSearch')renderPicker();
+ if(e.target.dataset&&e.target.dataset.fitRaw!==undefined&&FIT_STATE.battery){
+  const code=e.target.dataset.fitRaw;
+  const b=FIT_STATE.battery;
+  const item=b.items.find(i=>i.code===code);
+  const box=$('[data-fit-preview="'+code+'"]');
+  if(!item||!box)return;
+  const ageEl=$('#fitAgeGroup'),sexEl=$('#fitSex'),varEl=$('[data-fit-variant="'+code+'"]');
+  const pv=fitPreview(b,ageEl?ageEl.value:'a18',sexEl?sexEl.value:'',item,e.target.value,varEl?varEl.value:'');
+  box.textContent=pv?('即时指数 '+pv.index+' · '+FIT_LEVEL_LABEL_LOCAL[pv.level]+'（保存后以后端结果为准）'):'';
+ }
 });
 document.addEventListener('keydown',e=>{
  if(e.key==='Escape')closeModal();
- if(e.key>='1'&&e.key<='6'&&!/input|textarea|select/i.test(document.activeElement.tagName))navigate(['dash','students','plan','tracking','assess','settings'][Number(e.key)-1]);
+ if(e.key>='1'&&e.key<='9'&&!/input|textarea|select/i.test(document.activeElement.tagName))navigate(['dash','students','today','enroll','plan','tracking','assess','settings','fitness'][Number(e.key)-1]);
 });
 $('#tweaksBtn').addEventListener('click',()=>{const t=$('#tweaks');t.hidden=!t.hidden});
 function applyPrefs(){

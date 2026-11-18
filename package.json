@@ -8,11 +8,12 @@
     "dev": "node --watch backend/src/index.js",
     "migrate": "node backend/src/db/migrate.js",
     "seed": "node database/seeds/seed.js",
-    "test": "node --test backend/tests/*.test.js && npm run check:curriculum && npm run check:frontend && npm run check:deploy",
+    "test": "node --test backend/tests/*.test.js && npm run check:curriculum && npm run check:frontend && npm run check:flow && npm run check:deploy",
     "check": "node --check backend/src/index.js",
     "check:curriculum": "node scripts/check-curriculum.js",
     "check:frontend": "node scripts/check-frontend.js",
-    "check:deploy": "bash scripts/test-ci-deploy.sh"
+    "check:deploy": "bash scripts/test-ci-deploy.sh",
+    "check:flow": "node scripts/check-flow.js"
   },
   "engines": {
     "node": ">=22.5.0"

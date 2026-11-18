@@ -1,6 +1,7 @@
 'use strict';
 const entities = require('./entities');
 const { settings, meta } = require('./misc');
+const { all } = require('../db/connection');
 const { transaction, run } = require('../db/connection');
 const { HttpError } = require('../utils/response');
 
@@ -8,6 +9,29 @@ const DEFAULT_DEFAULTS = { minutes: 90, size: 'small', age: 'adult', freq: 2, un
 const DEFAULT_PARAMS = {};
 const DEFAULT_PREFS = { theme: 'dark', accent: 'lime', density: 'comfortable', motion: 'on' };
 const DEFAULT_UI = { view: 'dash', planview: 'timeline', planForm: null, lastPlan: null, detailId: null };
+function readEnrollments() {
+  const rows = all(`SELECT e.*, s.name AS student_name FROM enrollments e
+                    LEFT JOIN students s ON s.id = e.student_id
+                    WHERE e.status IN ('active','paused') ORDER BY e.start_date DESC LIMIT 200`);
+  const outlines = all(`SELECT * FROM outline_lessons ORDER BY enrollment_id, seq`);
+  const byEnr = new Map();
+  for (const o of outlines) {
+    if (!byEnr.has(o.enrollment_id)) byEnr.set(o.enrollment_id, []);
+    byEnr.get(o.enrollment_id).push({
+      id: o.id, seq: o.seq, unitNo: o.unit_no, lessonNo: o.lesson_no, lessonType: o.lesson_type,
+      plannedDate: o.planned_date, minutes: o.minutes, focus: o.focus, status: o.status,
+      sessionId: o.session_id, planId: o.plan_id, note: o.note
+    });
+  }
+  return rows.map(r => ({
+    id: r.id, studentId: r.student_id, studentName: r.student_name, packageType: r.package_type,
+    className: r.class_name, totalLessons: r.total_lessons, usedLessons: r.used_lessons,
+    lessonsPerWeek: r.lessons_per_week, minutesPerLesson: r.minutes_per_lesson,
+    startDate: r.start_date, expireDate: r.expire_date, goal: r.goal, stage: r.stage,
+    paceMode: r.pace_mode, status: r.status, outline: byEnr.get(r.id) || []
+  }));
+}
+
 const ENTITY_KEYS = ['students', 'plans', 'sessions', 'assessments'];
 
 /** 聚合为前端可直接消费的 state（含乐观锁版本号） */
@@ -18,6 +42,8 @@ function readState() {
     plans: entities.listAll('plans'),
     sessions: entities.listAll('sessions'),
     assessments: entities.listAll('assessments'),
+    // P7：课程包与大纲只读下发，供前端离线时也能看「今天上哪节、点评了没」
+    enrollments: readEnrollments(),
     demo: Boolean(s.meta && s.meta.demo),
     thresholds: s.thresholds || {},
     params: Object.assign({}, DEFAULT_PARAMS, s.params || {}),

@@ -6,6 +6,8 @@ info:
     学员档案、教学计划生成数据、教学追踪与量化考核的后端接口。
     数据存 SQLite；除健康检查与登录外均需 Bearer JWT。
     涉及伤病、青少年与常青负荷时系统仅输出评估提示，不做医疗诊断。
+    P7 排课主线：课程包（买 N 节）→ 课程大纲（N 节 A/B/R）→ 执行一节课 → 课后点评。
+    执行与点评均为单事务；/today 与 /state 已包含课程包与大纲，离线可见。
 servers:
   - url: http://127.0.0.1:8787/api/v1
     description: 本机默认
@@ -322,3 +324,180 @@ paths:
     get: { summary: 考核详情, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '200': { description: ok } } }
     patch: { summary: 更新考核, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '200': { description: ok } } }
     delete: { summary: 删除考核, parameters: [{ in: path, name: id, required: true, schema: { type: string } }], responses: { '204': { description: 已删除 } } }
+  /fitness-battery:
+    get:
+      summary: 身体素质测评表（9 项测试卡 + 5 档锚点 + 年龄组/性别系数）
+      description: 分档为参考分档（推定值），不是官方常模，也不是医疗诊断。
+      responses: { '200': { description: ok } }
+  /fitness-assessments:
+    post:
+      summary: 为学员开一份体能测评（固化测评表快照）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [studentId]
+              properties:
+                studentId: { type: string }
+                sex: { type: string, enum: [male, female] }
+                ageGroupCode: { type: string, example: a18 }
+                heightCm: { type: number }
+                weightKg: { type: number }
+                testDate: { type: string, format: date }
+      responses: { '201': { description: 已创建 }, '404': { description: 学员不存在 }, '422': { description: 校验失败 } }
+  /fitness-assessments/{id}:
+    get:
+      summary: 体能测评报告（9 维指数 / 强项补强 / 计划适配建议）
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      responses: { '200': { description: ok } }
+  /fitness-assessments/{id}/results:
+    put:
+      summary: 录入单项实测值（非 measured 状态不计分）
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  maxItems: 20
+                  items:
+                    type: object
+                    required: [itemCode]
+                    properties:
+                      itemCode: { type: string, example: plank }
+                      rawValue: { type: number }
+                      variantCode: { type: string, nullable: true }
+                      status: { type: string, enum: [measured, aborted, skipped, contraindicated] }
+                      note: { type: string }
+      responses:
+        '200': { description: ok }
+        '409': { description: 已完成锁定（ASSESSMENT_LOCKED） }
+        '422': { description: 值非法（INVALID_VALUE）或项目不存在（UNKNOWN_ITEM） }
+  /fitness-assessments/{id}/finalize:
+    post:
+      summary: 生成报告并锁定（需 ≥6 项且覆盖 ≥4 个维度）
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      responses:
+        '200': { description: ok }
+        '422': { description: 项目不足（INCOMPLETE_BATTERY） }
+  /fitness-assessments/{id}/apply-to-student:
+    post:
+      summary: 教练确认后把换算体能分写入学员档案（可选覆盖 0-5）
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      responses:
+        '200': { description: ok }
+        '409': { description: 未完成（NOT_COMPLETED）或无法换算（NO_SCORE） }
+  /students/{id}/fitness-assessments:
+    get:
+      summary: 学员体能测评历史与趋势
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      responses: { '200': { description: ok } }
+  /students/{id}/fitness-latest:
+    get:
+      summary: 最新一份已完成体能报告（教案 ④ 段适配数据源）
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      responses: { '200': { description: ok } }
+  /curriculum-difficulty:
+    get:
+      summary: 24 单元难度 / 并列新授点 / 建议课次 / 放行判据 + 剂量模型 + 已知缺口
+      responses: { '200': { description: ok } }
+  /enrollments:
+    get:
+      summary: 课程包列表（含逐节大纲）
+      parameters:
+        - { in: query, name: studentId, schema: { type: string } }
+        - { in: query, name: status, schema: { type: string, enum: [active, completed, paused, cancelled] } }
+      responses: { '200': { description: ok } }
+    post:
+      summary: 登记课程包并按难度与剂量生成 N 节大纲（单事务）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [studentId, totalLessons]
+              properties:
+                studentId: { type: string }
+                totalLessons: { type: integer, minimum: 1, maximum: 200 }
+                packageType: { type: string, enum: [solo, small, large] }
+                lessonsPerWeek: { type: integer, minimum: 1, maximum: 7 }
+                minutesPerLesson: { type: integer, minimum: 30, maximum: 180 }
+                startDate: { type: string, format: date }
+                startStage: { type: integer, minimum: 1, maximum: 3 }
+                startUnit: { type: integer, minimum: 1, maximum: 24 }
+                techLevel: { type: number, minimum: 0, maximum: 5 }
+                fitLevel: { type: number, minimum: 0, maximum: 5 }
+                ageGroup: { type: string, enum: [adult, youth, senior, mixed] }
+                paceMode: { type: string, enum: [fixed, adaptive], description: adaptive 未达标插入同单元补强课，fixed 严格按购买课数排满 }
+      responses:
+        '201': { description: 建包并返回大纲 + generated（byUnit / truncated / truncatedReason） }
+        '404': { description: 学员不存在（STUDENT_NOT_FOUND） }
+        '422': { description: 课数或字段非法（VALIDATION_ERROR） }
+  /enrollments/{id}:
+    get:
+      summary: 课程包详情（学员快照 + 逐节状态 + 进度）
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      responses:
+        '200': { description: ok }
+        '404': { description: 课程包不存在（ENROLLMENT_NOT_FOUND） }
+    patch:
+      summary: 改状态 / 节奏模式 / 频次 / 时长 / 备注
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      responses:
+        '200': { description: ok }
+        '422': { description: 取值非法（VALIDATION_ERROR） }
+  /enrollments/{id}/lessons:
+    post:
+      summary: 执行一节课（幂等；单事务写授课记录 + 大纲状态 + 包已用 + 学员已耗）
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                outlineLessonId: { type: string, description: 不传则取第一个待上课次 }
+                planId: { type: string }
+                date: { type: string, format: date }
+                judge: { type: string, enum: [达标, 部分达标, 未达标] }
+                rpe: { type: integer, minimum: 1, maximum: 10 }
+                attend: { type: string }
+      responses:
+        '201': { description: 返回 session + outlineLesson + duplicated + nextStep }
+        '404': { description: 课程包或大纲课次不存在（ENROLLMENT_NOT_FOUND / OUTLINE_NOT_FOUND） }
+        '409': { description: 没有待上课次（NO_PLANNED_LESSON）或课程包已取消（ENROLLMENT_CANCELLED） }
+  /sessions/{id}/review:
+    post:
+      summary: 课后点评（3 要点达成 + 一句话 + 作业 + 下节重点），未达标自动把下一节改为同单元补强课
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [judge]
+              properties:
+                judge: { type: string, enum: [达标, 部分达标, 未达标] }
+                attend: { type: string }
+                rpe: { type: integer, minimum: 1, maximum: 10 }
+                note: { type: string }
+                homework: { type: string }
+                nextFocus: { type: string }
+                judgeVals: { type: object, description: '{ kp1: true, kp2: false, kp3: true }' }
+      responses:
+        '200': { description: 返回 session（reviewStatus=done）+ adjust（insert_r / hold / keep / none） }
+        '404': { description: 授课记录不存在（SESSION_NOT_FOUND） }
+        '422': { description: 判据取值非法（VALIDATION_ERROR） }
+  /today:
+    get:
+      summary: 今日视图：当天待上课次 / 待点评 / 已过期未上
+      parameters: [{ in: query, name: date, schema: { type: string, format: date } }]
+      responses: { '200': { description: ok } }
