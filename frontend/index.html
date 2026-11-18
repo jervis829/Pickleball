@@ -1095,11 +1095,11 @@ function renderTracking(){
 }
 function thresholdsReady(){const t=state.thresholds||{};return ['t1','t2','t3','line2','line3','w'].every(k=>t[k]!==undefined&&t[k]!=='')}
 function renderAssess(){
- $('#thresholdNotice').innerHTML=thresholdsReady()?'<div class="notice" style="margin-bottom:16px">阈值已保存（本馆实测值 / 基线百分位法）。晋级判定按总分 + 实战与规则单项门槛执行。</div>':'<div class="notice notice-warn" style="margin-bottom:16px">考核阈值尚未校准。按体系要求不得编造标准值，晋级判定将显示「阈值未校准，无法判定」。请到「体系与设置 → 量化阈值校准」填写 P50/P75/P90 实测值、权重与晋级线。</div>';
- $('#assessForm').innerHTML='<div class="grid-2"><div class="field"><label>学员</label><select id="aStudent">'+(state.students.length?state.students.map(s=>'<option value="'+s.id+'">'+esc(s.name)+' · 阶段 '+s.stage+'</option>').join(''):'<option value="">— 暂无学员 —</option>')+'</select></div><div class="field"><label>考核阶段</label><select id="aStage"><option value="1">阶段一 → 中级（第 16 课）</option><option value="2">阶段二 → 高级（第 32 课）</option><option value="3">阶段三 结业（第 48 课）</option></select></div></div><div class="field"><label>测试日期</label><input type="date" id="aDate" value="'+today()+'"></div><div class="divider"></div><div class="grid-2" id="aItems">'+ASSESS_ITEMS.map(i=>'<div class="field"><label>'+i.name+' <span class="mono" style="color:var(--text-3)">'+i.unit+'</span></label><input type="number" data-item="'+i.id+'" placeholder="实测值"></div>').join('')+'</div><div class="err-text" id="aErr"></div><button class="btn btn-primary" data-act="save-assess">保存成绩并判定</button>';
- $('#assessResult').innerHTML='<div class="notice">判定规则：<br>总分 = Σ(单项得分 × 权重)，满分 100 分。<br>晋级线：初级晋升中级 ≥ 设置页录入的晋级线（中）、中级晋升高级 ≥ 设置页录入的晋级线（高），且<strong>实战与规则两项不得低于各自初级线</strong>。<br>补考：只重测未达标项，取当次实测，不取历史最高。<br>考核时点：第 16 / 32 / 48 课。<br><br>当前状态：<strong>'+(thresholdsReady()?'阈值已校准':'阈值未校准，无法判定')+'</strong></div>';
+ $('#thresholdNotice').innerHTML='<div class="notice notice-warn" style="margin-bottom:16px"><strong>评估安全模式：</strong>旧七项指标尚未形成统一测试协议，当前只保存实测记录，不自动计算总分或判定晋级。第16/32/48课为建议评估窗口，不是自动升级节点。新版阶段能力协议经教练试测发布后再启用晋级判定。</div>';
+ $('#assessForm').innerHTML='<div class="grid-2"><div class="field"><label>学员</label><select id="aStudent">'+(state.students.length?state.students.map(s=>'<option value="'+s.id+'">'+esc(s.name)+' · 阶段 '+s.stage+'</option>').join(''):'<option value="">— 暂无学员 —</option>')+'</select></div><div class="field"><label>评估阶段</label><select id="aStage"><option value="1">初阶能力检查 · 建议第16课附近</option><option value="2">中阶能力检查 · 建议第32课附近</option><option value="3">高阶综合评估 · 建议第48课附近</option></select></div></div><div class="field"><label>测试日期</label><input type="date" id="aDate" value="'+today()+'"></div><div class="notice" style="margin:10px 0">本阶段必测项目需全部录入。下列旧指标仅作历史实测资料收集；非本阶段项目可留空，不能据此自动晋级。</div><div class="grid-2" id="aItems">'+ASSESS_ITEMS.map(i=>'<div class="field"><label>'+i.name+' <span class="mono" style="color:var(--text-3)">'+i.unit+'</span></label><input type="number" step="any" data-item="'+i.id+'" placeholder="实测值"></div>').join('')+'</div><div class="err-text" id="aErr"></div><button class="btn btn-primary" data-act="save-assess">保存实测记录</button>';
+ $('#assessResult').innerHTML='<div class="notice"><strong>当前判定：待新版评估协议发布。</strong><br>旧记录不会被删除；新录入数据保留原始实测值，但不生成误导性的百分制总分或晋级/补考结论。<br><br>正式评估将采用阶段专项能力项、统一测试条件、关键项门槛和教练复核。规则与安全为不可补偿的关键项。</div>';
  const a=state.assessments.slice().sort((x,y)=>(y.date||'').localeCompare(x.date||''));
- $('#assessList').innerHTML=a.length?a.map(x=>'<div class="list-row"><div><div class="main-txt">'+esc(x.studentName)+' · 阶段 '+x.stage+'</div><div class="sub-txt">'+esc(x.date)+' · '+x.conclusion+'</div></div><div class="right"><span class="chip '+(x.conclusion==='晋级'?'chip-ok':'chip-warn')+'">'+esc(x.total==null?'未校准':x.total+' 分')+'</span></div></div>').join(''):'<div class="list-row"><span class="muted" style="font-size:12px">暂无考核记录</span></div>';
+ $('#assessList').innerHTML=a.length?a.map(x=>'<div class="list-row"><div><div class="main-txt">'+esc(x.studentName)+' · 阶段 '+x.stage+'</div><div class="sub-txt">'+esc(x.date)+' · '+esc(x.conclusion||'历史记录待复核')+'</div></div><div class="right"><span class="chip '+(x.conclusion==='晋级'?'chip-ok':'chip-warn')+'">'+esc(x.total==null?'待复核':x.total+' 分')+'</span></div></div>').join(''):'<div class="list-row"><span class="muted" style="font-size:12px">暂无考核记录</span></div>';
 }
 
 function renderParamsPanel(){
@@ -1279,18 +1279,11 @@ function generate(){
  })().catch(err=>{btn.disabled=false;btn.textContent='生成详细教学计划';$('#planErr').textContent='生成失败：'+err.message});
 }
 function assessJudge(stage,vals){
- if(!thresholdsReady())return {total:null,conclusion:'阈值未校准，无法判定'};
- const t=state.thresholds,ids=STAGE_ITEMS[stage]||STAGE_ITEMS[1];
- let sum=0,cnt=0,gateFail=false;
- ids.forEach(id=>{const v=Number(vals[id]);if(!isFinite(v)||vals[id]==='')return;
-  const hi=Number(stage===1?t.t1:stage===2?t.t2:t.t3)||1;
-  const score=id==='shuttle'?Math.max(0,Math.min(100,(hi/Math.max(v,.1))*100)):Math.min(100,v/Math.max(hi,.1)*100);
-  sum+=score;cnt++;if((id==='rule'||id==='match')&&v<Number(t.t1))gateFail=true;});
- const total=cnt?Math.round(sum/cnt):null,line=Number(stage===1?t.line2:t.line3);
- if(total==null)return {total:null,conclusion:'未录入实测值'};
- if(gateFail)return {total,conclusion:'单项门槛未过 · 补考'};
- if(total>=line)return {total,conclusion:'晋级'};
- return {total,conclusion:'未达晋级线 · 补考'};
+ const ids=STAGE_ITEMS[stage]||STAGE_ITEMS[1];
+ const missing=ids.filter(id=>vals[id]===undefined||vals[id]===null||String(vals[id]).trim()==='');
+ if(missing.length)return {total:null,conclusion:'资料不完整 · 待补录',missing};
+ // 旧七项指标缺少统一测试协议与经验证的标准参照线，不能安全地产生自动晋级结论。
+ return {total:null,conclusion:'已记录实测 · 待教练复核',missing:[],model:'legacy_pending_review'};
 }
 document.addEventListener('click',e=>{
  const nav=e.target.closest('[data-nav]');if(nav){navigate(nav.dataset.nav);return}
@@ -1366,11 +1359,22 @@ document.addEventListener('click',e=>{
  if(act==='save-assess'){
   const sid=$('#aStudent').value;if(!sid){$('#aErr').textContent='请先新增学员';return}
   const stage=Number($('#aStage').value),date=$('#aDate').value,vals={};
-  $$('#aItems input').forEach(x=>vals[x.dataset.item]=x.value);
-  if(!Object.values(vals).some(v=>v!=='')){$('#aErr').textContent='请至少录入 1 项实测值';return}
+  $('#aItems input').forEach(x=>vals[x.dataset.item]=x.value.trim());
+  const ids=STAGE_ITEMS[stage]||STAGE_ITEMS[1],missing=ids.filter(id=>vals[id]==='');
+  if(missing.length){$('#aErr').textContent='本阶段必测项目未完成：'+missing.join('、')+'。缺测不能当作0分，也不能生成评估结论。';return}
+  const invalid=[];
+  ids.forEach(id=>{
+   const v=Number(vals[id]);
+   if(!Number.isFinite(v)){invalid.push(id+'需为有效数字');return}
+   if((id==='serve'||id==='aim')&&(v<0||v>100))invalid.push(id+'须在0–100之间');
+   if((id==='foot'||id==='rule')&&(v<0||v>5))invalid.push(id+'须在0–5之间');
+   if(id==='shuttle'&&v<=0)invalid.push(id+'秒数须大于0');
+   if(id==='dink'&&v<0)invalid.push(id+'回合数不能为负数');
+  });
+  if(invalid.length){$('#aErr').textContent='数据范围有误：'+invalid.join('；');return}
   const st=state.students.find(x=>x.id===sid),j=assessJudge(stage,vals);
-  state.assessments.push({id:uid(),studentId:sid,studentName:st?st.name:'—',stage,date,vals,total:j.total,conclusion:j.conclusion});
-  save();renderAssess();toast('成绩已保存：'+j.conclusion);return;
+  state.assessments.push({id:uid(),studentId:sid,studentName:st?st.name:'—',stage,date,vals,total:null,conclusion:j.conclusion,assessmentModel:'legacy_pending_review',missingCriteria:[],reviewStatus:'pending'});
+  save();renderAssess();toast('实测记录已保存，等待教练复核');return;
  }
  if(act==='save-thresholds'){const t={};$$('[data-th]').forEach(x=>t[x.dataset.th]=x.value);state.thresholds=t;save();toast('阈值已保存（本馆实测值）');renderSettings();return}
  if(act==='save-defaults'){const d={};$$('[data-default]').forEach(x=>d[x.dataset.default]=x.value);state.defaults=Object.assign(state.defaults||{},d,{minutes:Number(d.minutes)});save();toast('默认假设已更新');renderSettings();return}
