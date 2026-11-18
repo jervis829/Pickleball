@@ -70,9 +70,13 @@ def build_package(ts: str) -> Path:
     return pkg
 
 
-def connect(cfg: dict):
-    cli = paramiko.SSHClient()
-    cli.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+def connect(cfg: dict, retries: int = 6):
+    """建立 SSH 连接。
+
+    本机若装了系统级代理 / TUN 隧道，到服务器的链路会间歇性抖动：
+    TCP 能连上但 sshd 的 banner 读不到，表现为 banner_timeout 超时。
+    这里做指数退避重试，避免把网络抖动误判成部署失败。
+    """
     args = dict(hostname=cfg['DEPLOY_HOST'], port=int(cfg['DEPLOY_PORT']),
                 username=cfg['DEPLOY_USER'], timeout=25,
                 look_for_keys=False, allow_agent=False)
@@ -80,9 +84,28 @@ def connect(cfg: dict):
         args['key_filename'] = str(Path(cfg['DEPLOY_KEY']).expanduser())
     else:
         args['password'] = cfg['DEPLOY_PWD']
-    cli.connect(**args)
-    print(f"[1] SSH 连接成功 {cfg['DEPLOY_USER']}@{cfg['DEPLOY_HOST']}:{cfg['DEPLOY_PORT']}")
-    return cli
+
+    last = None
+    for attempt in range(1, retries + 1):
+        cli = paramiko.SSHClient()
+        cli.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        try:
+            cli.connect(banner_timeout=45, auth_timeout=45, **args)
+            print(f"[1] SSH 连接成功 {cfg['DEPLOY_USER']}@{cfg['DEPLOY_HOST']}:{cfg['DEPLOY_PORT']}"
+                  + (f"（第 {attempt} 次尝试）" if attempt > 1 else ''))
+            return cli
+        except Exception as exc:  # noqa: BLE001 - 网络异常种类多，统一退避重试
+            last = exc
+            try:
+                cli.close()
+            except Exception:  # noqa: BLE001
+                pass
+            if attempt == retries:
+                break
+            wait = min(20, 3 * attempt)
+            print(f"    SSH 连接失败（第 {attempt}/{retries} 次）：{type(exc).__name__} — {wait}s 后重试")
+            time.sleep(wait)
+    raise RuntimeError(f"SSH 连接失败（重试 {retries} 次）：{type(last).__name__} — {last}")
 
 
 def sh(cli, cmd: str, label: str, timeout: int = 300, check: bool = True):
