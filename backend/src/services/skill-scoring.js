@@ -173,7 +173,7 @@ function trainingRecommendations(studentId, lessonNo) {
   const recentSessions = all(`SELECT id, lesson_date AS lessonDate, lesson, rpe, attend, note
     FROM sessions WHERE student_id = ? AND deleted_at IS NULL
     ORDER BY lesson_date DESC, created_at DESC LIMIT 3`, [studentId]);
-  const injury = get('SELECT injury FROM students WHERE id = ? AND deleted_at IS NULL', [studentId])?.injury || '';
+  const injury = get('SELECT injury_note AS injury FROM students WHERE id = ? AND deleted_at IS NULL', [studentId])?.injury || '';
   const rpes = recentSessions.map(x => Number(x.rpe)).filter(Number.isFinite);
   const highRpeCount = rpes.filter(x => x >= 8).length;
   const painNote = recentSessions.some(x => /疼痛|痛感|受伤|伤病|不适|肿胀|麻木/.test(String(x.note || '')));
