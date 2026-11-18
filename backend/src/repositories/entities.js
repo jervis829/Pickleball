@@ -23,7 +23,7 @@ const DEFS = {
   },
   sessions: {
     table: 'sessions',
-    cols: { studentId: 'student_id', date: 'lesson_date', lesson: 'lesson', minutes: 'minutes', attend: 'attend', judge: 'judge', rpe: 'rpe', note: 'note' },
+    cols: { studentId: 'student_id', planId: 'plan_id', date: 'lesson_date', lesson: 'lesson', minutes: 'minutes', attend: 'attend', judge: 'judge', rpe: 'rpe', note: 'note' },
     defaults: {},
     search: ['note']
   },
@@ -43,7 +43,7 @@ function toDb(entity, input, forcedId) {
     let v = src[fe];
     if (JSON_COLS.has(col)) v = v == null ? null : (typeof v === 'string' ? v : JSON.stringify(v));
     else if (NUM_COLS.has(col)) v = (v === '' || v == null) ? null : Number(v);
-    else v = v == null ? null : String(v);
+    else v = (v == null || v === '') ? null : String(v);
     row[col] = (typeof v === 'number' && Number.isNaN(v)) ? null : v;
   }
   return row;
@@ -153,7 +153,10 @@ const clearPlanStudents = () => run('DELETE FROM plan_students');
 function create(entity, input) {
   const row = toDb(entity, input);
   upsertRow(entity, row);
-  if (entity === 'plans') writePlanStudents(row.id, input.studentIds || []);
+  if (entity === 'plans') {
+    writePlanStudents(row.id, input.studentIds || []);
+    require('../services/skill-scoring').ensurePlanSnapshot(row.id, row.lesson);
+  }
   return find(entity, row.id);
 }
 
@@ -162,7 +165,10 @@ function update(entity, id, input) {
   const merged = Object.assign({}, current, input, { id });
   const row = toDb(entity, merged, id);
   upsertRow(entity, row);
-  if (entity === 'plans' && input.studentIds) writePlanStudents(id, input.studentIds);
+  if (entity === 'plans') {
+    if (input.studentIds) writePlanStudents(id, input.studentIds);
+    require('../services/skill-scoring').ensurePlanSnapshot(id, row.lesson);
+  }
   return find(entity, id);
 }
 

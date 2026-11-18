@@ -36,7 +36,7 @@ function replaceState(snapshot, expectedRevision = null) {
   if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) {
     throw new HttpError(422, 'VALIDATION_ERROR', 'state 必须是对象');
   }
-  return transaction(() => {
+  const revision = transaction(() => {
     const current = meta.revision();
     if (expectedRevision !== null && Number(expectedRevision) !== current) {
       throw new HttpError(409, 'REVISION_CONFLICT',
@@ -67,6 +67,12 @@ function replaceState(snapshot, expectedRevision = null) {
     run(`DELETE FROM audit_logs WHERE id NOT IN (SELECT id FROM audit_logs ORDER BY id DESC LIMIT 5000)`);
     return revision;
   });
+  // 聚合同步/导入同样需要为新教案建立评分项目快照。
+  const scoring = require('../services/skill-scoring');
+  for (const plan of (snapshot.plans || [])) {
+    if (plan && plan.id && plan.lesson) scoring.ensurePlanSnapshot(plan.id, plan.lesson);
+  }
+  return revision;
 }
 
 module.exports = { readState, replaceState, DEFAULT_DEFAULTS, DEFAULT_PARAMS, DEFAULT_PREFS, DEFAULT_UI, ENTITY_KEYS };

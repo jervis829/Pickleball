@@ -38,7 +38,7 @@ const SCHEMAS = {
   },
   sessions: {
     id: COMMON_ID,
-    studentId: { type: 'string', maxLength: 64 },
+    studentId: { type: 'string', maxLength: 64 }, planId: { type: 'string', maxLength: 64 },
     date: { type: 'string', maxLength: 20 }, lesson: LESSON,
     minutes: { type: 'integer', min: 0, max: 300 },
     attend: { type: 'string', maxLength: 20 }, judge: { type: 'string', maxLength: 20 },
