@@ -79,6 +79,37 @@ function gen(students, form) {
   return { p, text: p ? ctx.planText(p) : '' };
 }
 const base = gen([mk({})]);
+const review = ctx.buildTrainingReview(base.p, { available: true, students: [{
+  student: { name: '测试学员' },
+  matchedWeakSkills: [{ skillKey: 'weak-1', skillName: '正手截击', history: [{ score: 2 }, { score: 1 }] }],
+  parkedWeakSkills: [{ skillName: '发球' }],
+  masteredSkills: [{ skillName: '反手挑球' }],
+  safety: { holdAdditionalLoad: true, caution: true, reasons: ['最近 RPE 偏高'] }
+}] });
+ok('动态复习只接收本课匹配薄弱项', review.weak.length === 1 && review.weak[0].skillName === '正手截击');
+ok('动态复习保留不匹配薄弱项待后续主题', review.parked.length === 1);
+ok('稳定掌握不意味着跳课', review.mastered.length === 1);
+ok('RPE / 安全信号触发负荷保护', review.safety.holdAdditionalLoad === true);
+const dynamicPlan = (() => {
+  const students = [mk({ techScore: 5, fitScore: 5, pkLevel: 5 })];
+  vm.runInContext('state.students = ' + JSON.stringify(students) + ';', ctx);
+  return ctx.buildPlan({ studentIds: [students[0].id], lesson: 13, minutes: 90, age: 'adult', size: 'small', date: '2026-11-14', fitMode: 'auto', goal: '技术晋级' }, {
+    available: true, students: [{
+      student: { name: '测试学员' },
+      matchedWeakSkills: [{ skillKey: 'weak-1', skillName: '正手截击', history: [{ score: 2 }, { score: 1 }] }],
+      parkedWeakSkills: [], masteredSkills: [],
+      safety: { holdAdditionalLoad: true, caution: true, reasons: ['最近 RPE 偏高'] }
+    }]
+  });
+})();
+const drillSegment = dynamicPlan.struct.find(x => x.id === 'drill');
+ok('P4 薄弱项复习真正进入③分解练习', dynamicPlan.trainingReview.weak.length === 1);
+ok('P4 复习占用③原有前5分钟', ctx.blockTime(drillSegment, 0, dynamicPlan).startsWith((drillSegment.start + 5) + '-'));
+ok('P4 复习不改变总课时', dynamicPlan.struct.reduce((a, b) => a + b.end - b.start, 0) === 90);
+ok('P4 负荷保护关闭高阶额外加练', dynamicPlan.advanced.length === 0);
+ok('P4 负荷保护封顶训练参数倍率', ctx.paramVal('feedBalls', dynamicPlan) <= ctx.paramVal('feedBalls', base.p));
+ok('P4 动态复习出现在可视教案中', /动态纠错复习/.test(ctx.renderPlanHTML(dynamicPlan)));
+
 ok('基础教案生成成功', !!base.p);
 ok('教案无 {p:} 残留', !/\{p:/.test(base.text));
 ok('教案无 [N] 残留', !/\[N\]/.test(base.text));

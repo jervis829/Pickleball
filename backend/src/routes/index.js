@@ -36,6 +36,24 @@ add('POST', '/api/v1/import', C.importAll);
 add('GET', '/api/v1/stats', C.stats);
 add('GET', '/api/v1/curriculum', C.curriculum);
 add('GET', '/api/v1/students/:id/records', C.studentRecords);
+add('GET', '/api/v1/students/:id/skill-progress', C.studentSkillProgress);
+add('GET', '/api/v1/students/:id/training-recommendations', C.studentTrainingRecommendations);
+add('GET', '/api/v1/curriculum/:lesson/skill-points', C.lessonSkillPoints);
+add('GET', '/api/v1/plans/:id/skill-points', C.planSkillPoints);
+add('GET', '/api/v1/sessions/:id/skill-scores', C.sessionSkillScores);
+add('PUT', '/api/v1/sessions/:id/skill-scores', C.saveSessionSkillScores);
+add('GET', '/api/v1/assessment-protocols', C.assessmentProtocols, { write: false });
+add('GET', '/api/v1/assessment-protocols/:id', C.assessmentProtocol, { write: false });
+add('POST', '/api/v1/assessment-attempts', C.createAssessmentAttempt);
+add('GET', '/api/v1/assessment-attempts/:id', C.getAssessmentAttempt, { write: false });
+add('PUT', '/api/v1/assessment-attempts/:id/results', C.saveAssessmentResults);
+add('GET', '/api/v1/students/:id/assessment-attempts', C.studentAssessmentAttempts, { write: false });
+add('PUT', '/api/v1/assessment-attempts/:id/results/:code/review', C.reviewAssessmentResult);
+add('GET', '/api/v1/assessment-attempts/:id/remediation', C.assessmentRemediationPreview, { write: false });
+add('POST', '/api/v1/assessment-attempts/:id/remediation-plans', C.createAssessmentRemediationPlan);
+add('GET', '/api/v1/assessment-remediation-plans/:id', C.getAssessmentRemediationPlan, { write: false });
+add('POST', '/api/v1/assessment-remediation-plans/:id/confirm', C.confirmAssessmentRemediationPlan);
+add('POST', '/api/v1/assessment-retests', C.createScopedAssessmentRetest);
 
 /* ---------- 各实体 RESTful CRUD ---------- */
 for (const [name, h] of Object.entries({

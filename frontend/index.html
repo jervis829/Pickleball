@@ -343,7 +343,7 @@ pre.card{white-space:pre-wrap;word-break:break-word;font-family:'IBM Plex Mono',
     </section>
 
     <section class="view" id="view-assess" hidden>
-      <div class="section-title"><h2>考核与晋级</h2><span class="note">考核时点：第 16 / 32 / 48 课；阈值未校准不判定</span></div>
+      <div class="section-title"><h2>考核与晋级</h2><span class="note">建议评估窗口：第 16 / 32 / 48 课附近；能力达标后晋级</span></div>
       <div id="thresholdNotice"></div>
       <div class="two-col" style="margin-top:0">
         <div class="panel"><div class="panel-head"><h2>成绩录入</h2><span class="sub">7 项实测值</span></div><div class="panel-body" id="assessForm"></div></div>
@@ -367,7 +367,7 @@ pre.card{white-space:pre-wrap;word-break:break-word;font-family:'IBM Plex Mono',
         </div>
         <div class="stack">
           <div class="panel"><div class="panel-head"><h2>量化阈值校准</h2><span class="sub">本馆实测值</span></div><div class="panel-body">
-            <div class="notice notice-warn" style="margin-bottom:16px">教练 1 人，不满足「教练组共识法」需 3 名以上教练；且暂无历史 cohort 数据。采用<strong>基线百分位法</strong>：入班全员测一次，取 P50 / P75 / P90 作为初级 / 中级 / 高级线。未填写前，晋级判定一律显示「阈值未校准」。</div>
+            <div class="notice notice-warn" style="margin-bottom:16px"><strong>旧版阈值仅作历史资料留存，不参与当前晋级判定。</strong>旧版百分位和综合分缺少统一测试协议、样本校准与分项量纲处理；请勿把 P50 / P75 / P90 或旧晋级线作为自动晋级依据。</div>
             <div id="thresholdForm"></div>
             <div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-primary btn-sm" data-act="save-thresholds">保存阈值</button></div>
           </div></div>
@@ -549,8 +549,8 @@ function paramVal(key,p){
  const pr=p&&p.profile;
  if(pr){
   const k=def.k;
-  if(k==='reps'||k==='balls'||k==='rally')v=v*pr.techMul;
-  if(k==='sets'||k==='secs'||k==='points')v=v*pr.fitMul;
+  if(k==='reps'||k==='balls'||k==='rally')v=v*(pr.loadGuard?Math.min(1,pr.techMul):pr.techMul);
+  if(k==='sets'||k==='secs'||k==='points')v=v*(pr.loadGuard?Math.min(1,pr.fitMul):pr.fitMul);
   if(k==='balls'&&pr.goal==='专项补强')v=v*1.3;
   if(k==='points'&&pr.goal==='比赛备战')v=v*1.2;
   if(k==='sets'&&pr.goal==='减脂塑形')v=v*1.2;
@@ -592,8 +592,12 @@ function buildStruct(minutes,hasFit,goal){
  let t=0;
  return ids.map((id,i)=>{const start=t,end=t+dur[i];t=end;const d=SEG_DEF.find(x=>x.id===id);return {id,no:d.no,n:d.n,t:start+'-'+end+' min',start,end};});
 }
-function blockTime(sg,i){
+function blockTime(sg,i,p){
  const r=(BLOCK_RATIOS[sg.id]||[])[i]||[0,1];
+ if(sg.id==='drill'&&p&&p.trainingReview&&p.trainingReview.weak.length){
+  const reserve=Math.min(5,Math.max(1,sg.end-sg.start-1)), usable=(sg.end-sg.start)-reserve;
+  return Math.round(sg.start+reserve+usable*r[0])+'-'+Math.round(sg.start+reserve+usable*r[1])+' min';
+ }
  return Math.round(sg.start+(sg.end-sg.start)*r[0])+'-'+Math.round(sg.start+(sg.end-sg.start)*r[1])+' min';
 }
 
@@ -742,7 +746,7 @@ function venuePlan(p){
  L.push('组织原则：教练 1 人统一发令，同一时刻全班做同一件事；移步时整队往返，设备只由教练操作。');
  return L;
 }
-function buildPlan(f){
+function buildPlan(f,trainingRecommendations){
  const students=(f.studentIds||[]).map(id=>state.students.find(x=>x.id===id)).filter(Boolean);
  const lesson=LESSONS.find(l=>l.n===Number(f.lesson));
  if(!students.length||!lesson)return null;
@@ -814,8 +818,41 @@ function buildPlan(f){
    'flick / roll 连击：先 roll volley 引对手上手，再 flick 打空档，各 '+paramVal('feedBalls',p)+' 球。'
   ];
  }
+ p.trainingReview=buildTrainingReview(p,trainingRecommendations);
+ if(p.trainingReview&&p.trainingReview.safety.caution){
+  p.profile.loadGuard=true;
+  p.advanced=[];
+ }
+ if(p.trainingReview&&p.trainingReview.weak.length){
+  const names=p.trainingReview.weak.map(x=>x.skillName).join('、');
+  p.notes.push('动态复习建议：'+names+' 在最近两次评分均低于 3 分；将复习嵌入本课既有③分解练习的前 5 分钟，不增加总课时、不改变本课主题或48课次顺序。');
+ }
+ if(p.trainingReview&&p.trainingReview.safety.holdAdditionalLoad)p.notes.push('安全负荷保护：近期伤病 / 不适或高 RPE 信号触发保护；不增加球数、组数或训练强度，复习只做低强度动作校正，出现疼痛立即停止并按安全流程处理。');
  p.venue=venuePlan(p);
  return p;
+}
+
+
+function buildTrainingReview(p,recommendations){
+ if(!recommendations||!recommendations.available)return null;
+ const byKey=new Map(),parked=[],mastered=[],safetyReasons=[];
+ (recommendations.students||[]).forEach(rec=>{
+  const name=rec.student&&rec.student.name||'学员';
+  (rec.matchedWeakSkills||[]).forEach(x=>{
+   if(!byKey.has(x.skillKey))byKey.set(x.skillKey,{skillKey:x.skillKey,skillName:x.skillName,students:[],scores:x.history.slice(-2).map(h=>h.score)});
+   const item=byKey.get(x.skillKey);if(!item.students.includes(name))item.students.push(name);
+  });
+  (rec.parkedWeakSkills||[]).forEach(x=>parked.push({studentName:name,skillName:x.skillName}));
+  (rec.masteredSkills||[]).forEach(x=>mastered.push({studentName:name,skillName:x.skillName}));
+  (rec.safety&&rec.safety.reasons||[]).forEach(reason=>{if(!safetyReasons.includes(name+'：'+reason))safetyReasons.push(name+'：'+reason)});
+ });
+ const safety={
+  holdAdditionalLoad:(recommendations.students||[]).some(x=>x.safety&&x.safety.holdAdditionalLoad),
+  caution:(recommendations.students||[]).some(x=>x.safety&&x.safety.caution),
+  reasons:safetyReasons
+ };
+ return {available:true,weak:[...byKey.values()],parked,mastered,safety,lesson:p.lesson.n,
+  policy:'仅复习与本课次技术主题匹配的薄弱项；复习嵌入③分解练习，不延长总课时、不跳课或退课。'};
 }
 
 function planText(p){
@@ -825,6 +862,17 @@ function planText(p){
  L.push('训练目标 '+p.goal+' | 入班技术 '+p.techAvg+' / 5（A 匹克球 '+p.aAvg.toFixed(1)+' · B 挥拍类迁移 '+p.bAvg.toFixed(1)+'） | 入班体能 '+p.fitEff+' / 5');
  L.push('课堂结构：'+p.minutes+' 分钟 / '+(p.hasFit?'6 段（含 ④ 专项体能 / 步伐）':'5 段（不设 ④ 专项体能 / 步伐）'));
  L.push('体能段判定：'+p.fitReason);
+ if(p.trainingReview){
+  L.push('');
+  L.push('【动态训练调整】');
+  if(p.trainingReview.weak.length){
+   L.push('③分解练习前 5 分钟复习薄弱项（使用原有课时，不增加总时长）：');
+   p.trainingReview.weak.forEach(x=>L.push('  - '+x.skillName+'：'+x.students.join('、')+' 最近两次评分 '+x.scores.join('、')+' 分；先慢速定型，再按本课主题串联。'));
+  }else L.push('本课次没有与当前技术主题匹配的连续低分项，不额外插入其他主题练习。');
+  if(p.trainingReview.parked.length)L.push('暂不插入（与本课主题不匹配，留待对应主题复习）：'+p.trainingReview.parked.map(x=>x.studentName+'·'+x.skillName).join('；'));
+  if(p.trainingReview.mastered.length)L.push('稳定掌握（最近连续三次 ≥4 分，保留常规观察，不据此跳课）：'+p.trainingReview.mastered.map(x=>x.studentName+'·'+x.skillName).join('；'));
+  if(p.trainingReview.safety.reasons.length)L.push('负荷 / 安全提醒：'+p.trainingReview.safety.reasons.join('；'));
+ }
  L.push('');L.push('【当课次技术拆解】'+p.unit.tech);
  L.push('  本课次重点：'+p.lesson.focus);
  L.push('  3 个可观察判据：'+p.unit.kp.split('|').join(' / '));
@@ -834,8 +882,12 @@ function planText(p){
  p.struct.forEach(sg=>{
   const d=SEGMENTS[sg.id];
   L.push('【'+sg.no+' '+sg.n+'｜'+sg.t+'】'+fill(d.purpose,p));
+  if(sg.id==='drill'&&p.trainingReview&&p.trainingReview.weak.length){
+   L.push('  · '+sg.start+'-'+Math.min(sg.start+5,sg.end)+' min 动态纠错复习：'+p.trainingReview.weak.map(x=>x.skillName+'（'+x.students.join('、')+'，最近评分 '+x.scores.join(' / ')+'）').join('；'));
+   L.push('      先慢速定型与拍面 / 步法校正，再接回本课原有三步练习；全班同场同步，不增加总课时。');
+  }
   d.blocks.forEach((b,i)=>{
-   L.push('  · '+blockTime(sg,i)+' '+fill(b.l,p));
+   L.push('  · '+blockTime(sg,i,p)+' '+fill(b.l,p));
    fill(b.a.join('\n'),p).split('\n').forEach(a=>L.push('      - '+a));
    L.push('      口令：'+fill(b.c,p));
   });
@@ -936,7 +988,7 @@ function renderDetail(){
  exams.forEach(x=>items.push({d:x.date||'—',t:'阶段 '+x.stage+' 考核',c:esc(x.conclusion||'')+' · '+(x.total==null?'未校准':x.total+' 分')+' <span class="chip chip-warn">考核</span>'}));
  items.sort((a,b)=>(b.d||'').localeCompare(a.d||''));
  $('#detailContent').innerHTML=
- '<div class="panel"><div class="detail-hero"><div class="avatar">'+esc(s.name.slice(0,1))+'</div><div style="flex:1"><h2>'+esc(s.name)+'</h2><div style="display:flex;flex-wrap:wrap;gap:7px"><span class="chip mono">'+esc(s.id)+'</span><span class="chip">'+esc(AGE_GROUPS[s.age||'adult'].name)+'</span><span class="chip">阶段 '+s.stage+' '+STAGES[s.stage].name+'</span><span class="chip chip-accent">第 '+esc(s.used)+' / '+esc(s.total)+' 课</span><span class="chip">出勤 '+at+'</span><span class="chip">'+esc(s.status||'在训')+'</span></div><div style="margin-top:10px;font-size:11.5px;color:var(--text-3)">入班技术 '+esc(s.techScore==null?'—':s.techScore)+' / 5（A '+esc(s.pkLevel==null?'—':s.pkLevel)+' · B '+esc(s.racketBase==null?'0':s.racketBase)+'） · 入班体能 '+esc(s.fitScore==null?'—':s.fitScore)+' / 5 · 目标 '+esc(s.goal||'技术晋级')+'</div></div><div class="no-print" style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-sm btn-primary" data-act="plan-for" data-id="'+s.id+'">生成下一课次计划</button><button class="btn btn-sm" data-act="export-student" data-id="'+s.id+'">导出该学员记录</button></div></div>'+
+ '<div class="panel"><div class="detail-hero"><div class="avatar">'+esc(s.name.slice(0,1))+'</div><div style="flex:1"><h2>'+esc(s.name)+'</h2><div style="display:flex;flex-wrap:wrap;gap:7px"><span class="chip mono">'+esc(s.id)+'</span><span class="chip">'+esc(AGE_GROUPS[s.age||'adult'].name)+'</span><span class="chip">阶段 '+s.stage+' '+STAGES[s.stage].name+'</span><span class="chip chip-accent">第 '+esc(s.used)+' / '+esc(s.total)+' 课</span><span class="chip">出勤 '+at+'</span><span class="chip">'+esc(s.status||'在训')+'</span></div><div style="margin-top:10px;font-size:11.5px;color:var(--text-3)">入班技术 '+esc(s.techScore==null?'—':s.techScore)+' / 5（A '+esc(s.pkLevel==null?'—':s.pkLevel)+' · B '+esc(s.racketBase==null?'0':s.racketBase)+'） · 入班体能 '+esc(s.fitScore==null?'—':s.fitScore)+' / 5 · 目标 '+esc(s.goal||'技术晋级')+'</div></div><div class="no-print" style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-sm btn-primary" data-act="plan-for" data-id="'+s.id+'">生成下一课次计划</button><button class="btn btn-sm" data-act="skill-progress" data-id="'+s.id+'">技术成长</button><button class="btn btn-sm" data-act="export-student" data-id="'+s.id+'">导出该学员记录</button></div></div>'+
  (s.injury?'<div class="panel-body" style="padding-bottom:0"><div class="notice notice-danger"><strong>安全标记：</strong>'+esc(s.injury)+' — 须先经医生或专业人员评估，训练全程启用退阶动作；本系统不做医疗诊断。</div></div>':'')+
  '<div class="panel-body"><div class="section-title" style="margin-bottom:8px"><h2 style="font-size:15px">学习记录时间线</h2><span class="note">按日期倒序 · 计划 / 授课 / 考核合并</span></div>'+
  (items.length?items.map(i=>'<div class="timeline-item"><div class="d">'+esc(i.d)+'</div><div><div class="t">'+i.t+'</div><div class="c">'+i.c+'</div></div></div>').join(''):'<div class="empty" style="border:0"><div class="mark">[ 00 ]</div><h3>暂无学习记录</h3><p>生成并保存计划、补录授课记录后，这里会自动汇总该学员的进度与反馈。</p></div>')+
@@ -986,8 +1038,9 @@ function refreshLessonOptions(){
 }
 function segCardHTML(sg,p){
  const d=SEGMENTS[sg.id];
- const acts=d.blocks.map((b,i)=>'<div class="act-block"><div class="at">'+blockTime(sg,i)+'</div><div class="al">'+esc(fill(b.l,p))+'</div><ul>'+b.a.map(a=>'<li>'+esc(fill(a,p))+'</li>').join('')+'</ul><div class="call">教练口令：'+esc(fill(b.c,p))+'</div></div>').join('');
- return '<div class="seg-card"><div class="seg-card-top"><span class="no">'+sg.no+'</span><span class="nm">'+sg.n+'</span><span class="tm">'+sg.t+'</span></div><div class="seg-card-body"><div class="purpose"><strong>目的：</strong>'+esc(fill(d.purpose,p))+'</div>'+acts+
+ const acts=d.blocks.map((b,i)=>'<div class="act-block"><div class="at">'+blockTime(sg,i,p)+'</div><div class="al">'+esc(fill(b.l,p))+'</div><ul>'+b.a.map(a=>'<li>'+esc(fill(a,p))+'</li>').join('')+'</ul><div class="call">教练口令：'+esc(fill(b.c,p))+'</div></div>').join('');
+ const review=sg.id==='drill'&&p.trainingReview&&p.trainingReview.weak.length?'<div class="act-block"><div class="at">'+sg.start+'-'+Math.min(sg.start+5,sg.end)+' min</div><div class="al">动态纠错复习 · '+esc(p.trainingReview.weak.map(x=>x.skillName).join('、'))+'</div><ul><li>先慢速徒手 / 定点动作定型，教练逐项观察原技术判据</li><li>按学员名单做个别口令提示；全班仍在同一场地、同一步骤</li><li>复习后直接衔接本课原有三步递进练习，不增加球数、组数或总时长</li></ul><div class="call">教练口令：先把动作做稳，再接回今天的新内容</div></div>':'';
+ return '<div class="seg-card"><div class="seg-card-top"><span class="no">'+sg.no+'</span><span class="nm">'+sg.n+'</span><span class="tm">'+sg.t+'</span></div><div class="seg-card-body"><div class="purpose"><strong>目的：</strong>'+esc(fill(d.purpose,p))+'</div>'+review+acts+
   '<div class="seg-meta"><div class="m age"><div class="k">年龄段调整 · '+esc(p.ageName)+'</div><div class="v">'+esc(fill(d.age[p.age],p))+'</div></div>'+
   '<div class="m"><div class="k">与本课次的关系</div><div class="v">'+esc(fill(d.link,p))+'</div></div>'+
   '<div class="m"><div class="k">教练判据</div><div class="v">'+esc(fill(d.judge,p))+'</div></div>'+
@@ -997,6 +1050,17 @@ function segCardHTML(sg,p){
 /* 调整说明 / 高阶加练的共用渲染块（三种视图都显示） */
 function planExtraHTML(p){
  let h='';
+ if(p.trainingReview){
+  h+='<div class="block"><h3><span class="idx">04A</span>动态训练调整 · 技术复习与负荷保护</h3>';
+  if(p.trainingReview.weak.length){
+   h+='<div class="why"><b>复习位置：</b>嵌入③分解练习前 5 分钟，使用本课既有时长；不延长课程、不改变48课次顺序。</div>';
+   h+=p.trainingReview.weak.map(x=>'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)"><b>'+esc(x.skillName)+'</b> · '+esc(x.students.join('、'))+' · 最近两次评分 '+esc(x.scores.join(' / '))+' 分<br><span class="sec">先慢速定型和拍面 / 步法校正，再接回本课次主题。</span></div>').join('');
+  }else h+='<div class="notice">没有发现与第 '+p.lesson.n+' 课技术主题匹配的连续低分项，因此不把其他课次主题强行插入本课。</div>';
+  if(p.trainingReview.parked.length)h+='<div style="font-size:11.5px;color:var(--text-2);padding:8px 0">其他薄弱项暂存，待对应主题课次复习：'+p.trainingReview.parked.map(x=>esc(x.studentName)+' · '+esc(x.skillName)).join('；')+'</div>';
+  if(p.trainingReview.mastered.length)h+='<div style="font-size:11.5px;color:var(--ok);padding:8px 0">稳定掌握（连续三次 ≥4 分）：'+p.trainingReview.mastered.map(x=>esc(x.studentName)+' · '+esc(x.skillName)).join('；')+'。保留常规观察，不因此跳课。</div>';
+  if(p.trainingReview.safety.caution)h+='<div class="notice notice-warn" style="margin-top:8px"><b>负荷保护：</b>不增加球数、组数或强度；'+(p.trainingReview.safety.reasons.map(esc).join('；')||'近期 RPE 偏高，维持原负荷观察')+'。如出现疼痛立即停止。</div>';
+  h+='</div>';
+ }
  if(p.notes&&p.notes.length)h+='<div class="block"><h3><span class="idx">05</span>本课次调整说明</h3>'+p.notes.map((x,i)=>'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)">'+(i+1)+'. '+esc(x)+'</div>').join('')+'</div>';
  if(p.advanced&&p.advanced.length)h+='<div class="block"><h3><span class="idx">06</span>高阶加练 · 选修 <span class="chip chip-accent">技术 5 分 / 4.0+</span></h3><div class="why">本段不占用 48 课次主线时长，可在课后追加或转私教方案；教练按当天状态决定是否执行。</div>'+p.advanced.map((x,i)=>'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)">'+(i+1)+'. '+esc(x)+'</div>').join('')+'</div>';
  return h;
@@ -1010,7 +1074,7 @@ function renderPlanHTML(p){
  if(v==='print')return head+'<div class="plan-body"><div class="block"><h3>打印稿（含全部详细动作）</h3><pre class="card">'+esc(planText(p))+'</pre></div>'+planExtraHTML(p)+'</div>';
  if(v==='table'){
   let rows='';
-  p.struct.forEach(sg=>{const d=SEGMENTS[sg.id];d.blocks.forEach((b,i)=>{rows+='<tr><td>'+sg.no+' '+sg.n+'</td><td class="num">'+blockTime(sg,i)+'</td><td>'+esc(fill(b.l,p))+'</td><td class="sec">'+b.a.map(a=>esc(fill(a,p))).join('；')+'</td><td class="sec">'+esc(fill(b.c,p))+'</td></tr>'})});
+  p.struct.forEach(sg=>{const d=SEGMENTS[sg.id];if(sg.id==='drill'&&p.trainingReview&&p.trainingReview.weak.length){rows+='<tr><td>'+sg.no+' '+sg.n+'</td><td class="num">'+sg.start+'-'+Math.min(sg.start+5,sg.end)+' min</td><td>动态纠错复习 · '+esc(p.trainingReview.weak.map(x=>x.skillName).join('、'))+'</td><td class="sec">先慢速定型、拍面 / 步法校正；按学员给个别口令</td><td class="sec">先把动作做稳，再接回本课内容</td></tr>'}d.blocks.forEach((b,i)=>{rows+='<tr><td>'+sg.no+' '+sg.n+'</td><td class="num">'+blockTime(sg,i,p)+'</td><td>'+esc(fill(b.l,p))+'</td><td class="sec">'+b.a.map(a=>esc(fill(a,p))).join('；')+'</td><td class="sec">'+esc(fill(b.c,p))+'</td></tr>'})});
   const venueRows=p.venue.map((x,i)=>'<tr><td class="num">'+(i+1)+'</td><td class="sec">'+esc(x)+'</td></tr>').join('');
   return head+'<div class="plan-body rise"><div class="block"><h3><span class="idx">01</span>课堂结构表（含具体动作）</h3><div class="table-wrap"><table><thead><tr><th>环节</th><th>时间</th><th>做什么</th><th>具体动作 / 组次</th><th>教练口令</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
    '<div class="block"><h3><span class="idx">02</span>场地与器材动线</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>说明</th></tr></thead><tbody>'+venueRows+'</tbody></table></div></div>'+
@@ -1026,16 +1090,113 @@ function renderPlanHTML(p){
 }
 function renderTracking(){
  $('#sessionCount').textContent=state.sessions.length+' 条记录';
- $('#sessionTable').innerHTML=state.sessions.length?'<table><thead><tr><th>日期</th><th>学员</th><th>课次</th><th>时长</th><th>出勤</th><th>判据</th><th>RPE</th><th>反馈</th><th></th></tr></thead><tbody>'+state.sessions.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(x=>'<tr><td class="num">'+esc(x.date)+'</td><td>'+esc(x.studentName)+'</td><td class="num">第 '+x.lesson+' 课</td><td class="num">'+x.minutes+' min</td><td><span class="chip '+(x.attend==='出勤'?'chip-ok':'chip-warn')+'">'+esc(x.attend)+'</span></td><td>'+esc(x.judge||'—')+'</td><td class="num">'+esc(x.rpe||'—')+'</td><td class="sec">'+esc(x.note||'—')+'</td><td><button class="btn btn-sm" data-act="del-session" data-id="'+x.id+'">删除</button></td></tr>').join('')+'</tbody></table>':'<div class="empty" style="border:0"><div class="mark">[ 00 ]</div><h3>还没有授课记录</h3><p>生成教案后点「保存计划」，或在上方补录一条记录。</p></div>';
+ $('#sessionTable').innerHTML=state.sessions.length?'<table><thead><tr><th>日期</th><th>学员</th><th>课次</th><th>时长</th><th>出勤</th><th>判据</th><th>RPE</th><th>反馈</th><th></th></tr></thead><tbody>'+state.sessions.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(x=>'<tr><td class="num">'+esc(x.date)+'</td><td>'+esc(x.studentName)+'</td><td class="num">第 '+x.lesson+' 课</td><td class="num">'+x.minutes+' min</td><td><span class="chip '+(x.attend==='出勤'?'chip-ok':'chip-warn')+'">'+esc(x.attend)+'</span></td><td>'+esc(x.judge||'—')+'</td><td class="num">'+esc(x.rpe||'—')+'</td><td class="sec">'+esc(x.note||'—')+'</td><td style="white-space:nowrap">'+(x.planId?'<button class="btn btn-sm btn-primary" data-act="skill-score" data-id="'+x.id+'">技术评分</button> ':'<span class="muted">未关联教案</span> ')+'<button class="btn btn-sm" data-act="del-session" data-id="'+x.id+'">删除</button></td></tr>').join('')+'</tbody></table>':'<div class="empty" style="border:0"><div class="mark">[ 00 ]</div><h3>还没有授课记录</h3><p>生成教案后点「保存计划」，或在上方补录一条记录。</p></div>';
  $('#mgmtTable').innerHTML='<table><thead><tr><th>动作</th><th>责任人</th><th>频率</th><th>判据 / 阈值</th><th>交付物</th></tr></thead><tbody>'+MGMT_ROWS.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td class="sec">'+resolve(r[3],null)+'</td><td class="sec">'+r[4]+'</td></tr>').join('')+'</tbody></table>';
 }
 function thresholdsReady(){const t=state.thresholds||{};return ['t1','t2','t3','line2','line3','w'].every(k=>t[k]!==undefined&&t[k]!=='')}
 function renderAssess(){
- $('#thresholdNotice').innerHTML=thresholdsReady()?'<div class="notice" style="margin-bottom:16px">阈值已保存（本馆实测值 / 基线百分位法）。晋级判定按总分 + 实战与规则单项门槛执行。</div>':'<div class="notice notice-warn" style="margin-bottom:16px">考核阈值尚未校准。按体系要求不得编造标准值，晋级判定将显示「阈值未校准，无法判定」。请到「体系与设置 → 量化阈值校准」填写 P50/P75/P90 实测值、权重与晋级线。</div>';
- $('#assessForm').innerHTML='<div class="grid-2"><div class="field"><label>学员</label><select id="aStudent">'+(state.students.length?state.students.map(s=>'<option value="'+s.id+'">'+esc(s.name)+' · 阶段 '+s.stage+'</option>').join(''):'<option value="">— 暂无学员 —</option>')+'</select></div><div class="field"><label>考核阶段</label><select id="aStage"><option value="1">阶段一 → 中级（第 16 课）</option><option value="2">阶段二 → 高级（第 32 课）</option><option value="3">阶段三 结业（第 48 课）</option></select></div></div><div class="field"><label>测试日期</label><input type="date" id="aDate" value="'+today()+'"></div><div class="divider"></div><div class="grid-2" id="aItems">'+ASSESS_ITEMS.map(i=>'<div class="field"><label>'+i.name+' <span class="mono" style="color:var(--text-3)">'+i.unit+'</span></label><input type="number" data-item="'+i.id+'" placeholder="实测值"></div>').join('')+'</div><div class="err-text" id="aErr"></div><button class="btn btn-primary" data-act="save-assess">保存成绩并判定</button>';
- $('#assessResult').innerHTML='<div class="notice">判定规则：<br>总分 = Σ(单项得分 × 权重)，满分 100 分。<br>晋级线：初级晋升中级 ≥ 设置页录入的晋级线（中）、中级晋升高级 ≥ 设置页录入的晋级线（高），且<strong>实战与规则两项不得低于各自初级线</strong>。<br>补考：只重测未达标项，取当次实测，不取历史最高。<br>考核时点：第 16 / 32 / 48 课。<br><br>当前状态：<strong>'+(thresholdsReady()?'阈值已校准':'阈值未校准，无法判定')+'</strong></div>';
+ $('#thresholdNotice').innerHTML='<div class="notice notice-warn" style="margin-bottom:16px"><strong>评估安全模式：</strong>旧七项指标尚未形成统一测试协议，当前只保存实测记录，不自动计算总分或判定晋级。第16/32/48课为建议评估窗口，不是自动升级节点。新版阶段能力协议经教练试测发布后再启用晋级判定。</div>';
+ $('#assessForm').innerHTML='<div class="grid-2"><div class="field"><label>学员</label><select id="aStudent">'+(state.students.length?state.students.map(s=>'<option value="'+s.id+'">'+esc(s.name)+' · 阶段 '+s.stage+'</option>').join(''):'<option value="">— 暂无学员 —</option>')+'</select></div><div class="field"><label>评估阶段</label><select id="aStage"><option value="1">初阶能力检查 · 建议第16课附近</option><option value="2">中阶能力检查 · 建议第32课附近</option><option value="3">高阶综合评估 · 建议第48课附近</option></select></div></div><div class="field"><label>测试日期</label><input type="date" id="aDate" value="'+today()+'"></div><div class="notice" style="margin:10px 0">本阶段必测项目需全部录入。下列旧指标仅作历史实测资料收集；非本阶段项目可留空，不能据此自动晋级。</div><div class="grid-2" id="aItems">'+ASSESS_ITEMS.map(i=>'<div class="field"><label>'+i.name+' <span class="mono" style="color:var(--text-3)">'+i.unit+'</span></label><input type="number" step="any" data-item="'+i.id+'" placeholder="实测值"></div>').join('')+'</div><div class="err-text" id="aErr"></div><button class="btn btn-primary" data-act="save-assess">保存实测记录</button>';
+ $('#assessResult').innerHTML='<div class="notice"><strong>当前判定：待新版评估协议发布。</strong><br>旧记录不会被删除；新录入数据保留原始实测值，但不生成误导性的百分制总分或晋级/补考结论。<br><br>正式评估将采用阶段专项能力项、统一测试条件、关键项门槛和教练复核。规则与安全为不可补偿的关键项。</div>';
  const a=state.assessments.slice().sort((x,y)=>(y.date||'').localeCompare(x.date||''));
- $('#assessList').innerHTML=a.length?a.map(x=>'<div class="list-row"><div><div class="main-txt">'+esc(x.studentName)+' · 阶段 '+x.stage+'</div><div class="sub-txt">'+esc(x.date)+' · '+x.conclusion+'</div></div><div class="right"><span class="chip '+(x.conclusion==='晋级'?'chip-ok':'chip-warn')+'">'+esc(x.total==null?'未校准':x.total+' 分')+'</span></div></div>').join(''):'<div class="list-row"><span class="muted" style="font-size:12px">暂无考核记录</span></div>';
+ $('#assessList').innerHTML=a.length?a.map(x=>{const legacy=!x.assessmentModel;const status=legacy?(x.conclusion==='晋级'?'历史晋级结论（旧规则）':'历史记录（旧规则）'):(x.conclusion||'待教练复核');return '<div class="list-row"><div><div class="main-txt">'+esc(x.studentName)+' · 阶段 '+x.stage+'</div><div class="sub-txt">'+esc(x.date)+' · '+esc(status)+'</div></div><div class="right"><span class="chip chip-warn">'+esc(x.total==null?'待复核':x.total+' 分（旧规则）')+'</span></div></div>'}).join(''):'<div class="list-row"><span class="muted" style="font-size:12px">暂无考核记录</span></div>';
+ renderStageAssessmentPanel();
+}
+
+
+async function renderStageAssessmentPanel(){
+ let host=$('#stageAssessmentPanel');
+ if(!host){host=document.createElement('div');host.id='stageAssessmentPanel';host.className='panel';host.style.marginTop='18px';$('#view-assess').appendChild(host);}
+ if(!window.PKB_API||!window.PKB_API.online()){
+  host.innerHTML='<div class="panel-head"><h2>新版阶段能力评估 · 补训复测</h2></div><div class="panel-body"><div class="notice notice-warn">请先连接数据服务并登录，才能使用版本化协议、教练复核和补训复测。</div></div>';return;
+ }
+ try{
+  const [protocols,students]=await Promise.all([
+   window.PKB_API.request('/assessment-protocols?status=draft'),
+   Promise.resolve(state.students||[])
+  ]);
+  const selectedStudent=host.dataset.student||students[0]?.id||'';
+  const stage=Number(host.dataset.stage||1);
+  const protocolsForStage=protocols.filter(p=>p.stage===stage);
+  const selectedProtocol=protocolsForStage[0]?.id||'';
+  const attempts=selectedStudent?await window.PKB_API.request('/students/'+encodeURIComponent(selectedStudent)+'/assessment-attempts'):[];
+  host.innerHTML='<div class="panel-head"><h2>新版阶段能力评估 · 补训复测</h2><span class="sub">草案协议 · 教练复核 · 不自动晋级</span></div>'+
+   '<div class="panel-body"><div class="notice notice-warn" style="margin-bottom:14px">阶段评分采用0–4描述性锚点，与课堂技术点0–5分独立。当前协议仍为试测稿，不提供自动晋级结论；请由教练确认每项结果。</div>'+
+   '<div class="grid-3"><div class="field"><label>学员</label><select id="stageAssessStudent">'+students.map(s=>'<option value="'+esc(s.id)+'" '+(s.id===selectedStudent?'selected':'')+'>'+esc(s.name)+'</option>').join('')+'</select></div>'+
+   '<div class="field"><label>阶段协议</label><select id="stageAssessStage">'+[1,2,3].map(n=>'<option value="'+n+'" '+(n===stage?'selected':'')+'>阶段 '+n+'</option>').join('')+'</select></div>'+
+   '<div class="field"><label>关联课次（可选）</label><input id="stageAssessLesson" type="number" min="1" max="48" placeholder="16 / 32 / 48"></div></div>'+
+   '<button class="btn btn-primary btn-sm" data-act="create-stage-attempt" data-protocol="'+esc(selectedProtocol)+'" '+(!selectedProtocol?'disabled':'')+'>创建阶段能力评估</button>'+
+   '<div class="divider"></div><div class="section-title"><h2 style="font-size:14px">评估记录与教练复核</h2><span class="note">最近记录</span></div>'+
+   (attempts.length?attempts.slice(0,8).map(a=>{
+    const status=a.status==='cancelled'?'已取消':a.status==='submitted'?'已提交':'进行中';
+    const results=(a.results||[]).map(r=>{
+     const rv=r.coachReviewStatus||'pending';
+     return '<div style="padding:10px 0;border-bottom:1px dashed var(--hairline)"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>'+esc(r.criterionSnapshot?.name||r.criterionCode)+'</b><span class="chip '+(rv==='needs_remediation'?'chip-danger':rv==='confirmed'?'chip-ok':'chip-warn')+'">'+(rv==='needs_remediation'?'需补训':rv==='confirmed'?'已确认':rv==='not_applicable'?'不适用':'待复核')+'</span></div>'+
+      '<div class="grid-2" style="margin-top:8px"><div class="field"><label>阶段评分（0–4；0表示无有效观察）</label><input type="number" min="0" max="4" step="1" data-stage-score="'+a.id+'" data-criterion="'+r.criterionId+'" value="'+(r.score==null?'':r.score)+'" placeholder="未评估"></div><div class="field"><label>观察与证据</label><input type="text" data-stage-observation="'+a.id+'" data-criterion="'+r.criterionId+'" value="'+esc(r.observations||'')+'" placeholder="动作表现、情境、证据"></div></div>'+
+      '<div class="field" style="margin:8px 0"><label>教练复核结论</label><select id="review-'+a.id+'-'+r.criterionCode+'"><option value="confirmed" '+(rv==='confirmed'?'selected':'')+'>确认达到 / 记录完成</option><option value="needs_remediation" '+(rv==='needs_remediation'?'selected':'')+'>需补训</option><option value="not_applicable" '+(rv==='not_applicable'?'selected':'')+'>不适用（需说明）</option></select></div>'+
+      '<button class="btn btn-sm" data-act="review-stage-result" data-attempt="'+a.id+'" data-code="'+esc(r.criterionCode)+'">保存复核</button>'+
+      (r.coachDecisionNote?'<div class="sub-txt">'+esc(r.coachDecisionNote)+'</div>':'')+'</div>';
+    }).join('');
+    return '<details style="border:1px solid var(--hairline);border-radius:8px;padding:12px;margin:10px 0"><summary style="cursor:pointer"><b>'+esc(a.assessmentDate)+' · 阶段 '+a.protocolSnapshot.stage+'</b> <span class="chip">'+status+'</span> <span class="chip">'+(a.results||[]).length+'/'+(a.protocolSnapshot.criteria||[]).length+' 项已录入</span></summary>'+
+      '<div style="padding-top:10px">'+results+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-sm btn-primary" data-act="save-stage-results" data-attempt="'+a.id+'">保存评分与观察</button><button class="btn btn-sm" data-act="preview-remediation" data-attempt="'+a.id+'">查看补训建议</button></div><div id="remediation-'+a.id+'" style="margin-top:10px"></div></div></details>';
+   }).join(''):'<div class="empty" style="padding:24px"><h3>暂无新版评估记录</h3><p>选择学员和阶段协议，创建第一份阶段能力评估。</p></div>')+
+   '</div>';
+  host.dataset.student=selectedStudent;host.dataset.stage=String(stage);
+ }catch(e){host.innerHTML='<div class="panel-head"><h2>新版阶段能力评估</h2></div><div class="panel-body"><div class="notice notice-warn">载入失败：'+esc(e.message)+'</div></div>';}
+}
+async function createStageAttempt(protocolId){
+ const studentId=$('#stageAssessStudent')?.value,stage=Number($('#stageAssessStage')?.value||1);
+ const protocolList=await window.PKB_API.request('/assessment-protocols?stage='+stage+'&status=draft');
+ const protocol=protocolList[0];if(!studentId||!protocol){toast('缺少学员或阶段协议');return}
+ const lesson=Number($('#stageAssessLesson')?.value||0)||null;
+ try{
+  const a=await window.PKB_API.request('/assessment-attempts',{method:'POST',body:JSON.stringify({studentId,protocolId:protocol.id,lessonNumber:lesson,assessmentDate:today()})});
+  const results=protocol.criteria.map(c=>({criterionId:c.id,score:null,achieved:null,rawTrials:[],observations:''}));
+  await window.PKB_API.request('/assessment-attempts/'+a.id+'/results',{method:'PUT',body:JSON.stringify({results})});
+  toast('已创建阶段评估；请逐项录入观察分数并完成教练复核');
+  const host=$('#stageAssessmentPanel');host.dataset.student=studentId;host.dataset.stage=String(stage);await renderStageAssessmentPanel();
+ }catch(e){toast('创建评估失败：'+e.message)}
+}
+async function saveStageResults(attemptId){
+ try{
+  const attempt=await window.PKB_API.request('/assessment-attempts/'+attemptId);
+  const results=(attempt.results||[]).map(r=>{
+   const scoreEl=$('[data-stage-score="'+attemptId+'"][data-criterion="'+r.criterionId+'"]');
+   const noteEl=$('[data-stage-observation="'+attemptId+'"][data-criterion="'+r.criterionId+'"]');
+   const raw=scoreEl?.value??'';
+   return {criterionId:r.criterionId,score:raw===''?null:Number(raw),achieved:null,rawTrials:r.rawTrials||[],observations:noteEl?.value||''};
+  });
+  await window.PKB_API.request('/assessment-attempts/'+attemptId+'/results',{method:'PUT',body:JSON.stringify({results})});
+  toast('阶段评分与观察证据已保存');await renderStageAssessmentPanel();
+ }catch(e){toast('保存评估结果失败：'+e.message)}
+}
+async function reviewStageResult(attemptId,code){
+ const status=$('#review-'+attemptId+'-'+code)?.value;
+ try{await window.PKB_API.request('/assessment-attempts/'+attemptId+'/results/'+encodeURIComponent(code)+'/review',{method:'PUT',body:JSON.stringify({status,note:'由考核与晋级页面教练复核'})});toast('复核已保存');await renderStageAssessmentPanel();}
+ catch(e){toast('复核失败：'+e.message)}
+}
+async function previewRemediation(attemptId){
+ const box=$('#remediation-'+attemptId);if(!box)return;
+ try{
+  const p=await window.PKB_API.request('/assessment-attempts/'+attemptId+'/remediation');
+  box.innerHTML='<div class="notice">'+esc(p.policy)+'</div>'+
+   '<div style="margin-top:8px;font-size:12px"><b>需补训 '+p.needsRemediation.length+' 项 · 待复核 '+p.pendingReview.length+' 项 · 必测缺项 '+p.unassessedRequired.length+' 项</b></div>'+
+   (p.needsRemediation.length?p.needsRemediation.map(x=>'<div style="padding:8px 0;border-bottom:1px dashed var(--hairline)"><b>'+esc(x.name)+'</b> · 建议课次 '+(x.lessons.length?x.lessons.join('、'):'待教练指定')+'<div class="sub-txt">'+esc(x.activity)+'</div></div>').join(''):'')+
+   (p.canCreatePlan?'<button class="btn btn-primary btn-sm" style="margin-top:10px" data-act="create-remediation-plan" data-attempt="'+attemptId+'">生成补训计划草案</button>':'<div class="notice notice-warn" style="margin-top:10px">需先补齐必测项并完成所有已录入项的教练复核，系统才会生成补训计划。</div>');
+ }catch(e){box.textContent='补训建议载入失败：'+e.message}
+}
+async function createRemediationPlan(attemptId){
+ try{
+  const plan=await window.PKB_API.request('/assessment-attempts/'+attemptId+'/remediation-plans',{method:'POST',body:JSON.stringify({})});
+  await window.PKB_API.request('/assessment-remediation-plans/'+plan.id+'/confirm',{method:'POST',body:JSON.stringify({})});
+  const retest=await window.PKB_API.request('/assessment-retests',{method:'POST',body:JSON.stringify({
+   studentId:plan.studentId,protocolId:(await window.PKB_API.request('/assessment-attempts/'+attemptId)).protocolId,
+   retestOfId:attemptId,remediationPlanId:plan.id,criterionCodes:plan.items.map(x=>x.criterionCode)
+  })});
+  toast('补训计划已确认，并建立限定范围复测记录 '+retest.id);
+  await renderStageAssessmentPanel();
+ }catch(e){toast('补训计划处理失败：'+e.message)}
 }
 
 function renderParamsPanel(){
@@ -1063,7 +1224,7 @@ function renderSettings(){
  $('#defaultsForm').innerHTML='<div class="grid-2"><div class="field"><label>每阶教学单元数〔默认假设〕</label><input type="number" data-default="unitsPerStage" value="'+esc(d.unitsPerStage||8)+'"></div><div class="field"><label>每周课次〔默认假设〕</label><input type="number" data-default="freq" value="'+esc(d.freq||2)+'"></div><div class="field"><label>默认单次时长</label><select data-default="minutes"><option value="90" '+(d.minutes==90?'selected':'')+'>90 分钟</option><option value="60" '+(d.minutes==60?'selected':'')+'>60 分钟</option></select></div><div class="field"><label>默认年龄段</label><select data-default="age"><option value="adult" '+(d.age==='adult'?'selected':'')+'>成人</option><option value="youth" '+(d.age==='youth'?'selected':'')+'>青少年</option><option value="senior" '+(d.age==='senior'?'selected':'')+'>常青</option><option value="mixed" '+(d.age==='mixed'?'selected':'')+'>混合班</option></select></div><div class="field"><label>默认班型</label><select data-default="size"><option value="small" '+(d.size==='small'?'selected':'')+'>4-6 人小班</option><option value="large" '+(d.size==='large'?'selected':'')+'>8-12 人团课</option><option value="solo" '+(d.size==='solo'?'selected':'')+'>私教 1 人</option></select></div><div class="field"><label>场地片数〔默认假设〕</label><input type="number" data-default="courts" value="'+esc(d.courts||1)+'"></div><div class="field"><label>续费预警剩余课次</label><input type="number" data-default="renewWarn" value="'+esc(d.renewWarn||3)+'"></div></div><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" data-act="save-defaults">保存默认假设</button></div><div class="notice" style="margin-top:14px">每阶课次数 = 单元数 × 2 = '+esc((d.unitsPerStage||8)*2)+' 课〔默认假设推算〕。改动时长 / 单元数 / 人数 / 场地后，按体系 §0.1 重算清单检查课次编号、体能段安排与场地动线。</div>';
  const t=state.thresholds||{};
  renderParamsPanel();
- $('#thresholdForm').innerHTML='<div class="grid-3"><div class="field"><label>P50 初级线</label><input type="number" data-th="t1" value="'+esc(t.t1||'')+'" placeholder="待录入本馆实测值"></div><div class="field"><label>P75 中级线</label><input type="number" data-th="t2" value="'+esc(t.t2||'')+'" placeholder="待录入本馆实测值"></div><div class="field"><label>P90 高级线</label><input type="number" data-th="t3" value="'+esc(t.t3||'')+'" placeholder="待录入本馆实测值"></div></div><div class="grid-2"><div class="field"><label>晋级线 · 中级</label><input type="number" data-th="line2" value="'+esc(t.line2||'')+'" placeholder="待录入本馆实测值"></div><div class="field"><label>晋级线 · 高级</label><input type="number" data-th="line3" value="'+esc(t.line3||'')+'" placeholder="待录入本馆实测值"></div><div class="field"><label>单项满分 100</label><input type="number" data-th="w" value="'+esc(t.w||100)+'"></div><div class="field"><label>样本量</label><input type="text" data-th="sample" value="'+esc(t.sample||'')+'" placeholder="入班实测人数"></div></div><div class="field"><label>统计日期</label><input type="date" data-th="date" value="'+esc(t.date||'')+'"></div><div class="hint" style="color:var(--text-3);font-size:10.5px">阈值须标注「本馆实测值 / 默认假设」、样本量与统计日期；7 项权重 Σw = 100%。青少年与常青须按年龄组另建基线，不与成人混用。</div>';
+ $('#thresholdForm').innerHTML='<div class="grid-3"><div class="field"><label>历史 P50（不用于晋级）</label><input type="number" data-th="t1" value="'+esc(t.t1||'')+'" placeholder="待录入本馆实测值"></div><div class="field"><label>历史 P75（不用于晋级）</label><input type="number" data-th="t2" value="'+esc(t.t2||'')+'" placeholder="待录入本馆实测值"></div><div class="field"><label>历史 P90（不用于晋级）</label><input type="number" data-th="t3" value="'+esc(t.t3||'')+'" placeholder="待录入本馆实测值"></div></div><div class="grid-2"><div class="field"><label>晋级线 · 中级</label><input type="number" data-th="line2" value="'+esc(t.line2||'')+'" placeholder="待录入本馆实测值"></div><div class="field"><label>晋级线 · 高级</label><input type="number" data-th="line3" value="'+esc(t.line3||'')+'" placeholder="待录入本馆实测值"></div><div class="field"><label>单项满分 100</label><input type="number" data-th="w" value="'+esc(t.w||100)+'"></div><div class="field"><label>样本量</label><input type="text" data-th="sample" value="'+esc(t.sample||'')+'" placeholder="入班实测人数"></div></div><div class="field"><label>统计日期</label><input type="date" data-th="date" value="'+esc(t.date||'')+'"></div><div class="hint" style="color:var(--text-3);font-size:10.5px">以上字段为旧版阈值快照，仅供追溯；新协议将采用分阶段标准参照判据，不再以混合量纲加权总分自动晋级。</div>';
  /* 数据服务面板：后端 SQLite 状态、账号与同步 */
  (function(){
   const api=window.PKB_API;
@@ -1132,12 +1293,51 @@ function studentModal(id){
 function sessionModal(){
  if(!state.students.length){toast('请先新增学员');return}
  openModal('<div class="modal-head"><h3>补录授课记录</h3><button class="x" data-act="close-modal">×</button></div><div class="modal-body">'+
-  '<div class="grid-2"><div class="field"><label>学员</label><select data-rf="studentId">'+state.students.map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('')+'</select></div><div class="field"><label>日期</label><input type="date" data-rf="date" value="'+today()+'"></div></div>'+
+  '<div class="grid-2"><div class="field"><label>学员</label><select data-rf="studentId">'+state.students.map(s=>'<option value="'+s.id+'">'+esc(s.name)+'</option>').join('')+'</select></div><div class="field"><label>关联教案</label><select data-rf="planId"><option value="">不关联教案</option>'+state.plans.map(p=>'<option value="'+p.id+'">第 '+p.lesson+' 课 · '+esc(p.tech||'未命名教案')+'</option>').join('')+'</select></div></div><div class="field"><label>日期</label><input type="date" data-rf="date" value="'+today()+'"></div>'+
   '<div class="grid-3"><div class="field"><label>课次</label><input type="number" min="1" max="48" data-rf="lesson" value="1"></div><div class="field"><label>时长（分钟）</label><input type="number" data-rf="minutes" value="90"></div><div class="field"><label>RPE 自评</label><input type="number" min="1" max="10" data-rf="rpe" value="5"></div></div>'+
   '<div class="grid-2"><div class="field"><label>出勤</label><select data-rf="attend"><option>出勤</option><option>请假</option><option>缺勤</option></select></div><div class="field"><label>判据达标</label><select data-rf="judge"><option>达标</option><option>部分达标</option><option>未达标</option></select></div></div>'+
   '<div class="field"><label>阶段反馈（1 条优点 + 1 条改进点）</label><textarea data-rf="note" placeholder="例：分腿垫步时机改善；击球后回中仍偏慢"></textarea></div>'+
   '</div><div class="modal-foot"><button class="btn" data-act="close-modal">取消</button><button class="btn btn-primary" data-act="save-session">保存记录</button></div>');
 }
+async function openSkillScoreModal(sessionId){
+ if(!window.PKB_API){toast('数据服务不可用');return}
+ try{
+  const data=await window.PKB_API.request('/sessions/'+encodeURIComponent(sessionId)+'/skill-scores');
+  const items=data.items||[];
+  const html=items.map(p=>{
+   const anchors=(p.rubric&&p.rubric.anchors)||[];
+   const rubric=anchors.map(a=>'<div style="font-size:11px;margin:3px 0"><b>'+a.score+'分 '+esc(a.label)+'</b>：'+esc(a.description)+'</div>').join('');
+   return '<div class="panel" style="padding:14px;margin-bottom:10px"><b>'+esc(p.skillName)+'</b><div style="font-size:11px;color:var(--text-2);margin:5px 0">本课焦点：'+esc(p.focus||'—')+'<br>关键判据：'+esc(p.criterion)+'</div><div class="field"><label>评分（0–5；留空表示未评）</label><select data-skill-point="'+p.id+'"><option value="">待评分</option>'+[0,1,2,3,4,5].map(n=>'<option value="'+n+'" '+(p.score===n?'selected':'')+'>'+n+'分</option>').join('')+'</select></div><div class="grid-2"><div class="field"><label>尝试次数</label><input type="number" min="0" data-attempts="'+p.id+'" value="'+(p.attempts==null?'':p.attempts)+'"></div><div class="field"><label>成功次数</label><input type="number" min="0" data-successes="'+p.id+'" value="'+(p.successes==null?'':p.successes)+'"></div></div><div class="field"><label>教练观察</label><textarea data-coach-note="'+p.id+'" rows="2">'+esc(p.coachNote||'')+'</textarea></div><details><summary style="cursor:pointer;color:var(--accent)">查看评分锚点</summary>'+rubric+'</details></div>';
+  }).join('');
+  openModal('<div class="modal-head"><h3>本堂课技术点评分 · '+items.length+'项</h3><button class="x" data-act="close-modal">×</button></div><div class="modal-body" style="max-height:65vh;overflow:auto">'+(html||'暂无评分项目')+'</div><div class="modal-foot"><button class="btn" data-act="close-modal">取消</button><button class="btn btn-primary" data-act="save-skill-scores" data-id="'+sessionId+'">保存评分</button></div>');
+ }catch(e){toast('载入评分失败：'+e.message)}
+}
+async function saveSkillScores(sessionId){
+ const scores=[];
+ $('[data-skill-point]').forEach(el=>{
+  if(el.value==='')return;
+  const id=el.dataset.skillPoint,attempts=$('[data-attempts="'+id+'"]').value,successes=$('[data-successes="'+id+'"]').value;
+  scores.push({planSkillPointId:id,score:Number(el.value),attempts:attempts===''?null:Number(attempts),successes:successes===''?null:Number(successes),coachNote:$('[data-coach-note="'+id+'"]').value});
+ });
+ try{
+  await window.PKB_API.request('/sessions/'+encodeURIComponent(sessionId)+'/skill-scores',{method:'PUT',body:JSON.stringify({scores})});
+  closeModal();toast('技术评分已保存');renderTracking();
+ }catch(e){toast('保存失败：'+e.message)}
+}
+
+async function openSkillProgressModal(studentId){
+ if(!window.PKB_API){toast('数据服务不可用');return}
+ try{
+  const data=await window.PKB_API.request('/students/'+encodeURIComponent(studentId)+'/skill-progress');
+  const skills=data.skills||[];
+  const body=skills.map(x=>{
+   const status=x.status==='weak'?'<span class="chip chip-danger">薄弱项</span>':x.status==='mastered'?'<span class="chip chip-ok">稳定掌握</span>':'<span class="chip">持续观察</span>';
+   return '<tr><td>'+esc(x.skillName)+'</td><td>'+status+'</td><td class="num">'+x.latestScore+'/5</td><td class="num">'+x.recentAverage+'</td><td class="num">'+(x.trend>0?'+':'')+x.trend+'</td><td class="num">'+x.count+'</td></tr>';
+  }).join('');
+  openModal('<div class="modal-head"><h3>技术成长 · '+esc(data.student.name)+'</h3><button class="x" data-act="close-modal">×</button></div><div class="modal-body">'+(skills.length?'<div class="notice">共记录 '+data.totalScores+' 项技术评分。连续两次低于3分标记薄弱项；连续三次达到4分及以上标记稳定掌握。未评分不计为0。</div><table><thead><tr><th>技术点</th><th>状态</th><th>最近分</th><th>近三次均分</th><th>变化</th><th>次数</th></tr></thead><tbody>'+body+'</tbody></table>':'<div class="empty">暂无技术评分。请先在教学追踪中为关联教案的授课记录录入评分。</div>')+'</div><div class="modal-foot"><button class="btn" data-act="close-modal">关闭</button></div>');
+ }catch(e){toast('技术成长载入失败：'+e.message)}
+}
+
 function loadDemo(){
  const a={id:'DEMO01',name:'示例 · 陈一',phone:'—',age:'adult',stage:1,sizeLabel:'4-6 人小班',total:48,used:6,expire:'',injury:'',techScore:2,fitScore:3,goal:'技术晋级',status:'在训',note:'演示数据'},
  b={id:'DEMO02',name:'示例 · 林二',phone:'—',age:'youth',stage:1,sizeLabel:'4-6 人小班',total:48,used:15,expire:'',injury:'',techScore:3,fitScore:3,goal:'技术晋级',status:'待考',note:'演示数据'},
@@ -1156,27 +1356,31 @@ function generate(){
  f.age=$('#fAge').value;f.size=$('#fSize').value;f.minutes=Number($('#fMinutes').value);f.lesson=Number($('#fLesson').value);f.date=$('#fDate').value;f.focus=$('#fFocus').value;
  f.fitMode=$('#fFitMode').value;f.goal=$('#fGoal').value;
  if(f.size==='solo'&&f.studentIds.length>1){$('#planErr').textContent='私教仅能选 1 名学员，请取消多余勾选或改班型';return}
- const btn=$('#genBtn');btn.disabled=true;btn.textContent='生成中…';
- setTimeout(()=>{
-  const p=buildPlan(f);
+ const btn=$('#genBtn');btn.disabled=true;btn.textContent='读取训练历史…';
+ (async()=>{
+  let recs={available:false,students:[]};
+  if(window.PKB_API&&window.PKB_API.online()){
+   try{
+    const results=await Promise.all(f.studentIds.map(async id=>{
+     const data=await window.PKB_API.request('/students/'+encodeURIComponent(id)+'/training-recommendations?lesson='+encodeURIComponent(f.lesson));
+     return data;
+    }));
+    recs={available:true,students:results};
+   }catch(err){recs={available:false,students:[],reason:err.message};}
+  }else recs.reason='数据服务未连接，本次按原教案规则生成；连接数据库后可读取技术评分历史。';
+  const p=buildPlan(f,recs);
   if(!p){$('#planErr').textContent='学员或课次数据异常，请重新选择';btn.disabled=false;btn.textContent='生成详细教学计划';return}
   state.ui.lastPlan=p;save();$('#planOutput').innerHTML=renderPlanHTML(p);
-  btn.disabled=false;btn.textContent='生成详细教学计划';toast('已生成第 '+p.lesson.n+' 课详细教案（'+p.students.length+' 人 / '+p.ageName+'）');
- },220);
+  btn.disabled=false;btn.textContent='生成详细教学计划';
+  toast('已生成第 '+p.lesson.n+' 课教案'+(recs.available?'（已读取技术成长与负荷记录）':'（未读取历史评分）'));
+ })().catch(err=>{btn.disabled=false;btn.textContent='生成详细教学计划';$('#planErr').textContent='生成失败：'+err.message});
 }
 function assessJudge(stage,vals){
- if(!thresholdsReady())return {total:null,conclusion:'阈值未校准，无法判定'};
- const t=state.thresholds,ids=STAGE_ITEMS[stage]||STAGE_ITEMS[1];
- let sum=0,cnt=0,gateFail=false;
- ids.forEach(id=>{const v=Number(vals[id]);if(!isFinite(v)||vals[id]==='')return;
-  const hi=Number(stage===1?t.t1:stage===2?t.t2:t.t3)||1;
-  const score=id==='shuttle'?Math.max(0,Math.min(100,(hi/Math.max(v,.1))*100)):Math.min(100,v/Math.max(hi,.1)*100);
-  sum+=score;cnt++;if((id==='rule'||id==='match')&&v<Number(t.t1))gateFail=true;});
- const total=cnt?Math.round(sum/cnt):null,line=Number(stage===1?t.line2:t.line3);
- if(total==null)return {total:null,conclusion:'未录入实测值'};
- if(gateFail)return {total,conclusion:'单项门槛未过 · 补考'};
- if(total>=line)return {total,conclusion:'晋级'};
- return {total,conclusion:'未达晋级线 · 补考'};
+ const ids=STAGE_ITEMS[stage]||STAGE_ITEMS[1];
+ const missing=ids.filter(id=>vals[id]===undefined||vals[id]===null||String(vals[id]).trim()==='');
+ if(missing.length)return {total:null,conclusion:'资料不完整 · 待补录',missing};
+ // 旧七项指标缺少统一测试协议与经验证的标准参照线，不能安全地产生自动晋级结论。
+ return {total:null,conclusion:'已记录实测 · 待教练复核',missing:[],model:'legacy_pending_review'};
 }
 document.addEventListener('click',e=>{
  const nav=e.target.closest('[data-nav]');if(nav){navigate(nav.dataset.nav);return}
@@ -1236,24 +1440,45 @@ document.addEventListener('click',e=>{
   else fallbackCopy(txt);return;
  }
  if(act==='print-plan'){if(!state.ui.lastPlan){toast('请先生成计划');return}window.print();return}
+ if(act==='create-stage-attempt'){createStageAttempt(btn.dataset.protocol);return}
+ if(act==='save-stage-results'){saveStageResults(btn.dataset.attempt);return}
+ if(act==='review-stage-result'){reviewStageResult(btn.dataset.attempt,btn.dataset.code);return}
+ if(act==='preview-remediation'){previewRemediation(btn.dataset.attempt);return}
+ if(act==='create-remediation-plan'){createRemediationPlan(btn.dataset.attempt);return}
+ if(act==='skill-score'){openSkillScoreModal(id);return}
+ if(act==='skill-progress'){openSkillProgressModal(id);return}
+ if(act==='save-skill-scores'){saveSkillScores(id);return}
  if(act==='new-session'){sessionModal();return}
  if(act==='save-session'){
   const o={};$$('[data-rf]').forEach(x=>o[x.dataset.rf]=x.value);
   const s=state.students.find(x=>x.id===o.studentId);
-  state.sessions.push(Object.assign({id:uid(),studentName:s?s.name:'—'},o));
-  save();closeModal();toast('授课记录已保存');renderView(state.ui.view);return;
+  const sessionId=uid();state.sessions.push(Object.assign({id:sessionId,studentName:s?s.name:'—',planId:o.planId||null},o));
+  save();closeModal();toast('授课记录已保存');renderView(state.ui.view);
+  if(o.planId&&window.PKB_API)window.PKB_API.syncNow(state).then(()=>openSkillScoreModal(sessionId)).catch(err=>toast('评分项目载入失败：'+err.message));
+  return;
  }
  if(act==='del-session'){state.sessions=state.sessions.filter(x=>x.id!==id);save();renderTracking();toast('记录已删除');return}
  if(act==='save-assess'){
   const sid=$('#aStudent').value;if(!sid){$('#aErr').textContent='请先新增学员';return}
   const stage=Number($('#aStage').value),date=$('#aDate').value,vals={};
-  $$('#aItems input').forEach(x=>vals[x.dataset.item]=x.value);
-  if(!Object.values(vals).some(v=>v!=='')){$('#aErr').textContent='请至少录入 1 项实测值';return}
+  $('#aItems input').forEach(x=>vals[x.dataset.item]=x.value.trim());
+  const ids=STAGE_ITEMS[stage]||STAGE_ITEMS[1],missing=ids.filter(id=>vals[id]==='');
+  if(missing.length){$('#aErr').textContent='本阶段必测项目未完成：'+missing.join('、')+'。缺测不能当作0分，也不能生成评估结论。';return}
+  const invalid=[];
+  ids.forEach(id=>{
+   const v=Number(vals[id]);
+   if(!Number.isFinite(v)){invalid.push(id+'需为有效数字');return}
+   if((id==='serve'||id==='aim')&&(v<0||v>100))invalid.push(id+'须在0–100之间');
+   if((id==='foot'||id==='rule')&&(v<0||v>5))invalid.push(id+'须在0–5之间');
+   if(id==='shuttle'&&v<=0)invalid.push(id+'秒数须大于0');
+   if(id==='dink'&&v<0)invalid.push(id+'回合数不能为负数');
+  });
+  if(invalid.length){$('#aErr').textContent='数据范围有误：'+invalid.join('；');return}
   const st=state.students.find(x=>x.id===sid),j=assessJudge(stage,vals);
-  state.assessments.push({id:uid(),studentId:sid,studentName:st?st.name:'—',stage,date,vals,total:j.total,conclusion:j.conclusion});
-  save();renderAssess();toast('成绩已保存：'+j.conclusion);return;
+  state.assessments.push({id:uid(),studentId:sid,studentName:st?st.name:'—',stage,date,vals,total:null,conclusion:j.conclusion,assessmentModel:'legacy_pending_review',missingCriteria:[],reviewStatus:'pending'});
+  save();renderAssess();toast('实测记录已保存，等待教练复核');return;
  }
- if(act==='save-thresholds'){const t={};$$('[data-th]').forEach(x=>t[x.dataset.th]=x.value);state.thresholds=t;save();toast('阈值已保存（本馆实测值）');renderSettings();return}
+ if(act==='save-thresholds'){const t={};$$('[data-th]').forEach(x=>t[x.dataset.th]=x.value);state.thresholds=t;save();toast('旧版阈值快照已保存（不参与晋级判定）');renderSettings();return}
  if(act==='save-defaults'){const d={};$$('[data-default]').forEach(x=>d[x.dataset.default]=x.value);state.defaults=Object.assign(state.defaults||{},d,{minutes:Number(d.minutes)});save();toast('默认假设已更新');renderSettings();return}
  if(act==='change-password'){
   const e=$('#dsErr');if(e)e.textContent='';
@@ -1307,6 +1532,9 @@ document.addEventListener('change',e=>{
  }
  if(e.target.id==='stageFilter'||e.target.id==='ageFilter')renderStudents();
  if(e.target.id==='stageView')renderCurriculumTable(Number(e.target.value));
+ if(e.target.id==='stageAssessStudent'||e.target.id==='stageAssessStage'){
+  const host=$('#stageAssessmentPanel');if(host){if(e.target.id==='stageAssessStudent')host.dataset.student=e.target.value;else host.dataset.stage=e.target.value;renderStageAssessmentPanel();}
+ }
 });
 document.addEventListener('input',e=>{
  if(e.target.id==='studentSearch')renderStudents();

@@ -5,6 +5,9 @@ const catalog = require('../services/catalog');
 const stateSvc = require('../services/state');
 const insights = require('../services/insights');
 const { curriculum } = require('../repositories/misc');
+const skillScoring = require('../services/skill-scoring');
+const assessmentProtocols = require('../services/assessment-protocols');
+const assessmentRemediation = require('../services/assessment-remediation');
 
 function crud(entity) {
   return {
@@ -34,5 +37,23 @@ module.exports = {
   stats: ctx => ok(ctx.res, insights.overview()),
   studentRecords: ctx => ok(ctx.res, insights.studentRecords(ctx.params.id)),
   curriculum: ctx => ok(ctx.res, { units: curriculum.list(), lesson_count: curriculum.list().length * 2 }),
+  lessonSkillPoints: ctx => ok(ctx.res, { items: skillScoring.lessonSkillPoints(ctx.params.lesson) }),
+  planSkillPoints: ctx => ok(ctx.res, { items: skillScoring.planSkillPoints(ctx.params.id) }),
+  sessionSkillScores: ctx => ok(ctx.res, skillScoring.sessionScores(ctx.params.id)),
+  saveSessionSkillScores: ctx => ok(ctx.res, skillScoring.saveSessionScores(ctx.params.id, ctx.body.scores, ctx.user)),
+  studentSkillProgress: ctx => ok(ctx.res, skillScoring.studentProgress(ctx.params.id)),
+  studentTrainingRecommendations: ctx => ok(ctx.res, skillScoring.trainingRecommendations(ctx.params.id, ctx.query.lesson)),
+  assessmentProtocols: ctx => ok(ctx.res, assessmentProtocols.listProtocols(ctx.query)),
+  assessmentProtocol: ctx => ok(ctx.res, assessmentProtocols.getProtocol(ctx.params.id)),
+  createAssessmentAttempt: ctx => created(ctx.res, assessmentProtocols.createAttempt(ctx.body, ctx.user)),
+  getAssessmentAttempt: ctx => ok(ctx.res, assessmentProtocols.getAttempt(ctx.params.id)),
+  saveAssessmentResults: ctx => ok(ctx.res, assessmentProtocols.saveResults(ctx.params.id, ctx.body.results)),
+  studentAssessmentAttempts: ctx => ok(ctx.res, assessmentProtocols.listStudentAttempts(ctx.params.id)),
+  reviewAssessmentResult: ctx => ok(ctx.res, assessmentRemediation.reviewResult(ctx.params.id, ctx.params.code, ctx.body, ctx.user)),
+  assessmentRemediationPreview: ctx => ok(ctx.res, assessmentRemediation.remediationPreview(ctx.params.id)),
+  createAssessmentRemediationPlan: ctx => created(ctx.res, assessmentRemediation.createPlan(ctx.params.id, ctx.body, ctx.user)),
+  getAssessmentRemediationPlan: ctx => ok(ctx.res, assessmentRemediation.getPlan(ctx.params.id)),
+  confirmAssessmentRemediationPlan: ctx => ok(ctx.res, assessmentRemediation.confirmPlan(ctx.params.id, ctx.user)),
+  createScopedAssessmentRetest: ctx => created(ctx.res, assessmentRemediation.createScopedRetest(ctx.body, ctx.user)),
   students, plans, sessions, assessments
 };

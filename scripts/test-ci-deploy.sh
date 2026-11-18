@@ -37,12 +37,13 @@ setup() {
 run_deploy() { # $1=port
   TARGET_DIR="$ROOT/target" SVC=pkb-rehearse APP_PORT="$1" APP_HOST=127.0.0.1 \
     NODE_BIN="$NODE_BIN" DB_FILE=data/pickleball.db RUN_USER="$(whoami)" \
-    BACKUP_ROOT="$ROOT/backups" bash "$ROOT/src/scripts/ci-deploy.sh"
+    BACKUP_ROOT="$ROOT/backups" CI_DEPLOY_DRY_RUN=1 bash "$ROOT/src/scripts/ci-deploy.sh"
 }
 
 echo "== ① 正向部署 =="
 setup
 run_deploy 8891 >"$ROOT/out1.log" 2>&1; RC=$?
+if [ "$RC" != "0" ]; then echo "--- deploy log (scenario 1) ---"; cat "$ROOT/out1.log"; [ -f /tmp/pkb-ci-deploy-test.log ] && cat /tmp/pkb-ci-deploy-test.log; fi
 chk "退出码为 0（实际 ${RC}）" "$([ "$RC" = "0" ] && echo 1 || echo 0)"
 chk "数据库被保留" "$([ -f "$ROOT/target/data/pickleball.db" ] && echo 1 || echo 0)"
 chk ".env 被保留" "$([ -f "$ROOT/target/.env" ] && echo 1 || echo 0)"
@@ -54,6 +55,7 @@ chk "无残留暂存目录" "$(ls -d "$ROOT"/target.new.* >/dev/null 2>&1 && ech
 
 echo "== ② 幂等（第二次部署）=="
 run_deploy 8891 >"$ROOT/out2.log" 2>&1; RC=$?
+if [ "$RC" != "0" ]; then echo "--- deploy log (scenario 2) ---"; cat "$ROOT/out2.log"; [ -f /tmp/pkb-ci-deploy-test.log ] && cat /tmp/pkb-ci-deploy-test.log; fi
 chk "第二次退出码为 0（实际 ${RC}）" "$([ "$RC" = "0" ] && echo 1 || echo 0)"
 chk "迁移无新增（幂等）" "$(grep -q '新增 0' "$ROOT/out2.log" && echo 1 || echo 0)"
 chk "数据仍在" "$([ -f "$ROOT/target/data/pickleball.db" ] && echo 1 || echo 0)"
@@ -70,6 +72,7 @@ echo "== ④ 健康检查失败 → 自动回滚 =="
 setup
 printf 'process.exit(1)\n' > "$ROOT/src/backend/src/index.js"
 run_deploy 8893 >"$ROOT/out4.log" 2>&1; RC=$?
+if [ "$RC" != "0" ]; then echo "--- deploy log (scenario 4) ---"; cat "$ROOT/out4.log"; [ -f /tmp/pkb-ci-deploy-test.log ] && cat /tmp/pkb-ci-deploy-test.log; fi
 chk "退出码非 0（实际 ${RC}）" "$([ "$RC" != "0" ] && echo 1 || echo 0)"
 chk "已回滚到上一版本" "$([ -f "$ROOT/target/GOOD_MARKER.txt" ] && echo 1 || echo 0)"
 chk "未误报成功" "$(grep -q 'CI_DEPLOY_OK' "$ROOT/out4.log" && echo 0 || echo 1)"
