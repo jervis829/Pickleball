@@ -1099,7 +1099,7 @@ function renderAssess(){
  $('#assessForm').innerHTML='<div class="grid-2"><div class="field"><label>学员</label><select id="aStudent">'+(state.students.length?state.students.map(s=>'<option value="'+s.id+'">'+esc(s.name)+' · 阶段 '+s.stage+'</option>').join(''):'<option value="">— 暂无学员 —</option>')+'</select></div><div class="field"><label>评估阶段</label><select id="aStage"><option value="1">初阶能力检查 · 建议第16课附近</option><option value="2">中阶能力检查 · 建议第32课附近</option><option value="3">高阶综合评估 · 建议第48课附近</option></select></div></div><div class="field"><label>测试日期</label><input type="date" id="aDate" value="'+today()+'"></div><div class="notice" style="margin:10px 0">本阶段必测项目需全部录入。下列旧指标仅作历史实测资料收集；非本阶段项目可留空，不能据此自动晋级。</div><div class="grid-2" id="aItems">'+ASSESS_ITEMS.map(i=>'<div class="field"><label>'+i.name+' <span class="mono" style="color:var(--text-3)">'+i.unit+'</span></label><input type="number" step="any" data-item="'+i.id+'" placeholder="实测值"></div>').join('')+'</div><div class="err-text" id="aErr"></div><button class="btn btn-primary" data-act="save-assess">保存实测记录</button>';
  $('#assessResult').innerHTML='<div class="notice"><strong>当前判定：待新版评估协议发布。</strong><br>旧记录不会被删除；新录入数据保留原始实测值，但不生成误导性的百分制总分或晋级/补考结论。<br><br>正式评估将采用阶段专项能力项、统一测试条件、关键项门槛和教练复核。规则与安全为不可补偿的关键项。</div>';
  const a=state.assessments.slice().sort((x,y)=>(y.date||'').localeCompare(x.date||''));
- $('#assessList').innerHTML=a.length?a.map(x=>'<div class="list-row"><div><div class="main-txt">'+esc(x.studentName)+' · 阶段 '+x.stage+'</div><div class="sub-txt">'+esc(x.date)+' · '+esc(x.conclusion||'历史记录待复核')+'</div></div><div class="right"><span class="chip '+(x.conclusion==='晋级'?'chip-ok':'chip-warn')+'">'+esc(x.total==null?'待复核':x.total+' 分')+'</span></div></div>').join(''):'<div class="list-row"><span class="muted" style="font-size:12px">暂无考核记录</span></div>';
+ $('#assessList').innerHTML=a.length?a.map(x=>{const legacy=!x.assessmentModel;const status=legacy?(x.conclusion==='晋级'?'历史晋级结论（旧规则）':'历史记录（旧规则）'):(x.conclusion||'待教练复核');return '<div class="list-row"><div><div class="main-txt">'+esc(x.studentName)+' · 阶段 '+x.stage+'</div><div class="sub-txt">'+esc(x.date)+' · '+esc(status)+'</div></div><div class="right"><span class="chip chip-warn">'+esc(x.total==null?'待复核':x.total+' 分（旧规则）')+'</span></div></div>'}).join(''):'<div class="list-row"><span class="muted" style="font-size:12px">暂无考核记录</span></div>';
 }
 
 function renderParamsPanel(){
@@ -1376,7 +1376,7 @@ document.addEventListener('click',e=>{
   state.assessments.push({id:uid(),studentId:sid,studentName:st?st.name:'—',stage,date,vals,total:null,conclusion:j.conclusion,assessmentModel:'legacy_pending_review',missingCriteria:[],reviewStatus:'pending'});
   save();renderAssess();toast('实测记录已保存，等待教练复核');return;
  }
- if(act==='save-thresholds'){const t={};$$('[data-th]').forEach(x=>t[x.dataset.th]=x.value);state.thresholds=t;save();toast('阈值已保存（本馆实测值）');renderSettings();return}
+ if(act==='save-thresholds'){const t={};$$('[data-th]').forEach(x=>t[x.dataset.th]=x.value);state.thresholds=t;save();toast('旧版阈值快照已保存（不参与晋级判定）');renderSettings();return}
  if(act==='save-defaults'){const d={};$$('[data-default]').forEach(x=>d[x.dataset.default]=x.value);state.defaults=Object.assign(state.defaults||{},d,{minutes:Number(d.minutes)});save();toast('默认假设已更新');renderSettings();return}
  if(act==='change-password'){
   const e=$('#dsErr');if(e)e.textContent='';
