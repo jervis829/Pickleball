@@ -36,6 +36,11 @@ add('POST', '/api/v1/import', C.importAll);
 add('GET', '/api/v1/stats', C.stats);
 add('GET', '/api/v1/curriculum', C.curriculum);
 add('GET', '/api/v1/students/:id/records', C.studentRecords);
+add('GET', '/api/v1/students/:id/skill-progress', C.studentSkillProgress);
+add('GET', '/api/v1/curriculum/:lesson/skill-points', C.lessonSkillPoints);
+add('GET', '/api/v1/plans/:id/skill-points', C.planSkillPoints);
+add('GET', '/api/v1/sessions/:id/skill-scores', C.sessionSkillScores);
+add('PUT', '/api/v1/sessions/:id/skill-scores', C.saveSessionSkillScores);
 
 /* ---------- 各实体 RESTful CRUD ---------- */
 for (const [name, h] of Object.entries({
