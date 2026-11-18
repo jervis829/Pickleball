@@ -42,6 +42,12 @@ add('GET', '/api/v1/curriculum/:lesson/skill-points', C.lessonSkillPoints);
 add('GET', '/api/v1/plans/:id/skill-points', C.planSkillPoints);
 add('GET', '/api/v1/sessions/:id/skill-scores', C.sessionSkillScores);
 add('PUT', '/api/v1/sessions/:id/skill-scores', C.saveSessionSkillScores);
+add('GET', '/api/v1/assessment-protocols', C.assessmentProtocols, { write: false });
+add('GET', '/api/v1/assessment-protocols/:id', C.assessmentProtocol, { write: false });
+add('POST', '/api/v1/assessment-attempts', C.createAssessmentAttempt);
+add('GET', '/api/v1/assessment-attempts/:id', C.getAssessmentAttempt, { write: false });
+add('PUT', '/api/v1/assessment-attempts/:id/results', C.saveAssessmentResults);
+add('GET', '/api/v1/students/:id/assessment-attempts', C.studentAssessmentAttempts, { write: false });
 
 /* ---------- 各实体 RESTful CRUD ---------- */
 for (const [name, h] of Object.entries({
