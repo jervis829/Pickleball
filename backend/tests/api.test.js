@@ -8,7 +8,7 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const config = require('../src/config');
-const { closeDb } = require('../src/db/connection');
+const { closeDb, all } = require('../src/db/connection');
 const { migrate } = require('../src/db/migrate');
 const { ensureAdmin } = require('../src/services/auth');
 const { seed } = require('../../database/seeds/seed');
@@ -98,6 +98,12 @@ test('06 课程体系 24 单元 / 48 课次，三阶段齐全', async () => {
   assert.equal(r.body.data.units.length, 24);
   assert.equal(r.body.data.lesson_count, 48);
   assert.deepEqual([...new Set(r.body.data.units.map(u => u.s))].sort(), [1, 2, 3]);
+  const mapped = all('SELECT COUNT(DISTINCT lesson_no) AS lessons, COUNT(*) AS points FROM lesson_skill_points')[0];
+  assert.equal(mapped.lessons, 48, '评分项目应覆盖全部48课次');
+  assert.ok(mapped.points >= 48, '每课至少应有一个评分判据');
+  const sample = all("SELECT lesson_no, lesson_type, criterion FROM lesson_skill_points WHERE lesson_no IN (1,2) ORDER BY lesson_no, sort_order");
+  assert.ok(sample.some(x => x.lesson_no === 1 && x.lesson_type === 'A'));
+  assert.ok(sample.some(x => x.lesson_no === 2 && x.lesson_type === 'B'));
 });
 
 test('07 全量同步写入数据库并可回读（含多学员关联）', async () => {
