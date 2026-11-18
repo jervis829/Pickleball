@@ -123,7 +123,7 @@ ok "已切换到新版本（回滚点：${BAK_DIR}）"
 
 # ---------- [5] systemd ----------
 log "[5] 服务配置与重启"
-if ! command -v systemctl >/dev/null 2>&1; then
+if ! command -v systemctl >/dev/null 2>&1 || [ "$(ps -p 1 -o comm= 2>/dev/null | tr -d ' ')" != "systemd" ]; then
   log "    当前环境无 systemd，跳过服务重启（仅用于本地演练）"
   HEALTH_OK=0
   # 本地演练：直接用 node 拉起临时实例做健康检查
