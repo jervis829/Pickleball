@@ -7,7 +7,7 @@ const parse = (v, fallback = {}) => { try { return v ? JSON.parse(v) : fallback;
 const round = n => n == null ? null : Math.round(n * 100) / 100;
 
 function studentAthleteProfile(studentId) {
-  const student = get(`SELECT id,name,age,stage,used,total,status,goal,injury_note AS injury,
+  const student = get(`SELECT id,name,age_group AS age,stage,used,total,status,goal,injury_note AS injury,
       tech_score AS techScore,fit_score AS fitScore,created_at AS createdAt
     FROM students WHERE id=? AND deleted_at IS NULL`, [studentId]);
   if (!student) throw new HttpError(404, 'STUDENT_NOT_FOUND', '学员不存在');
