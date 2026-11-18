@@ -374,3 +374,89 @@ systemctl start pickleball
 - 浏览器登录若提示「来源不在白名单」：说明 `Origin` 与后端按请求 `Host` 推导出的同源来源不一致（常见于自建反代未传 `Host` / `X-Forwarded-Host`）。复现命令（错密码时应返回 **401** 而非 403）：`curl -i -X POST https://ajtech.top/api/v1/auth/login -H 'Origin: https://ajtech.top' -H 'content-type: application/json' -d '{"username":"admin","password":"x"}'`。确认 Nginx 含 `proxy_set_header Host $host;`；确需额外来源时才填 `CORS_ORIGINS`。
 - `.deploy.env` 含服务器密码，已被 `.gitignore` 排除，绝不入库、不进对话。
 - 定期备份 `data/pickleball.db`（见 §12），数据库不随代码部署覆盖。
+
+---
+
+## 18. 自动部署（GitHub Actions + 服务器自托管 runner）
+
+> 目标：`git push origin main` → 服务器自动更新并重启，**不需要再手动跑 `deploy.py`**，也不依赖任何人的电脑开机。
+
+### 架构
+
+```
+你的电脑                      GitHub                    服务器（阿里云）
+─────────                    ──────                    ─────────────────
+git commit
+git push origin main ───────► main 分支
+                              │
+                              ├─ 触发 .github/workflows/deploy.yml
+                              │     ① 检出代码
+                              │     ② 门禁测试 npm test
+                              │        （21 API + 57 覆盖率 + 55 前端引擎 + 17 部署回归）
+                              │     ③ 测试不过 → 直接失败，不碰线上
+                              ▼
+                    自托管 runner（常驻在服务器本机）
+                    checkout → 执行 scripts/ci-deploy.sh
+                              │
+                              ├─ 备份数据库（VACUUM INTO，一致性快照）
+                              ├─ 备份代码目录
+                              ├─ 同步到暂存目录（排除 .git / data / .env）
+                              ├─ 语法校验 + 数据库迁移预演
+                              │     └─ 失败 → 线上目录原封不动
+                              ├─ 原子切换 → systemctl restart
+                              ├─ 健康检查 /api/v1/health（最多 10 次）
+                              │     └─ 失败 → 自动回滚代码 + 数据库
+                              └─ 公网复核 https://ajtech.top/api/v1/health
+```
+
+选**自托管 runner**而不是 GitHub 托管 runner 的理由：runner 跑在服务器本机，拉代码不消耗服务器带宽、不需要给公网额外放行 GitHub 的 IP 段、也不受你本地网络/代理影响。
+
+### 一次性安装（需要能 SSH 上服务器）
+
+```bash
+# 1. 在 GitHub 仓库页：Settings → Actions → Runners → New self-hosted runner
+#    选 Linux，复制页面给出的 registration token（形如 AXXXXXXXXXXXXXXXXXX）
+# 2. 上服务器执行（token 只在命令行传，不落盘）
+bash scripts/install-runner.sh jervis829 Pickleball <registration-token>
+```
+
+脚本会依次：检查服务器能否访问 `api.github.com`（不通则直接停下并提示改用方案 B）→ 下载解压 runner → 用令牌注册到仓库（labels `pickleball,linux,x64`）→ `svc.sh install runner` 装成 systemd 常驻服务、开机自启。
+
+### 之后日常怎么用
+
+```bash
+git add -A && git commit -m "..." && git push origin main
+```
+
+到仓库 **Actions** 标签页看流水线。绿色即上线成功；红色会自动回滚，失败原因写在日志里。
+
+### 服务器端部署脚本 `scripts/ci-deploy.sh`
+
+| 能力 | 说明 |
+|---|---|
+| 幂等 | 重复执行结果一致；`data/` 与 `.env` 永不覆盖 |
+| 数据库备份 | 用 `VACUUM INTO` 而不是 `cp`——WAL 模式下 `cp` 会拿到撕裂快照 |
+| 迁移预演 | 在**切目录之前**先跑迁移，失败则线上原封不动 |
+| 原子切换 | 新目录就绪才替换；旧版本保留为 `/opt/pickleball.bak.<时间戳>` |
+| 健康检查 | 重启后轮询 10 次；全失败则回滚代码与数据库 |
+| 备份位置 | `/opt/pickleball-backups/db-<时间戳>.db` 与 `code-<时间戳>.tar.gz` |
+| 无 systemd 环境 | 自动降级为临时实例演练（用于本地回归） |
+
+### 部署脚本回归测试
+
+```bash
+npm run check:deploy      # 或 bash scripts/test-ci-deploy.sh
+```
+
+覆盖 4 条路径：① 正向部署（数据与 `.env` 保留、旧代码被替换）② 幂等（第二次迁移无新增）③ 迁移预演失败 → 线上目录不动 ④ 健康检查失败 → 自动回滚且不误报成功。
+
+> 写这个脚本时踩过一个隐蔽的坑：UTF-8 locale 下 bash 会把 `$VAR）` 里的全角括号并入变量名，导致 `unbound variable`。脚本内所有紧跟中文的变量引用一律写成 `${VAR}`。
+
+### 故障排查
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| Actions 一直 queued，runner 显示 offline | runner 服务挂了 | `systemctl status actions.runner.actions-runner.service`、`journalctl -u actions.runner.actions-runner.service -n 50` |
+| runner 注册失败 | 服务器访问不到 `api.github.com` | 改用 GitHub 托管 runner（把 workflow 的 `runs-on` 换成 `ubuntu-latest`，再改走 `deploy.py` 的 SSH 通道） |
+| 部署步骤失败但线上正常 | 门禁测试或迁移预演没过 | 看日志；线上未被改动，属预期保护 |
+| 健康检查失败 | 代码有问题 | 已自动回滚；查 `/opt/pickleball-backups/` 里的数据库备份 |
