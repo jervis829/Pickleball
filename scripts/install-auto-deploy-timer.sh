@@ -31,14 +31,20 @@ SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 log "[1] 检查运行环境"
 [ -x /opt/node22/bin/node ] || fail "缺少 /opt/node22/bin/node"
-# 判活要能容忍偶发抖动：单次失败不代表不可用，重试 3 次
+# 判活用 codeload tarball 端点：服务器在国内，github.com 页面端点与 git 协议端点
+# 经常超时，REST API 又有 60 次/小时配额；codeload 实测稳定。
+# 容忍偶发抖动：单次失败不代表不可用，重试 3 次。
+REPO_OWNER="${REPO_OWNER:-jervis829}"
+REPO_NAME="${REPO_NAME:-Pickleball}"
+BRANCH="${BRANCH:-main}"
+CODELOAD_URL="https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/tar.gz/refs/heads/${BRANCH}"
 OK=0
 for i in 1 2 3; do
-  if timeout 25 git ls-remote https://github.com/jervis829/Pickleball.git refs/heads/main >/dev/null 2>&1; then OK=1; break; fi
-  log "    github.com 探测失败（第 $i/3 次），重试…"
+  if timeout 40 curl -fsSL -o /dev/null "$CODELOAD_URL"; then OK=1; break; fi
+  log "    codeload 探测失败（第 $i/3 次），重试…"
   sleep 4
 done
-[ "$OK" = "1" ] || fail "服务器连续 3 次访问不到 github.com，定时轮询方案不可用"
+[ "$OK" = "1" ] || fail "服务器连续 3 次访问不到 codeload，定时轮询方案不可用"
 ok "环境检查通过"
 
 log "[2] 安装脚本到 ${INSTALL_DIR}"
@@ -83,12 +89,14 @@ ok "已写入 $UNIT 与 $TIMER"
 log "[4] 记录当前已部署版本（避免首次空转）"
 STATE_FILE="${INSTALL_DIR}/state"
 if [ ! -f "$STATE_FILE" ]; then
-  SHA="$(timeout 25 git ls-remote https://github.com/jervis829/Pickleball.git refs/heads/main 2>/dev/null | awk 'NR==1{print $1}')"
-  if [ -n "$SHA" ]; then
-    printf '%s' "$SHA" > "$STATE_FILE"
-    ok "已记录基线 SHA ${SHA:0:7}（首次轮询不会重复部署）"
+  # 基线用 codeload 的 ETag，与 auto-deploy-timer.sh 的变更检测机制一致
+  ETAG="$(timeout 40 curl -fsSL -o /dev/null -D - "$CODELOAD_URL" 2>/dev/null \
+          | grep -iE '^etag:' | tail -1 | sed 's/^[Ee][Tt][Aa][Gg]:[[:space:]]*//' | tr -d '\r')"
+  if [ -n "$ETAG" ]; then
+    printf '%s' "$ETAG" > "$STATE_FILE"
+    ok "已记录基线 ETag ${ETAG:1:10}（首次轮询不会重复部署）"
   else
-    log "    未能取得基线 SHA，首次轮询会触发一次部署（属正常）"
+    log "    未能取得基线 ETag，首次轮询会触发一次部署（属正常）"
   fi
 fi
 
