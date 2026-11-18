@@ -48,6 +48,12 @@ add('POST', '/api/v1/assessment-attempts', C.createAssessmentAttempt);
 add('GET', '/api/v1/assessment-attempts/:id', C.getAssessmentAttempt, { write: false });
 add('PUT', '/api/v1/assessment-attempts/:id/results', C.saveAssessmentResults);
 add('GET', '/api/v1/students/:id/assessment-attempts', C.studentAssessmentAttempts, { write: false });
+add('PUT', '/api/v1/assessment-attempts/:id/results/:code/review', C.reviewAssessmentResult);
+add('GET', '/api/v1/assessment-attempts/:id/remediation', C.assessmentRemediationPreview, { write: false });
+add('POST', '/api/v1/assessment-attempts/:id/remediation-plans', C.createAssessmentRemediationPlan);
+add('GET', '/api/v1/assessment-remediation-plans/:id', C.getAssessmentRemediationPlan, { write: false });
+add('POST', '/api/v1/assessment-remediation-plans/:id/confirm', C.confirmAssessmentRemediationPlan);
+add('POST', '/api/v1/assessment-retests', C.createScopedAssessmentRetest);
 
 /* ---------- 各实体 RESTful CRUD ---------- */
 for (const [name, h] of Object.entries({
