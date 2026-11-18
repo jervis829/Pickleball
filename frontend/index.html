@@ -549,8 +549,8 @@ function paramVal(key,p){
  const pr=p&&p.profile;
  if(pr){
   const k=def.k;
-  if(k==='reps'||k==='balls'||k==='rally')v=v*pr.techMul;
-  if(k==='sets'||k==='secs'||k==='points')v=v*pr.fitMul;
+  if(k==='reps'||k==='balls'||k==='rally')v=v*(pr.loadGuard?Math.min(1,pr.techMul):pr.techMul);
+  if(k==='sets'||k==='secs'||k==='points')v=v*(pr.loadGuard?Math.min(1,pr.fitMul):pr.fitMul);
   if(k==='balls'&&pr.goal==='专项补强')v=v*1.3;
   if(k==='points'&&pr.goal==='比赛备战')v=v*1.2;
   if(k==='sets'&&pr.goal==='减脂塑形')v=v*1.2;
@@ -592,8 +592,12 @@ function buildStruct(minutes,hasFit,goal){
  let t=0;
  return ids.map((id,i)=>{const start=t,end=t+dur[i];t=end;const d=SEG_DEF.find(x=>x.id===id);return {id,no:d.no,n:d.n,t:start+'-'+end+' min',start,end};});
 }
-function blockTime(sg,i){
+function blockTime(sg,i,p){
  const r=(BLOCK_RATIOS[sg.id]||[])[i]||[0,1];
+ if(sg.id==='drill'&&p&&p.trainingReview&&p.trainingReview.weak.length){
+  const reserve=Math.min(5,Math.max(1,sg.end-sg.start-1)), usable=(sg.end-sg.start)-reserve;
+  return Math.round(sg.start+reserve+usable*r[0])+'-'+Math.round(sg.start+reserve+usable*r[1])+' min';
+ }
  return Math.round(sg.start+(sg.end-sg.start)*r[0])+'-'+Math.round(sg.start+(sg.end-sg.start)*r[1])+' min';
 }
 
@@ -815,6 +819,10 @@ function buildPlan(f,trainingRecommendations){
   ];
  }
  p.trainingReview=buildTrainingReview(p,trainingRecommendations);
+ if(p.trainingReview&&p.trainingReview.safety.caution){
+  p.profile.loadGuard=true;
+  p.advanced=[];
+ }
  if(p.trainingReview&&p.trainingReview.weak.length){
   const names=p.trainingReview.weak.map(x=>x.skillName).join('、');
   p.notes.push('动态复习建议：'+names+' 在最近两次评分均低于 3 分；将复习嵌入本课既有③分解练习的前 5 分钟，不增加总课时、不改变本课主题或48课次顺序。');
@@ -874,8 +882,12 @@ function planText(p){
  p.struct.forEach(sg=>{
   const d=SEGMENTS[sg.id];
   L.push('【'+sg.no+' '+sg.n+'｜'+sg.t+'】'+fill(d.purpose,p));
+  if(sg.id==='drill'&&p.trainingReview&&p.trainingReview.weak.length){
+   L.push('  · '+sg.start+'-'+Math.min(sg.start+5,sg.end)+' min 动态纠错复习：'+p.trainingReview.weak.map(x=>x.skillName+'（'+x.students.join('、')+'，最近评分 '+x.scores.join(' / ')+'）').join('；'));
+   L.push('      先慢速定型与拍面 / 步法校正，再接回本课原有三步练习；全班同场同步，不增加总课时。');
+  }
   d.blocks.forEach((b,i)=>{
-   L.push('  · '+blockTime(sg,i)+' '+fill(b.l,p));
+   L.push('  · '+blockTime(sg,i,p)+' '+fill(b.l,p));
    fill(b.a.join('\n'),p).split('\n').forEach(a=>L.push('      - '+a));
    L.push('      口令：'+fill(b.c,p));
   });
@@ -1026,8 +1038,9 @@ function refreshLessonOptions(){
 }
 function segCardHTML(sg,p){
  const d=SEGMENTS[sg.id];
- const acts=d.blocks.map((b,i)=>'<div class="act-block"><div class="at">'+blockTime(sg,i)+'</div><div class="al">'+esc(fill(b.l,p))+'</div><ul>'+b.a.map(a=>'<li>'+esc(fill(a,p))+'</li>').join('')+'</ul><div class="call">教练口令：'+esc(fill(b.c,p))+'</div></div>').join('');
- return '<div class="seg-card"><div class="seg-card-top"><span class="no">'+sg.no+'</span><span class="nm">'+sg.n+'</span><span class="tm">'+sg.t+'</span></div><div class="seg-card-body"><div class="purpose"><strong>目的：</strong>'+esc(fill(d.purpose,p))+'</div>'+acts+
+ const acts=d.blocks.map((b,i)=>'<div class="act-block"><div class="at">'+blockTime(sg,i,p)+'</div><div class="al">'+esc(fill(b.l,p))+'</div><ul>'+b.a.map(a=>'<li>'+esc(fill(a,p))+'</li>').join('')+'</ul><div class="call">教练口令：'+esc(fill(b.c,p))+'</div></div>').join('');
+ const review=sg.id==='drill'&&p.trainingReview&&p.trainingReview.weak.length?'<div class="act-block"><div class="at">'+sg.start+'-'+Math.min(sg.start+5,sg.end)+' min</div><div class="al">动态纠错复习 · '+esc(p.trainingReview.weak.map(x=>x.skillName).join('、'))+'</div><ul><li>先慢速徒手 / 定点动作定型，教练逐项观察原技术判据</li><li>按学员名单做个别口令提示；全班仍在同一场地、同一步骤</li><li>复习后直接衔接本课原有三步递进练习，不增加球数、组数或总时长</li></ul><div class="call">教练口令：先把动作做稳，再接回今天的新内容</div></div>':'';
+ return '<div class="seg-card"><div class="seg-card-top"><span class="no">'+sg.no+'</span><span class="nm">'+sg.n+'</span><span class="tm">'+sg.t+'</span></div><div class="seg-card-body"><div class="purpose"><strong>目的：</strong>'+esc(fill(d.purpose,p))+'</div>'+review+acts+
   '<div class="seg-meta"><div class="m age"><div class="k">年龄段调整 · '+esc(p.ageName)+'</div><div class="v">'+esc(fill(d.age[p.age],p))+'</div></div>'+
   '<div class="m"><div class="k">与本课次的关系</div><div class="v">'+esc(fill(d.link,p))+'</div></div>'+
   '<div class="m"><div class="k">教练判据</div><div class="v">'+esc(fill(d.judge,p))+'</div></div>'+
@@ -1061,7 +1074,7 @@ function renderPlanHTML(p){
  if(v==='print')return head+'<div class="plan-body"><div class="block"><h3>打印稿（含全部详细动作）</h3><pre class="card">'+esc(planText(p))+'</pre></div>'+planExtraHTML(p)+'</div>';
  if(v==='table'){
   let rows='';
-  p.struct.forEach(sg=>{const d=SEGMENTS[sg.id];d.blocks.forEach((b,i)=>{rows+='<tr><td>'+sg.no+' '+sg.n+'</td><td class="num">'+blockTime(sg,i)+'</td><td>'+esc(fill(b.l,p))+'</td><td class="sec">'+b.a.map(a=>esc(fill(a,p))).join('；')+'</td><td class="sec">'+esc(fill(b.c,p))+'</td></tr>'})});
+  p.struct.forEach(sg=>{const d=SEGMENTS[sg.id];d.blocks.forEach((b,i)=>{rows+='<tr><td>'+sg.no+' '+sg.n+'</td><td class="num">'+blockTime(sg,i,p)+'</td><td>'+esc(fill(b.l,p))+'</td><td class="sec">'+b.a.map(a=>esc(fill(a,p))).join('；')+'</td><td class="sec">'+esc(fill(b.c,p))+'</td></tr>'})});
   const venueRows=p.venue.map((x,i)=>'<tr><td class="num">'+(i+1)+'</td><td class="sec">'+esc(x)+'</td></tr>').join('');
   return head+'<div class="plan-body rise"><div class="block"><h3><span class="idx">01</span>课堂结构表（含具体动作）</h3><div class="table-wrap"><table><thead><tr><th>环节</th><th>时间</th><th>做什么</th><th>具体动作 / 组次</th><th>教练口令</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
    '<div class="block"><h3><span class="idx">02</span>场地与器材动线</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>说明</th></tr></thead><tbody>'+venueRows+'</tbody></table></div></div>'+
