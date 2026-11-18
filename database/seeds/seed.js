@@ -16,7 +16,9 @@ function seed(opts = {}) {
   const file = path.join(__dirname, 'curriculum.json');
   const units = JSON.parse(fs.readFileSync(file, 'utf8'));
   const count = curriculum.replaceAll(units);
-  return { units: count, admin_created: Boolean(admin), source: file };
+  const { seedSkillPoints } = require('./skill-points');
+  const scoring = seedSkillPoints(units);
+  return { units: count, skill_points: scoring, admin_created: Boolean(admin), source: file };
 }
 
 if (require.main === module) {
