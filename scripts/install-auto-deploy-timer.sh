@@ -31,8 +31,14 @@ SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 log "[1] 检查运行环境"
 [ -x /opt/node22/bin/node ] || fail "缺少 /opt/node22/bin/node"
-timeout 25 git ls-remote https://github.com/jervis829/Pickleball.git refs/heads/main >/dev/null 2>&1 \
-  || fail "服务器访问不到 github.com，定时轮询方案不可用"
+# 判活要能容忍偶发抖动：单次失败不代表不可用，重试 3 次
+OK=0
+for i in 1 2 3; do
+  if timeout 25 git ls-remote https://github.com/jervis829/Pickleball.git refs/heads/main >/dev/null 2>&1; then OK=1; break; fi
+  log "    github.com 探测失败（第 $i/3 次），重试…"
+  sleep 4
+done
+[ "$OK" = "1" ] || fail "服务器连续 3 次访问不到 github.com，定时轮询方案不可用"
 ok "环境检查通过"
 
 log "[2] 安装脚本到 ${INSTALL_DIR}"
