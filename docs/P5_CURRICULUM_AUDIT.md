@@ -171,3 +171,24 @@ ATP、Erne等高情境特殊球应作为机会识别/规则边界的专项加分
 - 不应把ATP/Erne等低频特殊球设为所有学员的必过项。
 - 不应在没有教练试测与样本校准前，擅自发布新的数值型晋级线。
 
+
+
+## 10. P5-B：版本化评估协议与单项证据结构（已建立，仍为试测稿）
+
+新增迁移 `004_assessment_protocols.sql`，建立四类实体：
+- `assessment_protocols`：阶段、协议代码/版本、适用路线/年龄、发布状态、测试条件和校准状态。
+- `assessment_criteria`：能力项、四维评价分类、必测/关键门槛标记、评分rubric、测试任务和待校准规则。
+- `assessment_attempts`：学员、协议版本快照、日期、关联课次/授课记录、评估人、状态、复测关联。
+- `assessment_criterion_results`：单项分数（0–4）、达标状态、原始尝试、观察与证据引用。
+
+迁移写入初/中/高阶三份 **draft** 协议蓝图，覆盖对应阶段出口能力。所有试次数、成功定义和通过线均明确标记待教练试测，不写入未经验证的数值门槛。初阶包含第三拍drop与NVZ dink；中阶包含第三拍选择、过渡区reset、截击选择和双打轮转；高阶包含连续决策、NVZ节奏、过渡区攻防和双打适应。
+
+新增API：
+- `GET /api/v1/assessment-protocols?stage=1&status=draft`
+- `GET /api/v1/assessment-protocols/:id`
+- `POST /api/v1/assessment-attempts`
+- `GET /api/v1/assessment-attempts/:id`
+- `PUT /api/v1/assessment-attempts/:id/results`
+- `GET /api/v1/students/:id/assessment-attempts`
+
+新评估创建时固化协议快照；复测必须关联同一学员、同一协议版本。旧 `assessments` 表及历史数据保持不动。当前协议全部为草案，API只允许采集试测资料，不提供发布、晋级或自动结论能力；阶段结果的教练复核与正式发布留待后续阶段。
