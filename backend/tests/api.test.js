@@ -458,3 +458,69 @@ test('26 P5-C：三阶段试测协议包含可执行测试卡、标准条件和�
   const s3 = list.body.data.find(p => p.stage === 3);
   assert.ok(s3.criteria.find(c => c.code === 'hands_battle_counter').testProtocol.safety_stop.includes('头面部'));
 });
+
+
+test('27 P5-D：教练复核后生成补训计划，并仅复测指定未达标能力项', async () => {
+  const created = await api('/api/v1/assessment-attempts', {
+    method: 'POST',
+    body: JSON.stringify({ id: 'AT-P5D-01', studentId: 'S001', protocolId: 'AP-STAGE1-V1', assessmentDate: '2026-11-18', lessonNumber: 16 })
+  });
+  assert.equal(created.status, 201);
+  const criteria = created.body.data.protocolSnapshot.criteria;
+  const saved = await api('/api/v1/assessment-attempts/AT-P5D-01/results', {
+    method: 'PUT',
+    body: JSON.stringify({ results: criteria.map(c => ({
+      criterionId: c.id, score: 2, achieved: null,
+      rawTrials: [{ attempt: 1, observation: 'pilot evidence' }],
+      observations: '试测证据'
+    })) })
+  });
+  assert.equal(saved.status, 200);
+  const beforeReview = await api('/api/v1/assessment-attempts/AT-P5D-01/remediation');
+  assert.equal(beforeReview.status, 200);
+  assert.equal(beforeReview.body.data.canCreatePlan, false, '未复核时不得推断补训项');
+  const target = criteria.find(c => c.code === 'third_shot_drop');
+  for (const c of criteria) {
+    const status = c.code === 'third_shot_drop' ? 'needs_remediation' : 'confirmed';
+    const review = await api('/api/v1/assessment-attempts/AT-P5D-01/results/' + c.code + '/review', {
+      method: 'PUT', body: JSON.stringify({ status, note: '教练复核记录' })
+    });
+    assert.equal(review.status, 200);
+  }
+  const preview = await api('/api/v1/assessment-attempts/AT-P5D-01/remediation');
+  assert.equal(preview.status, 200);
+  assert.equal(preview.body.data.canCreatePlan, true);
+  assert.equal(preview.body.data.needsRemediation.length, 1);
+  assert.equal(preview.body.data.needsRemediation[0].criterionCode, 'third_shot_drop');
+  assert.ok(preview.body.data.needsRemediation[0].skillPoints.length > 0, '应尝试映射到现有48课次技术点');
+  const plan = await api('/api/v1/assessment-attempts/AT-P5D-01/remediation-plans', {
+    method: 'POST', body: JSON.stringify({ coachNote: '按基础控制优先补训' })
+  });
+  assert.equal(plan.status, 201);
+  assert.equal(plan.body.data.status, 'draft');
+  assert.equal(plan.body.data.items.length, 1);
+  const confirmed = await api('/api/v1/assessment-remediation-plans/' + plan.body.data.id + '/confirm', { method: 'POST' });
+  assert.equal(confirmed.status, 200);
+  assert.equal(confirmed.body.data.status, 'confirmed');
+  const retest = await api('/api/v1/assessment-retests', {
+    method: 'POST',
+    body: JSON.stringify({ studentId: 'S001', protocolId: 'AP-STAGE1-V1', retestOfId: 'AT-P5D-01',
+      remediationPlanId: plan.body.data.id, criterionCodes: ['third_shot_drop'] })
+  });
+  assert.equal(retest.status, 201);
+  assert.deepEqual(retest.body.data.criteriaScope, ['third_shot_drop']);
+  const outside = await api('/api/v1/assessment-attempts/' + retest.body.data.id + '/results', {
+    method: 'PUT',
+    body: JSON.stringify({ results: [{ criterionId: criteria.find(c => c.code === 'nvz_dink').id, score: 3 }] })
+  });
+  assert.equal(outside.status, 422, '复测不得录入范围外能力项');
+  const inside = await api('/api/v1/assessment-attempts/' + retest.body.data.id + '/results', {
+    method: 'PUT',
+    body: JSON.stringify({ results: [{ criterionId: target.id, score: 3, rawTrials: [{ attempt: 1, observation: 'retest' }] }] })
+  });
+  assert.equal(inside.status, 200);
+  const original = await api('/api/v1/assessment-attempts/AT-P5D-01');
+  assert.equal(original.body.data.results.find(x => x.criterionCode === 'third_shot_drop').score, 2,
+    '复测不得覆盖原评估原始成绩');
+  assert.equal(original.body.data.conclusion, null, '补训闭环不得自动晋级');
+});
