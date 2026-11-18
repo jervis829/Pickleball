@@ -43,7 +43,7 @@ function toDb(entity, input, forcedId) {
     let v = src[fe];
     if (JSON_COLS.has(col)) v = v == null ? null : (typeof v === 'string' ? v : JSON.stringify(v));
     else if (NUM_COLS.has(col)) v = (v === '' || v == null) ? null : Number(v);
-    else v = v == null ? null : String(v);
+    else v = (v == null || v === '') ? null : String(v);
     row[col] = (typeof v === 'number' && Number.isNaN(v)) ? null : v;
   }
   return row;
