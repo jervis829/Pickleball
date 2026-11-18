@@ -23,7 +23,7 @@ const DEFS = {
   },
   sessions: {
     table: 'sessions',
-    cols: { studentId: 'student_id', date: 'lesson_date', lesson: 'lesson', minutes: 'minutes', attend: 'attend', judge: 'judge', rpe: 'rpe', note: 'note' },
+    cols: { studentId: 'student_id', planId: 'plan_id', date: 'lesson_date', lesson: 'lesson', minutes: 'minutes', attend: 'attend', judge: 'judge', rpe: 'rpe', note: 'note' },
     defaults: {},
     search: ['note']
   },
@@ -153,7 +153,10 @@ const clearPlanStudents = () => run('DELETE FROM plan_students');
 function create(entity, input) {
   const row = toDb(entity, input);
   upsertRow(entity, row);
-  if (entity === 'plans') writePlanStudents(row.id, input.studentIds || []);
+  if (entity === 'plans') {
+    writePlanStudents(row.id, input.studentIds || []);
+    require('../services/skill-scoring').ensurePlanSnapshot(row.id, row.lesson);
+  }
   return find(entity, row.id);
 }
 
@@ -162,7 +165,10 @@ function update(entity, id, input) {
   const merged = Object.assign({}, current, input, { id });
   const row = toDb(entity, merged, id);
   upsertRow(entity, row);
-  if (entity === 'plans' && input.studentIds) writePlanStudents(id, input.studentIds);
+  if (entity === 'plans') {
+    if (input.studentIds) writePlanStudents(id, input.studentIds);
+    require('../services/skill-scoring').ensurePlanSnapshot(id, row.lesson);
+  }
   return find(entity, id);
 }
 
