@@ -40,5 +40,6 @@ module.exports = {
   sessionSkillScores: ctx => ok(ctx.res, skillScoring.sessionScores(ctx.params.id)),
   saveSessionSkillScores: ctx => ok(ctx.res, skillScoring.saveSessionScores(ctx.params.id, ctx.body.scores, ctx.user)),
   studentSkillProgress: ctx => ok(ctx.res, skillScoring.studentProgress(ctx.params.id)),
+  studentTrainingRecommendations: ctx => ok(ctx.res, skillScoring.trainingRecommendations(ctx.params.id, ctx.query.lesson)),
   students, plans, sessions, assessments
 };
