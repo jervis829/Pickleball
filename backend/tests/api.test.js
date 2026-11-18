@@ -426,3 +426,35 @@ test('25 P5-B：复测必须关联同一学员与同一协议，旧 assessments 
   assert.equal(legacy.status, 200);
   assert.equal(legacy.body.data.vals.serve, 72);
 });
+
+
+test('26 P5-C：三阶段试测协议包含可执行测试卡、标准条件和描述性锚点', async () => {
+  const list = await api('/api/v1/assessment-protocols');
+  assert.equal(list.status, 200);
+  assert.equal(list.body.data.length, 3);
+  for (const protocol of list.body.data) {
+    assert.equal(protocol.status, 'draft');
+    assert.equal(protocol.conditions.calibration, '试测阶段至少安排教练共同观察和复核；不得自动形成晋级结论');
+    assert.ok(protocol.conditions.safety.includes('立即停止'));
+    assert.ok(protocol.criteria.length >= 6);
+    for (const criterion of protocol.criteria) {
+      assert.equal(criterion.testProtocol.protocolVersion, 'pilot-v1');
+      assert.ok(criterion.testProtocol.setup);
+      assert.ok(criterion.testProtocol.procedure.length >= 3);
+      assert.ok(criterion.testProtocol.valid_trial);
+      assert.ok(criterion.testProtocol.record_fields.length >= 3);
+      assert.ok(criterion.testProtocol.safety_stop);
+      assert.ok(criterion.testProtocol.adaptations);
+      assert.equal(criterion.testProtocol.passThreshold, null);
+      assert.equal(criterion.rubric.levels.length, 5);
+      assert.equal(criterion.rubric.levels[0].score, 0);
+      assert.ok(criterion.rubric.note.includes('不得据此自动晋级') || criterion.rubric.note.includes('试测后校准'));
+    }
+  }
+  const s1 = list.body.data.find(p => p.stage === 1);
+  assert.ok(s1.criteria.find(c => c.code === 'third_shot_drop').testProtocol.procedure.some(x => x.includes('第三拍')));
+  const s2 = list.body.data.find(p => p.stage === 2);
+  assert.ok(s2.criteria.find(c => c.code === 'volley_selection').testProtocol.safety_stop.includes('身体'));
+  const s3 = list.body.data.find(p => p.stage === 3);
+  assert.ok(s3.criteria.find(c => c.code === 'hands_battle_counter').testProtocol.safety_stop.includes('头面部'));
+});
