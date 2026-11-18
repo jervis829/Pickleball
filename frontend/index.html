@@ -1131,14 +1131,15 @@ async function renderStageAssessmentPanel(){
     const status=a.status==='cancelled'?'已取消':a.status==='submitted'?'已提交':'进行中';
     const results=(a.results||[]).map(r=>{
      const rv=r.coachReviewStatus||'pending';
-     return '<div style="padding:10px 0;border-bottom:1px dashed var(--hairline)"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>'+esc(r.criterionSnapshot?.name||r.criterionCode)+'</b><span class="chip">0–4：'+(r.score==null?'未评分':r.score)+'</span><span class="chip '+(rv==='needs_remediation'?'chip-danger':rv==='confirmed'?'chip-ok':'chip-warn')+'">'+(rv==='needs_remediation'?'需补训':rv==='confirmed'?'已确认':rv==='not_applicable'?'不适用':'待复核')+'</span></div>'+
+     return '<div style="padding:10px 0;border-bottom:1px dashed var(--hairline)"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>'+esc(r.criterionSnapshot?.name||r.criterionCode)+'</b><span class="chip '+(rv==='needs_remediation'?'chip-danger':rv==='confirmed'?'chip-ok':'chip-warn')+'">'+(rv==='needs_remediation'?'需补训':rv==='confirmed'?'已确认':rv==='not_applicable'?'不适用':'待复核')+'</span></div>'+
+      '<div class="grid-2" style="margin-top:8px"><div class="field"><label>阶段评分（0–4；0表示无有效观察）</label><input type="number" min="0" max="4" step="1" data-stage-score="'+a.id+'" data-criterion="'+r.criterionId+'" value="'+(r.score==null?'':r.score)+'" placeholder="未评估"></div><div class="field"><label>观察与证据</label><input type="text" data-stage-observation="'+a.id+'" data-criterion="'+r.criterionId+'" value="'+esc(r.observations||'')+'" placeholder="动作表现、情境、证据"></div></div>'+
       '<div class="field" style="margin:8px 0"><label>教练复核结论</label><select id="review-'+a.id+'-'+r.criterionCode+'"><option value="confirmed" '+(rv==='confirmed'?'selected':'')+'>确认达到 / 记录完成</option><option value="needs_remediation" '+(rv==='needs_remediation'?'selected':'')+'>需补训</option><option value="not_applicable" '+(rv==='not_applicable'?'selected':'')+'>不适用（需说明）</option></select></div>'+
       '<button class="btn btn-sm" data-act="review-stage-result" data-attempt="'+a.id+'" data-code="'+esc(r.criterionCode)+'">保存复核</button>'+
       (r.coachDecisionNote?'<div class="sub-txt">'+esc(r.coachDecisionNote)+'</div>':'')+'</div>';
     }).join('');
     return '<details style="border:1px solid var(--hairline);border-radius:8px;padding:12px;margin:10px 0"><summary style="cursor:pointer"><b>'+esc(a.assessmentDate)+' · 阶段 '+a.protocolSnapshot.stage+'</b> <span class="chip">'+status+'</span> <span class="chip">'+(a.results||[]).length+'/'+(a.protocolSnapshot.criteria||[]).length+' 项已录入</span></summary>'+
       '<div style="padding-top:10px">'+results+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-sm" data-act="preview-remediation" data-attempt="'+a.id+'">查看补训建议</button></div><div id="remediation-'+a.id+'" style="margin-top:10px"></div></div></details>';
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-sm btn-primary" data-act="save-stage-results" data-attempt="'+a.id+'">保存评分与观察</button><button class="btn btn-sm" data-act="preview-remediation" data-attempt="'+a.id+'">查看补训建议</button></div><div id="remediation-'+a.id+'" style="margin-top:10px"></div></div></details>';
    }).join(''):'<div class="empty" style="padding:24px"><h3>暂无新版评估记录</h3><p>选择学员和阶段协议，创建第一份阶段能力评估。</p></div>')+
    '</div>';
   host.dataset.student=selectedStudent;host.dataset.stage=String(stage);
@@ -1156,6 +1157,19 @@ async function createStageAttempt(protocolId){
   toast('已创建阶段评估；请逐项录入观察分数并完成教练复核');
   const host=$('#stageAssessmentPanel');host.dataset.student=studentId;host.dataset.stage=String(stage);await renderStageAssessmentPanel();
  }catch(e){toast('创建评估失败：'+e.message)}
+}
+async function saveStageResults(attemptId){
+ try{
+  const attempt=await window.PKB_API.request('/assessment-attempts/'+attemptId);
+  const results=(attempt.results||[]).map(r=>{
+   const scoreEl=$('[data-stage-score="'+attemptId+'"][data-criterion="'+r.criterionId+'"]');
+   const noteEl=$('[data-stage-observation="'+attemptId+'"][data-criterion="'+r.criterionId+'"]');
+   const raw=scoreEl?.value??'';
+   return {criterionId:r.criterionId,score:raw===''?null:Number(raw),achieved:null,rawTrials:r.rawTrials||[],observations:noteEl?.value||''};
+  });
+  await window.PKB_API.request('/assessment-attempts/'+attemptId+'/results',{method:'PUT',body:JSON.stringify({results})});
+  toast('阶段评分与观察证据已保存');await renderStageAssessmentPanel();
+ }catch(e){toast('保存评估结果失败：'+e.message)}
 }
 async function reviewStageResult(attemptId,code){
  const status=$('#review-'+attemptId+'-'+code)?.value;
@@ -1427,6 +1441,7 @@ document.addEventListener('click',e=>{
  }
  if(act==='print-plan'){if(!state.ui.lastPlan){toast('请先生成计划');return}window.print();return}
  if(act==='create-stage-attempt'){createStageAttempt(btn.dataset.protocol);return}
+ if(act==='save-stage-results'){saveStageResults(btn.dataset.attempt);return}
  if(act==='review-stage-result'){reviewStageResult(btn.dataset.attempt,btn.dataset.code);return}
  if(act==='preview-remediation'){previewRemediation(btn.dataset.attempt);return}
  if(act==='create-remediation-plan'){createRemediationPlan(btn.dataset.attempt);return}
