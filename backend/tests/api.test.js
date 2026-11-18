@@ -283,3 +283,45 @@ test('21 v4.1 课程体系含手法层技术点 flick / roll', async () => {
   assert.ok(/hands battle/.test(text), 'U19 应含 hands battle');
   assert.ok(!/教学管理中台/.test(text));
 });
+
+
+test('22 教案评分快照、课后0–5分录入与学员技术成长查询', async () => {
+  const lessonPoints = await api('/api/v1/curriculum/1/skill-points');
+  assert.equal(lessonPoints.status, 200);
+  assert.ok(lessonPoints.body.data.items.length > 0);
+
+  const plan = await api('/api/v1/plans', {
+    method: 'POST',
+    body: JSON.stringify({ id: 'PSKILL01', lesson: 1, stage: 1, tech: '评分接口测试', minutes: 90, studentIds: ['S001'], text: '测试教案' })
+  });
+  assert.equal(plan.status, 201);
+  const frozen = await api('/api/v1/plans/PSKILL01/skill-points');
+  assert.equal(frozen.status, 200);
+  assert.ok(frozen.body.data.items.length > 0);
+  assert.ok(frozen.body.data.items[0].rubricSnapshot);
+
+  const session = await api('/api/v1/sessions', {
+    method: 'POST',
+    body: JSON.stringify({ id: 'RSKILL01', studentId: 'S001', planId: 'PSKILL01', lesson: 1, date: '2026-11-18', minutes: 90, attend: '出勤' })
+  });
+  assert.equal(session.status, 201);
+
+  const item = frozen.body.data.items[0];
+  const saved = await api('/api/v1/sessions/RSKILL01/skill-scores', {
+    method: 'PUT',
+    body: JSON.stringify({ scores: [{ planSkillPointId: item.id, score: 3, attempts: 10, successes: 7, coachNote: '标准练习下基本达到' }] })
+  });
+  assert.equal(saved.status, 200);
+  assert.equal(saved.body.data.items.find(x => x.id === item.id).score, 3);
+
+  const progress = await api('/api/v1/students/S001/skill-progress');
+  assert.equal(progress.status, 200);
+  assert.equal(progress.body.data.totalScores, 1);
+  assert.equal(progress.body.data.skills[0].latestScore, 3);
+
+  const invalid = await api('/api/v1/sessions/RSKILL01/skill-scores', {
+    method: 'PUT',
+    body: JSON.stringify({ scores: [{ planSkillPointId: item.id, score: 6 }] })
+  });
+  assert.equal(invalid.status, 422);
+});
