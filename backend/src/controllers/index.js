@@ -6,6 +6,7 @@ const stateSvc = require('../services/state');
 const insights = require('../services/insights');
 const { curriculum } = require('../repositories/misc');
 const skillScoring = require('../services/skill-scoring');
+const assessmentProtocols = require('../services/assessment-protocols');
 
 function crud(entity) {
   return {
@@ -41,5 +42,11 @@ module.exports = {
   saveSessionSkillScores: ctx => ok(ctx.res, skillScoring.saveSessionScores(ctx.params.id, ctx.body.scores, ctx.user)),
   studentSkillProgress: ctx => ok(ctx.res, skillScoring.studentProgress(ctx.params.id)),
   studentTrainingRecommendations: ctx => ok(ctx.res, skillScoring.trainingRecommendations(ctx.params.id, ctx.query.lesson)),
+  assessmentProtocols: ctx => ok(ctx.res, assessmentProtocols.listProtocols(ctx.query)),
+  assessmentProtocol: ctx => ok(ctx.res, assessmentProtocols.getProtocol(ctx.params.id)),
+  createAssessmentAttempt: ctx => created(ctx.res, assessmentProtocols.createAttempt(ctx.body, ctx.user)),
+  getAssessmentAttempt: ctx => ok(ctx.res, assessmentProtocols.getAttempt(ctx.params.id)),
+  saveAssessmentResults: ctx => ok(ctx.res, assessmentProtocols.saveResults(ctx.params.id, ctx.body.results)),
+  studentAssessmentAttempts: ctx => ok(ctx.res, assessmentProtocols.listStudentAttempts(ctx.params.id)),
   students, plans, sessions, assessments
 };
