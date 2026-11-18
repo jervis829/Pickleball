@@ -1236,12 +1236,16 @@ document.addEventListener('click',e=>{
   else fallbackCopy(txt);return;
  }
  if(act==='print-plan'){if(!state.ui.lastPlan){toast('请先生成计划');return}window.print();return}
+ if(act==='skill-score'){openSkillScoreModal(id);return}
+ if(act==='save-skill-scores'){saveSkillScores(id);return}
  if(act==='new-session'){sessionModal();return}
  if(act==='save-session'){
   const o={};$$('[data-rf]').forEach(x=>o[x.dataset.rf]=x.value);
   const s=state.students.find(x=>x.id===o.studentId);
-  state.sessions.push(Object.assign({id:uid(),studentName:s?s.name:'—'},o));
-  save();closeModal();toast('授课记录已保存');renderView(state.ui.view);return;
+  const sessionId=uid();state.sessions.push(Object.assign({id:sessionId,studentName:s?s.name:'—',planId:o.planId||null},o));
+  save();closeModal();toast('授课记录已保存');renderView(state.ui.view);
+  if(o.planId&&window.PKB_API)window.PKB_API.syncNow(state).then(()=>openSkillScoreModal(sessionId)).catch(err=>toast('评分项目载入失败：'+err.message));
+  return;
  }
  if(act==='del-session'){state.sessions=state.sessions.filter(x=>x.id!==id);save();renderTracking();toast('记录已删除');return}
  if(act==='save-assess'){
