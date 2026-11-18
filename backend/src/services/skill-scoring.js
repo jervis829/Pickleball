@@ -150,10 +150,56 @@ function studentProgress(studentId) {
       latestScore: history[history.length - 1].score,
       recentAverage: Math.round(recent.reduce((sum, x) => sum + x.score, 0) / recent.length * 100) / 100,
       trend: recent.length > 1 ? recent[recent.length - 1].score - recent[0].score : 0,
+      status: history.length >= 3 && history.slice(-3).every(x => x.score >= 4) ? 'mastered'
+        : history.length >= 2 && history.slice(-2).every(x => x.score < 3) ? 'weak' : 'developing',
       count: history.length, history
     };
   }).sort((a, b) => a.latestScore - b.latestScore || a.skillName.localeCompare(b.skillName, 'zh-CN'));
   return { student, totalScores: rows.length, skills };
 }
 
-module.exports = { lessonSkillPoints, ensurePlanSnapshot, planSkillPoints, sessionScores, saveSessionScores, studentProgress };
+function trainingRecommendations(studentId, lessonNo) {
+  const lesson = Number(lessonNo);
+  if (!Number.isInteger(lesson) || lesson < 1 || lesson > 48) {
+    throw new HttpError(422, 'VALIDATION_ERROR', '课次必须为1–48');
+  }
+  const progress = studentProgress(studentId);
+  const currentPoints = lessonSkillPoints(lesson);
+  const currentKeys = new Set(currentPoints.map(p => p.skillKey));
+  const weak = progress.skills.filter(x => x.status === 'weak');
+  const mastered = progress.skills.filter(x => x.status === 'mastered');
+  const matchedWeak = weak.filter(x => currentKeys.has(x.skillKey));
+  const parkedWeak = weak.filter(x => !currentKeys.has(x.skillKey));
+  const recentSessions = all(`SELECT id, lesson_date AS lessonDate, lesson, rpe, attend, note
+    FROM sessions WHERE student_id = ? AND deleted_at IS NULL
+    ORDER BY lesson_date DESC, created_at DESC LIMIT 3`, [studentId]);
+  const injury = get('SELECT injury FROM students WHERE id = ? AND deleted_at IS NULL', [studentId])?.injury || '';
+  const rpes = recentSessions.map(x => Number(x.rpe)).filter(Number.isFinite);
+  const highRpeCount = rpes.filter(x => x >= 8).length;
+  const painNote = recentSessions.some(x => /疼痛|痛感|受伤|伤病|不适|肿胀|麻木/.test(String(x.note || '')));
+  const safetyHold = Boolean(String(injury).trim()) || painNote || rpes.some(x => x >= 9) || highRpeCount >= 2;
+  const loadCaution = safetyHold || highRpeCount >= 1;
+  return {
+    student: progress.student,
+    lesson,
+    weakSkills: weak,
+    matchedWeakSkills: matchedWeak,
+    parkedWeakSkills: parkedWeak,
+    masteredSkills: mastered,
+    recentSessions,
+    safety: {
+      holdAdditionalLoad: safetyHold,
+      caution: loadCaution,
+      reasons: [
+        ...(String(injury).trim() ? ['学员档案存在伤病 / 运动禁忌记录'] : []),
+        ...(painNote ? ['近期授课反馈出现疼痛或不适关键词'] : []),
+        ...(rpes.some(x => x >= 9) ? ['最近授课 RPE 曾达到 9–10'] : []),
+        ...(highRpeCount >= 2 ? ['最近三次授课中至少两次 RPE ≥ 8'] : []),
+        ...(!safetyHold && highRpeCount === 1 ? ['最近三次授课中出现一次 RPE ≥ 8，维持原负荷观察'] : [])
+      ]
+    },
+    policy: '只在本课次已有主题与技术点匹配时加入复习；不改变48课次顺序、不延长总课时；薄弱项复习嵌入③分解练习。'
+  };
+}
+
+module.exports = { lessonSkillPoints, ensurePlanSnapshot, planSkillPoints, sessionScores, saveSessionScores, studentProgress, trainingRecommendations };
