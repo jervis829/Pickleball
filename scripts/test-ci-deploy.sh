@@ -37,7 +37,7 @@ setup() {
 run_deploy() { # $1=port
   TARGET_DIR="$ROOT/target" SVC=pkb-rehearse APP_PORT="$1" APP_HOST=127.0.0.1 \
     NODE_BIN="$NODE_BIN" DB_FILE=data/pickleball.db RUN_USER="$(whoami)" \
-    BACKUP_ROOT="$ROOT/backups" bash "$ROOT/src/scripts/ci-deploy.sh"
+    BACKUP_ROOT="$ROOT/backups" CI_DEPLOY_DRY_RUN=1 bash "$ROOT/src/scripts/ci-deploy.sh"
 }
 
 echo "== ① 正向部署 =="
