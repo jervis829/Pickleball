@@ -366,3 +366,63 @@ test('22 教案评分快照、课后0–5分录入与学员技术成长查询', 
   assert.ok(mastered.body.data.masteredSkills.some(x => x.skillKey === item.skillKey));
   assert.ok(!mastered.body.data.weakSkills.some(x => x.skillKey === item.skillKey));
 });
+
+
+test('23 P5-B：三阶段评估协议以草案状态提供，且没有自动晋级线', async () => {
+  const list = await api('/api/v1/assessment-protocols');
+  assert.equal(list.status, 200);
+  assert.equal(list.body.data.length, 3);
+  assert.ok(list.body.data.every(p => p.status === 'draft' && p.calibrationStatus === 'coach_pilot_required'));
+  const s1 = list.body.data.find(p => p.stage === 1);
+  assert.ok(s1.criteria.some(c => c.code === 'third_shot_drop'));
+  assert.ok(s1.criteria.some(c => c.code === 'nvz_dink'));
+  assert.ok(s1.criteria.every(c => c.passRule.rule.includes('待教练试测') || c.passRule.rule.includes('关键能力项')));
+  const blocked = await api('/api/v1/assessment-attempts', {
+    method: 'POST', body: JSON.stringify({ studentId: 'S001', protocolId: 'missing-protocol' })
+  });
+  assert.equal(blocked.status, 404);
+});
+
+test('24 P5-B：评估记录固化协议快照、保存单项证据并保留未评估状态', async () => {
+  const created = await api('/api/v1/assessment-attempts', {
+    method: 'POST',
+    body: JSON.stringify({ id: 'AT-P5B-01', studentId: 'S001', protocolId: 'AP-STAGE1-V1', assessmentDate: '2026-11-18', lessonNumber: 16, assessorName: '测试教练' })
+  });
+  assert.equal(created.status, 201);
+  assert.equal(created.body.data.status, 'in_progress');
+  assert.equal(created.body.data.conclusion, null);
+  assert.equal(created.body.data.protocolSnapshot.version, 1);
+  const criterion = created.body.data.protocolSnapshot.criteria.find(x => x.code === 'third_shot_drop');
+  const saved = await api('/api/v1/assessment-attempts/AT-P5B-01/results', {
+    method: 'PUT',
+    body: JSON.stringify({ results: [{ criterionId: criterion.id, score: 3, achieved: null, rawTrials: [{ attempt: 1, outcome: '观察记录' }], observations: '记录动作弧线与落点' }] })
+  });
+  assert.equal(saved.status, 200);
+  assert.equal(saved.body.data.conclusion, null, '草案协议不得产生晋级结论');
+  assert.equal(saved.body.data.results[0].score, 3);
+  assert.equal(saved.body.data.results[0].achieved, null);
+  assert.equal(saved.body.data.results[0].rawTrials.length, 1);
+  const invalid = await api('/api/v1/assessment-attempts/AT-P5B-01/results', {
+    method: 'PUT', body: JSON.stringify({ results: [{ criterionId: criterion.id, score: 5 }] })
+  });
+  assert.equal(invalid.status, 422, '阶段评估量表范围为0–4');
+});
+
+test('25 P5-B：复测必须关联同一学员与同一协议，旧 assessments 仍保留', async () => {
+  const wrongStudent = await api('/api/v1/assessment-attempts', {
+    method: 'POST', body: JSON.stringify({ studentId: 'S002', protocolId: 'AP-STAGE1-V1', retestOfId: 'AT-P5B-01' })
+  });
+  assert.equal(wrongStudent.status, 422);
+  const retest = await api('/api/v1/assessment-attempts', {
+    method: 'POST', body: JSON.stringify({ studentId: 'S001', protocolId: 'AP-STAGE1-V1', retestOfId: 'AT-P5B-01' })
+  });
+  assert.equal(retest.status, 201);
+  assert.equal(retest.body.data.retestOfId, 'AT-P5B-01');
+  const history = await api('/api/v1/students/S001/assessment-attempts');
+  assert.equal(history.status, 200);
+  assert.ok(history.body.data.some(x => x.id === 'AT-P5B-01'));
+  assert.ok(history.body.data.some(x => x.retestOfId === 'AT-P5B-01'));
+  const legacy = await api('/api/v1/assessments/A001');
+  assert.equal(legacy.status, 200);
+  assert.equal(legacy.body.data.vals.serve, 72);
+});
