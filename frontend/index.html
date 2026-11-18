@@ -1074,7 +1074,7 @@ function renderPlanHTML(p){
  if(v==='print')return head+'<div class="plan-body"><div class="block"><h3>打印稿（含全部详细动作）</h3><pre class="card">'+esc(planText(p))+'</pre></div>'+planExtraHTML(p)+'</div>';
  if(v==='table'){
   let rows='';
-  p.struct.forEach(sg=>{const d=SEGMENTS[sg.id];d.blocks.forEach((b,i)=>{rows+='<tr><td>'+sg.no+' '+sg.n+'</td><td class="num">'+blockTime(sg,i,p)+'</td><td>'+esc(fill(b.l,p))+'</td><td class="sec">'+b.a.map(a=>esc(fill(a,p))).join('；')+'</td><td class="sec">'+esc(fill(b.c,p))+'</td></tr>'})});
+  p.struct.forEach(sg=>{const d=SEGMENTS[sg.id];if(sg.id==='drill'&&p.trainingReview&&p.trainingReview.weak.length){rows+='<tr><td>'+sg.no+' '+sg.n+'</td><td class="num">'+sg.start+'-'+Math.min(sg.start+5,sg.end)+' min</td><td>动态纠错复习 · '+esc(p.trainingReview.weak.map(x=>x.skillName).join('、'))+'</td><td class="sec">先慢速定型、拍面 / 步法校正；按学员给个别口令</td><td class="sec">先把动作做稳，再接回本课内容</td></tr>'}d.blocks.forEach((b,i)=>{rows+='<tr><td>'+sg.no+' '+sg.n+'</td><td class="num">'+blockTime(sg,i,p)+'</td><td>'+esc(fill(b.l,p))+'</td><td class="sec">'+b.a.map(a=>esc(fill(a,p))).join('；')+'</td><td class="sec">'+esc(fill(b.c,p))+'</td></tr>'})});
   const venueRows=p.venue.map((x,i)=>'<tr><td class="num">'+(i+1)+'</td><td class="sec">'+esc(x)+'</td></tr>').join('');
   return head+'<div class="plan-body rise"><div class="block"><h3><span class="idx">01</span>课堂结构表（含具体动作）</h3><div class="table-wrap"><table><thead><tr><th>环节</th><th>时间</th><th>做什么</th><th>具体动作 / 组次</th><th>教练口令</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'+
    '<div class="block"><h3><span class="idx">02</span>场地与器材动线</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>说明</th></tr></thead><tbody>'+venueRows+'</tbody></table></div></div>'+
