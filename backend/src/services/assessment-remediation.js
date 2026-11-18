@@ -118,7 +118,11 @@ function createScopedRetest(input,user) {
   const eligible=new Set((parentAttempt.results||[]).filter(r=>r.coachReviewStatus==='needs_remediation').map(r=>r.criterionCode));
   if(codes.some(x=>!eligible.has(x))) throw new HttpError(422,'INVALID_RETEST_SCOPE','只能复测原评估中由教练确认需补训的能力项');
   const created=protocols.createAttempt({...input,retestOfId:parent.id},user);
-  run('UPDATE assessment_attempts SET criteria_scope_json=? WHERE id=?',[JSON.stringify([...new Set(codes)]),created.id]);
+  const scope=[...new Set(codes)];
+  run('UPDATE assessment_attempts SET criteria_scope_json=? WHERE id=?',[JSON.stringify(scope),created.id]);
+  const snapshot=created.protocolSnapshot||{};
+  const scopedCriteria=(snapshot.criteria||[]).filter(c=>scope.includes(c.code));
+  protocols.saveResults(created.id,scopedCriteria.map(c=>({criterionId:c.id,score:null,achieved:null,rawTrials:[],observations:'复测待录入'})));
   return protocols.getAttempt(created.id);
 }
 module.exports={reviewResult,remediationPreview,createPlan,getPlan,confirmPlan,createScopedRetest};
