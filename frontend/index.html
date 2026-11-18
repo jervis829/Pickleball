@@ -1220,8 +1220,11 @@ async function openSkillProgressModal(studentId){
  try{
   const data=await window.PKB_API.request('/students/'+encodeURIComponent(studentId)+'/skill-progress');
   const skills=data.skills||[];
-  const body=skills.map(x=>'<tr><td>'+esc(x.skillName)+'</td><td class="num">'+x.latestScore+'/5</td><td class="num">'+x.recentAverage+'</td><td class="num">'+(x.trend>0?'+':'')+x.trend+'</td><td class="num">'+x.count+'</td></tr>').join('');
-  openModal('<div class="modal-head"><h3>技术成长 · '+esc(data.student.name)+'</h3><button class="x" data-act="close-modal">×</button></div><div class="modal-body">'+(skills.length?'<div class="notice">共记录 '+data.totalScores+' 项技术评分。近三次平均仅使用已评分记录，未评分不计为0。</div><table><thead><tr><th>技术点</th><th>最近分</th><th>近三次均分</th><th>变化</th><th>次数</th></tr></thead><tbody>'+body+'</tbody></table>':'<div class="empty">暂无技术评分。请先在教学追踪中为关联教案的授课记录录入评分。</div>')+'</div><div class="modal-foot"><button class="btn" data-act="close-modal">关闭</button></div>');
+  const body=skills.map(x=>{
+   const status=x.status==='weak'?'<span class="chip chip-danger">薄弱项</span>':x.status==='mastered'?'<span class="chip chip-ok">稳定掌握</span>':'<span class="chip">持续观察</span>';
+   return '<tr><td>'+esc(x.skillName)+'</td><td>'+status+'</td><td class="num">'+x.latestScore+'/5</td><td class="num">'+x.recentAverage+'</td><td class="num">'+(x.trend>0?'+':'')+x.trend+'</td><td class="num">'+x.count+'</td></tr>';
+  }).join('');
+  openModal('<div class="modal-head"><h3>技术成长 · '+esc(data.student.name)+'</h3><button class="x" data-act="close-modal">×</button></div><div class="modal-body">'+(skills.length?'<div class="notice">共记录 '+data.totalScores+' 项技术评分。连续两次低于3分标记薄弱项；连续三次达到4分及以上标记稳定掌握。未评分不计为0。</div><table><thead><tr><th>技术点</th><th>状态</th><th>最近分</th><th>近三次均分</th><th>变化</th><th>次数</th></tr></thead><tbody>'+body+'</tbody></table>':'<div class="empty">暂无技术评分。请先在教学追踪中为关联教案的授课记录录入评分。</div>')+'</div><div class="modal-foot"><button class="btn" data-act="close-modal">关闭</button></div>');
  }catch(e){toast('技术成长载入失败：'+e.message)}
 }
 
