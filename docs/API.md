@@ -117,7 +117,7 @@ curl -X POST http://127.0.0.1:8787/api/v1/auth/login \
 2. **执行是单事务**：`sessions` 插入（`review_status = pending`）+ `outline_lessons.status = taught` + `enrollments.used_lessons + 1` + `students.used + 1`。任一步失败整体回滚。
 3. **执行幂等**：同一 `outlineLessonId` 重复调用返回同一 `session`，`duplicated = true`，不会重复扣课时。
 4. **点评会自动调大纲**：`paceMode = adaptive` 且判据非「达标」→ 下一个 `planned` 课次改为同单元 `R` 补强课，**不新增课时、不改单次时长**；`paceMode = fixed` → 不动大纲，返回 `adjust.action = 'hold'`。
-5. `GET /state` 同时下发 `enrollments`（含 `outline`），离线也能看今天上哪节、哪节还没点评。
+5. `GET /state` 同时下发只读字段 `enrollments`（含 `outline`）与 `difficulty`（24 单元难度表），离线也能看今天上哪节并按难度计算教案剂量。
 
 返回示例（执行一节课）：
 

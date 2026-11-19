@@ -34,6 +34,35 @@ function readEnrollments() {
 
 const ENTITY_KEYS = ['students', 'plans', 'sessions', 'assessments'];
 
+/**
+ * 课程难度表（只读参考数据，随 state 一起下发）。
+ * 为什么放进 state 而不是让前端单独拉：教案在离线模式下也要按难度算剂量，
+ * 单开一个接口会让「离线备的课」和「在线备的课」球数不一样。数据源唯一：
+ * database/seeds/curriculum-difficulty.json。
+ */
+let cachedDifficulty = null;
+function readDifficulty() {
+  if (cachedDifficulty) return cachedDifficulty;
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const config = require('../config');
+  const file = path.join(config.ROOT, 'database', 'seeds', 'curriculum-difficulty.json');
+  if (!fs.existsSync(file)) return null;
+  const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+  cachedDifficulty = {
+    version: raw.version, status: raw.status,
+    doseModel: raw.doseModel || null,
+    calibrationNote: raw.calibrationNote || '',
+    units: (raw.units || []).map(u => ({
+      u: u.u, difficulty: u.difficulty, newPoints: u.newPoints, repsToUsable: u.repsToUsable,
+      revisedLessons: u.revisedLessons, prereq: u.prereq || [], gate: u.gate || '',
+      splitAdvice: u.splitAdvice || '', risk: u.risk || ''
+    })),
+    missingCoverage: raw.missingCoverage || []
+  };
+  return cachedDifficulty;
+}
+
 /** 聚合为前端可直接消费的 state（含乐观锁版本号） */
 function readState() {
   const s = settings.all();
@@ -44,6 +73,8 @@ function readState() {
     assessments: entities.listAll('assessments'),
     // P7：课程包与大纲只读下发，供前端离线时也能看「今天上哪节、点评了没」
     enrollments: readEnrollments(),
+    // P7：难度表随 state 下发，教案剂量在离线状态下也按同一张表算
+    difficulty: readDifficulty(),
     demo: Boolean(s.meta && s.meta.demo),
     thresholds: s.thresholds || {},
     params: Object.assign({}, DEFAULT_PARAMS, s.params || {}),

@@ -55,6 +55,23 @@ const docBad = (doc.match(BAD) || []);
 ok('课程种子无方括号占位', seedBad.length === 0, seedBad.slice(0, 3).join(','));
 ok('前端无方括号占位', htmlBad.length === 0, htmlBad.slice(0, 3).join(','));
 ok('体系文档无方括号占位', docBad.length === 0, docBad.slice(0, 3).join(','));
+/* R 补强教案与难度兜底数据一致性 */
+const remSeed = JSON.parse(fs.readFileSync(path.join(root, 'frontend/curriculum-remedial.json'), 'utf8'));
+const diffSeed = JSON.parse(fs.readFileSync(path.join(root, 'database/seeds/curriculum-difficulty.json'), 'utf8'));
+ok('R 补强教案种子 24 条齐全', Array.isArray(remSeed.units) && remSeed.units.length === 24 && remSeed.units.every((u, i) => u.u === i + 1 && u.kp && u.drill));
+const remMatch = html.match(/const REMUNITS=(\[[\s\S]*?\]);\n/);
+ok('前端 REMUNITS 可解析', !!remMatch);
+if (remMatch) {
+  let rfe; try { rfe = JSON.parse(remMatch[1]); } catch (e) { rfe = null; }
+  ok('前端 REMUNITS 与 curriculum-remedial.json 一致', !!rfe && rfe.length === 24 && rfe.every((u, i) => u.tech === remSeed.units[i].tech && u.kp === remSeed.units[i].kp && u.drill === remSeed.units[i].drill));
+}
+const diffMatch = html.match(/const DEFAULT_DIFF_UNITS=(\[[\s\S]*?\]);\n/);
+ok('前端 DEFAULT_DIFF_UNITS 可解析', !!diffMatch);
+if (diffMatch) {
+  let dfe; try { dfe = JSON.parse(diffMatch[1]); } catch (e) { dfe = null; }
+  ok('前端 DEFAULT_DIFF_UNITS 与 curriculum-difficulty.json 一致', !!dfe && dfe.length === 24 && dfe.every((u, i) => u.u === diffSeed.units[i].u && u.difficulty === diffSeed.units[i].difficulty && u.newPoints === diffSeed.units[i].newPoints && u.repsToUsable === diffSeed.units[i].repsToUsable));
+}
+
 const pKeys = new Set([...html.matchAll(/\{p:([A-Za-z0-9_]+)\}/g)].map(x => x[1]));
 const pDefs = new Set([...html.matchAll(/^\s*([A-Za-z0-9_]+):\{v:/gm)].map(x => x[1]));
 ok('所有训练参数都有默认值', [...pKeys].every(k => pDefs.has(k)), [...pKeys].filter(k => !pDefs.has(k)).join(','));

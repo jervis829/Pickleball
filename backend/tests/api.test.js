@@ -977,3 +977,22 @@ test('43 停用账号不能通过续期绕过', async () => {
     conn.run('UPDATE users SET is_active = 1 WHERE id = ?', [u.id]);
   }
 });
+
+test('44 P7 收尾：难度表随 state 下发并与 /curriculum-difficulty 一致', async () => {
+  const st = await api('/api/v1/state');
+  const diff = await api('/api/v1/curriculum-difficulty');
+  assert.equal(st.status, 200);
+  assert.equal(diff.status, 200);
+  const sd = st.body.data.difficulty;
+  const dd = diff.body.data;
+  assert.ok(sd && Array.isArray(sd.units) && sd.units.length === 24);
+  assert.equal(sd.doseModel.maxNewPointsPerLesson, 3);
+  assert.equal(sd.calibrationNote, dd.calibrationNote);
+  assert.deepEqual(sd.missingCoverage, dd.missingCoverage);
+  for (let i = 0; i < 24; i++) {
+    assert.equal(sd.units[i].u, dd.units[i].u);
+    assert.equal(sd.units[i].difficulty, dd.units[i].difficulty);
+    assert.equal(sd.units[i].newPoints, dd.units[i].newPoints);
+    assert.equal(sd.units[i].repsToUsable, dd.units[i].repsToUsable);
+  }
+});

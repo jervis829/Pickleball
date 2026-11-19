@@ -567,11 +567,28 @@ const AGE_GROUPS={
   mixed:{name:'混合班',rpe:'取各组最低上限'}
 };
 const UNITS=[{"u":1,"s":1,"tech":"握拍、准备姿势、两跳规则与 NVZ 计分","a":"大陆式握拍、准备姿势定格；具名步法 split step / shuffle","b":"两跳规则、报分与站位轮转快问","fit":"关节活动度、基础核心激活","foot":"分腿垫步 split step、侧滑步 shuffle","org":"标准场地全员集合示范 → 两人一组对练；热身含弹力带肩胛激活","play":"A 无对抗、教练定点喂球；B 站位小游戏（听口令抢占基准位）","hw":"徒手挥拍 {p:shadowReps} 次 × {p:baseSets} 组；规则 {p:quizCount} 题快问","err":"拍子下垂、重心直立、上手就截击","fix":"「拍在胸前、膝微屈」+ 喂球前定格检查；每球先喊两跳规则","kp":"拍面始终高于网带|双膝微屈、重心在两脚之间|NVZ 线后不凌空截击","drill":"徒手握拍与准备姿势定格 {p:shadowReps} 次|教练定点喂轻球，只做接球定格不挥拍|split step + shuffle 到位后还原准备姿势"},{"u":2,"s":1,"tech":"正手底线抽球 groundstroke drive","a":"正手转体与击球点（身前 {p:hitPointCm} cm）","b":"下手发球规则与抛球稳定性 + 对墙连续击球","fit":"下肢力量、肩胛稳定","foot":"侧滑步 shuffle、击球后回中","org":"标准场地正手定格与喂球；发球机为可选替代（教练手喂等效）","play":"A 定点对打计分；B 发球落点小竞赛","hw":"对墙 {p:wallReps} 次 × {p:wallSets} 组，记录成功数","err":"只用手臂挥、抛球不稳、击球点靠后","fix":"夹球转体练习；定点抛球 + 击球点标记","kp":"击球后肩转过来|击球点在身前 {p:hitPointCm} cm|下手发球击球点低于腰部、拍头低于手腕","drill":"徒手正手挥拍 + 夹球转体 {p:shadowReps} 次|教练定点喂球 {p:feedBalls} 球/人，击球点标记|侧滑步到位后正手击球并 {p:recoverSecs} 秒内回中"},{"u":3,"s":1,"tech":"反手底线抽球（单反 / 双反认知）","a":"反手拍面与击球点；单反 / 双反适用场景","b":"接发站位 + 交叉步补位","fit":"灵敏、启动制动","foot":"交叉步 crossover、后退步 drop step","org":"标准场地反手定格与喂球；多球区为可选替代","play":"A 发球—接发小游戏；B 接发后 2 拍计分","hw":"步伐影子练习 {p:baseSets} 组","err":"交叉脚侧移、拍面翻、击球后不回中","fix":"侧滑步 + 回中计次；双反时非持拍手不松拍","kp":"反手拍面不翻、击球点在体前|接发站位在底线后 {p:serveStep} 步|击球后 {p:recoverSecs} 秒内回中","drill":"徒手反手挥拍 + 拍面定格 {p:shadowReps} 次|教练定点喂反手 {p:feedBalls} 球/人|交叉步补位后反手击球并回中"},{"u":4,"s":1,"tech":"发球与接发球（深度、接完即上）","a":"下手发球的击球点、拍头与脚误规则","b":"接发深球 return of serve + 接完即上 return & crash","fit":"肩胛稳定、启动制动","foot":"分腿垫步 split step + 前压回中","org":"标准场地发球区与接发区；发球机为可选替代","play":"A 发球落点计分；B 接发后 3 拍内必须到达 NVZ 线后","hw":"发球成功 / 失误分类统计 {p:feedBalls} 球","err":"接发只挡不压、站位留在底线","fix":"「接完就上」+ 前压回中计次；两跳规则口令复诵","kp":"发球对角且落在对方发球区|接发落点深且不过网高|接发后 3 拍内到达 NVZ 线后 {p:nvzLineCm} cm","drill":"徒手抛球 + 下手发球定格 {p:shadowReps} 次|教练喂接发 {p:feedBalls} 球，接完即前压|接发 + 前压 + 网前 dink 三拍串联"},{"u":5,"s":1,"tech":"长丁克入门：第三拍吊放 third shot drop","a":"长丁克（deep / long dink）定义与第三拍 drop 弧线","b":"弧线过网后落对方 NVZ + 落点自测","fit":"核心抗旋转、腕肘负荷控制","foot":"前后移动 + 回中","org":"标准场地发球—接发—第三拍三拍串联，教练统一喂球","play":"A 三拍组合喂球；B 第三拍落入 NVZ 才计分","hw":"落点自测表（左 / 中 / 右各 {p:gridBalls} 球）","err":"第三拍盲目强攻、弧线过高、落点过深","fix":"软手感「推不甩」+ 目标区落点计分；与 drive 明确区分","kp":"长丁克弧线过网后落对方 NVZ|第三拍先判断再选 drop 或 drive|击球后回位不滞留底线","drill":"徒手长丁克拍面轨迹 {p:shadowReps} 次|教练喂第三拍，定点吊放 {p:feedBalls} 球|前后移动到位后打落点九宫格"},{"u":6,"s":1,"tech":"网前短丁克 NVZ dink（斜线 / 直线）","a":"短丁克拍面略开、soft hands「推不甩」","b":"斜线 crosscourt / 直线 down-the-line 与连续相持","fit":"核心抗旋转、腕肘负荷控制","foot":"NVZ 网前小步 shuffle","org":"标准场地网前（两人在 NVZ 线后），教练统一喂球","play":"A 定点 dink 到目标区；B dink 连续 {p:dinkRally} 回合挑战","hw":"记录 dink 连续回合数","err":"用力过大、惯性踩线截击、拍面后仰","fix":"「推不甩」+ NVZ 线后 {p:nvzLineCm} cm 站位标记","kp":"拍面略开、用推不用甩|球过网后落在对方非截击区|脚不触 NVZ 线、不凌空击球","drill":"徒手 dink 推挡 + 拍面定格 {p:shadowReps} 次|教练网前喂球，轻推入目标区 {p:feedBalls} 球|网前小步调整后连续 dink {p:dinkRally} 回合"},{"u":7,"s":1,"tech":"网前截击 volley（挡截 block）+ NVZ 规则深化","a":"block volley 定格：拍面在体前、吸力缓冲","b":"NVZ 违规边界：踩线、惯性踏入、拍子落入 NVZ","fit":"反应速度、下肢离心控制","foot":"分腿垫步 split step、drop step","org":"标准场地网前，教练统一喂中速球","play":"A 定点挡截计分；B 零踩线违规挑战","hw":"规则快问 {p:quizCount} 题（含两跳与 NVZ）","err":"截击重心前扑、大幅引拍、踩线","fix":"先定格再击球；缩短引拍，拍子停在体前","kp":"截击前身体定格|拍面在体前、不做挥击|不因截击踩入 NVZ","drill":"徒手截击定格 {p:shadowReps} 次|教练定点喂截击球 {p:feedBalls} 球|中速球挡截后回到准备姿势"},{"u":8,"s":1,"tech":"中场重置球认知、双打站位沟通 + 初阶考核","a":"reset 认知：快球软挡回对方 NVZ（最简 block reset）","b":"双打 two-up 站位、「我的 / 你的」口令 + 第 16 课初阶考核","fit":"减量、恢复","foot":"考核动作复习","org":"标准场地情境演练；考核流程说明 → 逐项测试","play":"A 低强度要点复习；B 结业交流赛","hw":"下一周期建议","err":"中场强行进攻、两人同时抢球","fix":"过渡区优先 reset；「我的 / 你的」口令固定化","kp":"知道快球该软放回厨房|两人不站重叠|规则零违规","drill":"徒手复习 8 个单元要点 {p:shadowReps} 次|定点喂球找手感 {p:feedBalls} 球|结业交流赛（不计入考核）"},{"u":9,"s":2,"tech":"第三拍选择树：drop / drive / drip","a":"三种第三拍的适用时机（drop 软、drive 压迫、drip 中速带上旋）","b":"按接发质量选择分支 + 约束计分","fit":"下肢力量进阶、核心抗旋转","foot":"前后移动 + 回中","org":"标准场地发球—接发—第三拍三拍串联，教练手喂","play":"A 定点落点计分；B 每分必须先口述所选第三拍分支","hw":"落点分布表 {p:feedBalls} 球","err":"第三拍只会强攻、drip 打成半吊半抽","fix":"九宫格分布集中 1 格即重练；drip 固定中速上旋","kp":"能说出 drop / drive / drip 三者适用时机|落点分散到至少 {p:gridCells} 个格|击球后回中不滞留","drill":"徒手模拟三种第三拍选择 {p:shadowReps} 次|教练喂第三拍，按分支打 {p:feedBalls} 球|移动中第三拍选择并回中"},{"u":10,"s":2,"tech":"中场重置球 reset 完整技术 + 过渡区站位","a":"block reset / drop reset / half-volley reset 三种手法","b":"过渡区 stop-set-hit：到位停稳 → 软放 → 回位","fit":"腕肘负荷控制、核心稳定","foot":"stop-set-hit、drop step、paddle up","org":"标准场地过渡区，教练喂中速球","play":"A 中场喂球选择 reset 手法；B 被攻时先 reset 才计分","hw":"自录视频 {p:videoMins} 分钟，标 1 个问题","err":"中场强行进攻、重心后倒、拍面太硬","fix":"soft hands 拍面缓冲 + 缩短制动距离","kp":"被攻时能软挡回 NVZ 并回位|击球前身体停稳|三种 reset 可按来球高度选用","drill":"徒手中场 reset 拍面 {p:shadowReps} 次|教练喂中场球，软放回 NVZ {p:feedBalls} 球|防守一拍后接反击计分"},{"u":11,"s":2,"tech":"长丁克旋转Ⅰ：正手上旋、下旋（铲式）长丁克","a":"forehand topspin long dink 的低→高刷球轨迹","b":"backspin / slice long dink（铲式）拍面下切","fit":"腕肘负荷控制、肩胛稳定","foot":"前后移动 + 回中","org":"标准场地底线，教练统一喂球","play":"A 两种旋转定点计分；B 每 {p:stopEvery} 球强制换旋转","hw":"长丁克旋转切换记录 {p:feedBalls} 球","err":"上旋刷得太薄下网、下旋拍面过度开放顶高","fix":"固定落点不变只换旋转；拍面角度逐球定格","kp":"两种旋转可切换且落点不变|上旋过网后下坠|下旋弧线平、不过网过高","drill":"徒手两种旋转轨迹 {p:shadowReps} 次|教练喂球，正手上旋长丁克 {p:feedBalls} 球|下旋（铲式）长丁克 {p:feedBalls} 球"},{"u":12,"s":2,"tech":"长丁克旋转Ⅱ：双反上旋、反手下旋长丁克","a":"two-handed backhand topspin long dink","b":"one-handed backhand slice long dink","fit":"核心抗旋转、腕肘负荷控制","foot":"交叉步 crossover + 回中","org":"标准场地底线反手侧，教练统一喂球","play":"A 双侧定点计分；B 左右随机出球的长丁克选择","hw":"双侧长丁克成功数记录","err":"双反时非持拍手松拍、单反下旋甩腕","fix":"双反全程双手贴拍；单反固定拍面不翻腕","kp":"双侧都能打出长丁克|双反上旋落 NVZ|单反下旋不甩腕","drill":"徒手双反上旋轨迹 {p:shadowReps} 次|教练喂反手，双反上旋长丁克 {p:feedBalls} 球|单反下旋（铲式）长丁克 {p:feedBalls} 球"},{"u":13,"s":2,"tech":"网前丁克进阶：高度 / 深度变化、可攻丁克识别与短丁克旋转变体","a":"roll dink（topspin 卷击）、slice dink、双反 dink 三种短丁克手法","b":"attackable dink（可攻高丁克）识别与惩罚","fit":"核心抗旋转、腕肘负荷控制","foot":"NVZ 网前 shuffle + paddle up","org":"标准场地网前，教练统一喂球","play":"A 定速 dink 相持；B 每 {p:stopEvery} 球必须换一种旋转 / 高度","hw":"dink 连续回合与旋转变化记录","err":"节奏单一、上旋刷太薄、可攻高丁克没惩罚","fix":"「推不甩」+ 强制变速口令；高丁克立即 flick / roll 惩罚","kp":"三种短丁克旋转可切换|变速时拍面不变形|能认出高丁克并主动进攻","drill":"徒手 roll / slice / 双反 dink 轨迹 {p:shadowReps} 次|同伴定点 dink 定速 {p:dinkRally} 回合|按口令强制换旋转相持 {p:dinkRally} 回合"},{"u":14,"s":2,"tech":"volley 家族与提速手法：block / punch / swinging / half volley + flick / roll volley","a":"flick（反手 / 正手弹击）：手腕短促弹击、弧线平、突然加速","b":"roll volley / topspin roll：低→高卷刷、强上旋过网急坠；与 flick 机制区分","fit":"反应速度、腕肘负荷控制","foot":"split step、NVZ shuffle","org":"标准场地网前，教练统一喂中低速球","play":"A 定点手法计分；B 相持中按来球高度选手法（高于网 flick / 低于网 roll）","hw":"flick / roll 各 {p:feedBalls} 球的徒手 + 实打记录","err":"flick 引拍过大变成 drive、roll 刷太薄下网、两者混用","fix":"flick 只用手腕不引拍；roll 拍面略关、轨迹低→高；先分解后对抗","kp":"flick 球速快、弧线平|roll volley 带上旋且过网下坠|能按来球高度选对手法","drill":"徒手 flick 与 roll volley 各 {p:shadowReps} 次|教练网前喂球，flick {p:feedBalls} 球|按高度选择 flick / roll 的连续提速 {p:feedBalls} 球"},{"u":15,"s":2,"tech":"挑高球 lob（进攻 / 防守）+ 高压扣杀 overhead 入门 + 让球落地 bounce it","a":"offensive lob 过顶、defensive lob 解围、lob over poacher","b":"overhead put-away 入门 + 两跳规则下的 bounce it / 出界判断","fit":"下肢离心控制、肩胛稳定","foot":"后退步 drop step、侧身","org":"标准场地，教练喂高球；打墙区为可选替代","play":"A 高压喂球防守；B 防守成功并反击才得分","hw":"防守回合复盘表","err":"lob 过短、退不到位仰身、NVZ 内凌空击球违规","fix":"缩短距离、加回位还原；NVZ 内高球先让球落地再打","kp":"lob 过对手头顶且落底线区|退到位不仰身、非持拍手指球|NVZ 内不凌空、会判断让球落地","drill":"徒手 lob 轨迹与 overhead 侧身 {p:shadowReps} 次|教练高压喂球，lob 防守 {p:feedBalls} 球|让球落地后再击球 + 反击到空档 {p:shortGame} 分"},{"u":16,"s":2,"tech":"双打 stacking 基础、沟通协议 + 中阶考核","a":"stacking 站位与触发条件、4 条沟通口令","b":"轮转路线默写 + 第 32 课中阶考核","fit":"减量、恢复","foot":"考核动作复习","org":"标准场地战术板讲解 → 无球走位演练","play":"A 无对抗走位；B 限定 stacking 站位的小分赛","hw":"轮转路线图默写","err":"轮转时机错、两人重叠","fix":"战术板 + 固定沟通口令","kp":"知道何时启动 stacking|两人不重叠|中阶 6 项考核逐项达标","drill":"战术板前徒手走位 {p:baseSets} 组|无球轮转跑位 {p:shadowReps} 次|带喂球的 stacking 轮转 {p:shortGame} 分"},{"u":17,"s":3,"tech":"发接发体系：发球旋转变化、接发变体与第三拍战术树","a":"topspin / slice serve、内外角与追身落点；接发 return & crash / drop return / lob return / 短角","b":"按对手接发选 drop / drive / drip 的战术树","fit":"爆发力（药球）、肩肘腕预防","foot":"分腿垫步 + 前压回中","org":"标准场地发球—接发—第三拍高重复量，教练手喂","play":"A 按指定接发变体执行；B 每局更换 1 个战术分支","hw":"战术树一页纸 + 执行率统计","err":"战术单一、可预测、接发站位偏后","fix":"每局强制更换 1 个分支；接发后 3 拍内上网","kp":"至少 {p:serveVariants} 种发球变化|能按对手接发选第三拍分支|执行后记录是否命中意图","drill":"战术树卡片口述 {p:shadowReps} 次|发球 + 接发变体高重复量 {p:feedBalls} 球|移动中发接发 + 第三拍分支实战"},{"u":18,"s":3,"tech":"第五拍补吊 fifth shot drop + 过渡区完整攻防","a":"third shot drive 之后用第五拍重新进网前","b":"过渡区连续 reset → 进 NVZ 的完整链","fit":"核心抗旋转、下肢离心控制","foot":"stop-set-hit、drop step、crossover","org":"标准场地底线 → 过渡区 → NVZ 三点串联","play":"A 第三拍 drive 后第五拍补吊计分；B 连续攻防转换短局","hw":"第五拍决策记录（补吊 / reset / 继续压迫）","err":"drive 后停在底线硬抽、过渡区不减速","fix":"第五拍强制重新判断；过渡区先停稳再击球","kp":"drive 后能用 fifth shot drop 重新进网前|过渡区能连续 reset|击球前身体停稳","drill":"徒手第五拍补吊轨迹 {p:shadowReps} 次|第三拍 drive + 第五拍补吊 {p:feedBalls} 球|连续 reset 后进入 NVZ 的攻防转换 {p:shortGame} 分"},{"u":19,"s":3,"tech":"提速 speed-up 手法选择与落点 + 防提速反击 counter-attack + hands battle","a":"手法选择判据：高于网 flick / swinging，低于网 roll，冲身体 block；双反加速 two-handed speed-up","b":"counter-attack、reset 反制与 hands battle 网前快速对打；打脚 / 打身体 / 打中路 / 打弱侧","fit":"反应速度、腕肘负荷控制","foot":"split step、NVZ shuffle、drop step","org":"标准场地网前，教练统一发令；不分组到不同区域","play":"A 指定手法提速计分；B 提速后 3 拍内的 hands battle 对抗","hw":"提速手法选择成功率 + 被提速反制成功率","err":"只会一种提速手法、被提速后僵住、落点总打对手正手","fix":"按来球高度强制选手法；被提速先 block / reset 再反击","kp":"至少 {p:speedupVariants} 种提速手法可按球高选用|被提速能挡回并反制|落点按对手弱侧选择","drill":"徒手 flick / roll / swinging 手法切换 {p:shadowReps} 次|按球高选手法提速 {p:feedBalls} 球|hands battle 连续 {p:dinkRally} 拍反应对打 {p:baseSets} 组"},{"u":20,"s":3,"tech":"高压 dink 相持、主动变速、可攻丁克惩罚与反制","a":"dink 节奏 / 旋转 / 深度三重变化与假动作 deception","b":"attackable dink 惩罚链与对手提速后的反制","fit":"核心抗旋转、腕肘负荷控制","foot":"NVZ shuffle、paddle up","org":"标准场地网前相持，教练统一计时","play":"A 限时相持；B 相持超 {p:dinkRally} 回合必须主动变速或提速","hw":"dink 回合数与主动变速成功率","err":"被动等待对手失误、变速时拍面变形","fix":"限时回合 + 主动变速口令；先 roll 引对手上手再 flick 打空档","kp":"能识别提速窗口|变速时拍面不变形|提速后站位不失衡","drill":"徒手两档 dink 加速 {p:shadowReps} 次|限时 {p:dinkRally} 回合相持 {p:baseSets} 组|按窗口主动提速计分 {p:shortGame} 分"},{"u":21,"s":3,"tech":"overhead 稳定终结 + 防挑高球体系（含反手高压）","a":"overhead put-away 方向 / 角度 / 打点、backhand overhead","b":"defensive lob 判断、退防让球与 bounce it、lob over poacher 应对","fit":"下肢离心控制、肩胛稳定","foot":"drop step、侧身、回位","org":"标准场地，教练喂高球与过顶球","play":"A 高压终结计分；B 对手 lob 后退到位并反击才得分","hw":"高压终结与防挑高球复盘表","err":"高压打点无变化、对手 lob 退不到位、仰身","fix":"非持拍手指球 + 侧身到位；先退到位再挥拍","kp":"高位球能稳定得分|对手 lob 能退到位并安全回位|NVZ 内不凌空击球","drill":"徒手 overhead 侧身 + 反手高压 {p:shadowReps} 次|教练喂高位球终结 {p:feedBalls} 球|对手 lob 后让球落地 / 反击到空档 {p:shortGame} 分"},{"u":22,"s":3,"tech":"网前特殊球：ATP、Erne（含进场时机与 NVZ 违规边界）","a":"ATP（around-the-post）绕柱球的线路与柱侧空间","b":"Erne 跃入 NVZ 侧翼截击的进场时机、违规边界与回位","fit":"爆发力、侧向制动","foot":"cross-over、split step、侧向启动","org":"标准场地边线 / 柱侧，教练喂球；一次只练一种特殊球","play":"A 指定特殊球执行；B 情境中出现机会才允许使用","hw":"特殊球使用时机复盘","err":"勉强使用、进场踩 NVZ 违规、完成后不回位","fix":"只在符合条件的球使用；完成后立即回位并复述规则边界","kp":"能执行一次 ATP 或 Erne 并安全回位|不违反 NVZ 规则|知道不该用的情形","drill":"无球进场与回位路线 {p:shadowReps} 次|教练喂出机会球，ATP {p:feedBalls} 球|Erne 进场截击 {p:feedBalls} 球并回位"},{"u":23,"s":3,"tech":"双打战术：poach / stacking 进阶、中路球归属、shake & bake、假动作与目标选择","a":"middle ball 归属（正手优先 / 赛前约定）、poach 时机、shake & bake 组合","b":"deception 拍面欺骗、targeting 打脚 / 打身体 / 打弱侧、对手画像与临场调整","fit":"反应速度、下肢离心控制","foot":"split step、crossover、轮转路线","org":"标准场地双打四人站位，教练统一发令","play":"A 指定战术约束计分；B 每局更换 1 个对手画像约束","hw":"对手画像卡 + 沟通失误次数统计","err":"中路球两人都不接 / 都抢、一套打法打到底","fix":"赛前约定中路归属；每局强制换约束；4 条口令全场一致","kp":"中路球归属明确无犹豫|能执行 poach / shake & bake|按对手弱项选择落点","drill":"战术板推演 + 中路归属口令 {p:shadowReps} 次|poach / shake & bake 走位 {p:baseSets} 组|双打循环赛按画像换打法 {p:shortGame} 分"},{"u":24,"s":3,"tech":"决胜分情境 + 高级考核（对齐 USA Pickleball 4.0 自评清单）","a":"决胜分呼吸流程与固定准备动作（动作不变形）","b":"第 48 课高级考核：4.0 可观察判据逐项核对 + 结业邀请赛","fit":"减量、恢复","foot":"全步伐串联","org":"标准场地逐项测试 → 录像复盘","play":"A 低强度复习；B 结业邀请赛","hw":"下一周期训练建议","err":"关键分动作收紧、考核日超量热身","fix":"关键分呼吸流程演练；热身减量、只做流程演练","kp":"决胜分前完成呼吸流程|动作幅度不缩小|4.0 清单逐项可观察达标","drill":"徒手呼吸流程 + 准备动作 {p:shadowReps} 次|决胜分情境定点喂球 {p:feedBalls} 球|决胜分情境赛并录像"}];
+const REMUNITS=[{"u":1,"s":1,"tech":"第 1 单元补强：握拍、准备姿势、两跳规则与 NVZ 计分（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"关节活动度、基础核心激活","foot":"分腿垫步 split step、侧滑步 shuffle","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"拍子下垂、重心直立、上手就截击","fix":"「拍在胸前、膝微屈」+ 喂球前定格检查；每球先喊两跳规则","kp":"准备姿势能在口令后 1 秒内定格|两跳规则快问 3/3 全对","drill":"徒手准备姿势定格 {p:shadowReps} 次（只做上节未达标的那一项）|教练定点喂球，只练上节未过的那条判据 {p:feedBalls} 球|按上节点评里打「未达标」的判据逐条复测"},{"u":2,"s":1,"tech":"第 2 单元补强：正手底线抽球 groundstroke drive（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"下肢力量、肩胛稳定","foot":"侧滑步 shuffle、击球后回中","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"只用手臂挥、抛球不稳、击球点靠后","fix":"夹球转体练习；定点抛球 + 击球点标记","kp":"定点喂球 10 球中 ≥7 球过网并落单打区|击球点在身前 {p:hitPointCm} cm 以内","drill":"徒手正手挥拍定格 {p:shadowReps} 次，只纠正上节记录的错误|教练定点喂正手 {p:feedBalls} 球，只盯击球点与肩转|侧滑步到位击球后回中，{p:recoverSecs} 秒内回位"},{"u":3,"s":1,"tech":"第 3 单元补强：反手底线抽球（单反 / 双反认知）（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"灵敏、启动制动","foot":"交叉步 crossover、后退步 drop step","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"交叉脚侧移、拍面翻、击球后不回中","fix":"侧滑步 + 回中计次；双反时非持拍手不松拍","kp":"反手 10 球中 ≥6 球过网|拍面不翻（教练侧视 5 球）","drill":"徒手反手拍面定格 {p:shadowReps} 次，只做未达标那一面|教练定点喂反手 {p:feedBalls} 球，只盯拍面不翻|交叉步到位后反手击球并回中"},{"u":4,"s":1,"tech":"第 4 单元补强：发球与接发球（深度、接完即上）（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"肩胛稳定、启动制动","foot":"分腿垫步 split step + 前压回中","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"接发只挡不压、站位留在底线","fix":"「接完就上」+ 前压回中计次；两跳规则口令复诵","kp":"下手发球连续 5 次不失误|接发后 3 拍内到达 NVZ 线后","drill":"徒手抛球与下手发球定格 {p:shadowReps} 次|发球只练未达标项（深度 / 对角 / 抛球稳定）{p:feedBalls} 球|接发后 {p:serveStep} 步内前压到 NVZ 线后"},{"u":5,"s":1,"tech":"第 5 单元补强：长丁克入门：第三拍吊放 third shot drop（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"核心抗旋转、腕肘负荷控制","foot":"前后移动 + 回中","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"第三拍盲目强攻、弧线过高、落点过深","fix":"软手感「推不甩」+ 目标区落点计分；与 drive 明确区分","kp":"第三拍 10 球中 ≥4 球落进对方 NVZ|弧线过网不低于 30 cm","drill":"徒手第三拍 drop 弧线 {p:shadowReps} 次|教练喂第三拍只练「落进厨房」{p:feedBalls} 球，不要求深度|三拍串联：发球→接发→第三拍，只评 drop 是否入 NVZ"},{"u":6,"s":1,"tech":"第 6 单元补强：网前短丁克 NVZ dink（斜线 / 直线）（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"核心抗旋转、腕肘负荷控制","foot":"NVZ 网前小步 shuffle","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"用力过大、惯性踩线截击、拍面后仰","fix":"「推不甩」+ NVZ 线后 {p:nvzLineCm} cm 站位标记","kp":"斜线或直线 dink 连续 6 回合不失误|脚不触 NVZ 线","drill":"徒手 dink 推挡定格 {p:shadowReps} 次|只练上节未达标的方向（斜线或直线）{p:feedBalls} 球|连续 dink {p:dinkRally} 回合，只计「脚不触 NVZ 线」"},{"u":7,"s":1,"tech":"第 7 单元补强：网前截击 volley（挡截 block）+ NVZ 规则深化（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"反应速度、下肢离心控制","foot":"分腿垫步 split step、drop step","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"截击重心前扑、大幅引拍、踩线","fix":"先定格再击球；缩短引拍，拍子停在体前","kp":"中速球挡截 10 球中 ≥7 球回球过网|零 NVZ 踩线","drill":"徒手截击定格 {p:shadowReps} 次|教练喂中速球只做挡截 {p:feedBalls} 球|挡截后回准备姿势，只评「不踩线」与「不做挥击」"},{"u":8,"s":1,"tech":"第 8 单元补强：中场重置球认知、双打站位沟通 + 初阶考核（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"减量、恢复","foot":"考核动作复习","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"中场强行进攻、两人同时抢球","fix":"过渡区优先 reset；「我的 / 你的」口令固定化","kp":"两人不站重叠|「我的 / 你的」口令零冲突","drill":"徒手 reset 拍面 {p:shadowReps} 次|教练喂快球，只做软挡回 NVZ {p:feedBalls} 球|两人站位演练，只评「我的 / 你的」口令是否冲突"},{"u":9,"s":2,"tech":"第 9 单元补强：第三拍选择树：drop / drive / drip（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"下肢力量进阶、核心抗旋转","foot":"前后移动 + 回中","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"第三拍只会强攻、drip 打成半吊半抽","fix":"九宫格分布集中 1 格即重练；drip 固定中速上旋","kp":"能口述 drop / drive / drip 的选择条件|落点分散 ≥3 格","drill":"三种第三拍选择口述 {p:shadowReps} 次（不出手，先说选哪个）|按上节错得最多的分支专练 {p:feedBalls} 球|移动中第三拍选择，只评落点是否集中"},{"u":10,"s":2,"tech":"第 10 单元补强：中场重置球 reset 完整技术 + 过渡区站位（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"腕肘负荷控制、核心稳定","foot":"stop-set-hit、drop step、paddle up","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"中场强行进攻、重心后倒、拍面太硬","fix":"soft hands 拍面缓冲 + 缩短制动距离","kp":"被攻时软挡回 NVZ 10 球中 ≥5 球|击球前身体停稳","drill":"徒手三种 reset 拍面各 {p:shadowReps} 次|只练上节未达标的那一种 reset {p:feedBalls} 球|被攻后 reset + 回位，只评「击球前停稳」"},{"u":11,"s":2,"tech":"第 11 单元补强：长丁克旋转Ⅰ：正手上旋、下旋（铲式）长丁克（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"腕肘负荷控制、肩胛稳定","foot":"前后移动 + 回中","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"上旋刷得太薄下网、下旋拍面过度开放顶高","fix":"固定落点不变只换旋转；拍面角度逐球定格","kp":"上旋与下旋各 10 球中 ≥5 球落点不变|不过网过高","drill":"徒手上旋 / 下旋轨迹 {p:shadowReps} 次|只练上节没打成的那个旋转 {p:feedBalls} 球|两种旋转交替，只评「落点不变」"},{"u":12,"s":2,"tech":"第 12 单元补强：长丁克旋转Ⅱ：双反上旋、反手下旋长丁克（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"核心抗旋转、腕肘负荷控制","foot":"交叉步 crossover + 回中","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"双反时非持拍手松拍、单反下旋甩腕","fix":"双反全程双手贴拍；单反固定拍面不翻腕","kp":"双反上旋 10 球中 ≥5 球过网下坠|单反下旋不甩腕","drill":"徒手双反 / 单反轨迹 {p:shadowReps} 次|反手侧专练，只练上节未达标的一侧 {p:feedBalls} 球|左右随机，只评「不甩腕、不松拍」"},{"u":13,"s":2,"tech":"第 13 单元补强：网前丁克进阶：高度 / 深度变化、可攻丁克识别与短丁克旋转变体（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"核心抗旋转、腕肘负荷控制","foot":"NVZ 网前 shuffle + paddle up","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"节奏单一、上旋刷太薄、可攻高丁克没惩罚","fix":"「推不甩」+ 强制变速口令；高丁克立即 flick / roll 惩罚","kp":"三种短丁克各 10 球中 ≥5 球可用|能认出高丁克并主动进攻","drill":"三种短丁克手法定格 {p:shadowReps} 次|只练上节最不稳的一种（roll / slice / 双反）{p:feedBalls} 球|定速相持 {p:dinkRally} 回合，只评「能认出高丁克」"},{"u":14,"s":2,"tech":"第 14 单元补强：volley 家族与提速手法：block / punch / swinging / half volley + flick / roll volley（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"反应速度、腕肘负荷控制","foot":"split step、NVZ shuffle","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"flick 引拍过大变成 drive、roll 刷太薄下网、两者混用","fix":"flick 只用手腕不引拍；roll 拍面略关、轨迹低→高；先分解后对抗","kp":"flick 与 roll 各 10 球中 ≥5 球达判据|能按来球高度选对手法","drill":"flick 与 roll 各徒手 {p:shadowReps} 次|按上节错得最多的手法专练 {p:feedBalls} 球|按来球高度选手法，只评「选对没选对」"},{"u":15,"s":2,"tech":"第 15 单元补强：挑高球 lob（进攻 / 防守）+ 高压扣杀 overhead 入门 + 让球落地 bounce it（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"下肢离心控制、肩胛稳定","foot":"后退步 drop step、侧身","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"lob 过短、退不到位仰身、NVZ 内凌空击球违规","fix":"缩短距离、加回位还原；NVZ 内高球先让球落地再打","kp":"lob 过顶且落底线区 10 球中 ≥5 球|退到位不仰身","drill":"徒手 lob 轨迹与 overhead 侧身 {p:shadowReps} 次|只练上节未达标项（lob 过顶 / 高压终结）{p:feedBalls} 球|对手 lob 后退到位，只评「不仰身」"},{"u":16,"s":2,"tech":"第 16 单元补强：双打 stacking 基础、沟通协议 + 中阶考核（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"减量、恢复","foot":"考核动作复习","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"轮转时机错、两人重叠","fix":"战术板 + 固定沟通口令","kp":"能说出 stacking 启动条件|轮转路线默写正确","drill":"轮转路线口述 + 无球走位 {p:shadowReps} 次|带喂球的 stacking 轮转 {p:shortGame} 分|只评「两人不重叠」"},{"u":17,"s":3,"tech":"第 17 单元补强：发接发体系：发球旋转变化、接发变体与第三拍战术树（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"爆发力（药球）、肩肘腕预防","foot":"分腿垫步 + 前压回中","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"战术单一、可预测、接发站位偏后","fix":"每局强制更换 1 个分支；接发后 3 拍内上网","kp":"按指定接发变体 10 球中 ≥5 球执行到位|能按对手接发选第三拍分支","drill":"战术树口述 {p:shadowReps} 次（先说分支再打）|只练上节执行率最低的那 1 个分支 {p:feedBalls} 球|按对手接发选分支，只评「意图是否命中」"},{"u":18,"s":3,"tech":"第 18 单元补强：第五拍补吊 fifth shot drop + 过渡区完整攻防（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"核心抗旋转、下肢离心控制","foot":"stop-set-hit、drop step、crossover","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"drive 后停在底线硬抽、过渡区不减速","fix":"第五拍强制重新判断；过渡区先停稳再击球","kp":"第三拍 drive 后第五拍补吊 10 球中 ≥4 球|过渡区能连续 reset","drill":"徒手第五拍补吊轨迹 {p:shadowReps} 次|第三拍 drive 后补吊专练 {p:feedBalls} 球|连续 reset 后进 NVZ，只评「过渡区是否停稳」"},{"u":19,"s":3,"tech":"第 19 单元补强：提速 speed-up 手法选择与落点 + 防提速反击 counter-attack + hands battle（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"反应速度、腕肘负荷控制","foot":"split step、NVZ shuffle、drop step","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"只会一种提速手法、被提速后僵住、落点总打对手正手","fix":"按来球高度强制选手法；被提速先 block / reset 再反击","kp":"≥3 种提速手法可按球高选用|被提速能挡回并反制 10 球中 ≥4 球","drill":"flick / roll / swinging 手法切换 {p:shadowReps} 次|按上节选错的手法专练 {p:feedBalls} 球|hands battle {p:dinkRally} 拍 × {p:baseSets} 组，只评「被打回来能挡」"},{"u":20,"s":3,"tech":"第 20 单元补强：高压 dink 相持、主动变速、可攻丁克惩罚与反制（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"核心抗旋转、腕肘负荷控制","foot":"NVZ shuffle、paddle up","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"被动等待对手失误、变速时拍面变形","fix":"限时回合 + 主动变速口令；先 roll 引对手上手再 flick 打空档","kp":"限时 8 回合相持中至少 1 次主动变速|变速时拍面不变形","drill":"两档 dink 加速 {p:shadowReps} 次|限时 {p:dinkRally} 回合相持，只练「主动变速」{p:baseSets} 组|变速后不失衡，只评「拍面有没有变形」"},{"u":21,"s":3,"tech":"第 21 单元补强：overhead 稳定终结 + 防挑高球体系（含反手高压）（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"下肢离心控制、肩胛稳定","foot":"drop step、侧身、回位","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"高压打点无变化、对手 lob 退不到位、仰身","fix":"非持拍手指球 + 侧身到位；先退到位再挥拍","kp":"高位球终结 10 球中 ≥6 球得分|对手 lob 后退到位率 ≥70%","drill":"徒手 overhead 侧身 + 反手高压 {p:shadowReps} 次|只练上节未达标项（高压打点 / 反手高压）{p:feedBalls} 球|对手 lob 后退到位并反击，只评「退到位不仰身」"},{"u":22,"s":3,"tech":"第 22 单元补强：网前特殊球：ATP、Erne（含进场时机与 NVZ 违规边界）（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"爆发力、侧向制动","foot":"cross-over、split step、侧向启动","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"勉强使用、进场踩 NVZ 违规、完成后不回位","fix":"只在符合条件的球使用；完成后立即回位并复述规则边界","kp":"能执行 1 次 ATP 或 Erne 并安全回位|零 NVZ 违规","drill":"无球进场与回位路线 {p:shadowReps} 次|只练上节没做成的那个特殊球（ATP 或 Erne）{p:feedBalls} 球|完成后立即回位，只评「零 NVZ 违规」"},{"u":23,"s":3,"tech":"第 23 单元补强：双打战术：poach / stacking 进阶、中路球归属、shake & bake、假动作与目标选择（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"反应速度、下肢离心控制","foot":"split step、crossover、轮转路线","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"中路球两人都不接 / 都抢、一套打法打到底","fix":"赛前约定中路归属；每局强制换约束；4 条口令全场一致","kp":"中路球归属零犹豫|能执行 poach / shake & bake","drill":"中路归属与 poach 口令 {p:shadowReps} 次|只练上节最乱的那个战术（poach / shake & bake）{p:shortGame} 分|按对手画像换打法，只评「中路零犹豫」"},{"u":24,"s":3,"tech":"第 24 单元补强：决胜分情境 + 高级考核（对齐 USA Pickleball 4.0 自评清单）（只练未达标判据）","a":"上节点评里标记「未达标」的判据逐条复测，不引入新技术点","b":"同一判据换 2 种球速 / 距离复测，确认是能力问题还是当天状态问题","fit":"减量、恢复","foot":"全步伐串联","org":"标准场地，全员同位；教练按上节点评名单逐人喂球；不新增器材、不分组到不同区域","play":"R 课不进入新单元：把上节对抗形式原样重打，只计未达标判据；达标后可提前 5 分钟收尾","hw":"只做上节未达标判据的单项作业，量取标准作业的一半","err":"关键分动作收紧、考核日超量热身","fix":"关键分呼吸流程演练；热身减量、只做流程演练","kp":"决胜分前完成呼吸流程|动作幅度不缩小","drill":"呼吸流程 + 准备动作 {p:shadowReps} 次|决胜分情境定点喂球 {p:feedBalls} 球|只评「动作幅度不缩小」"}];
 const LESSONS=[];
 UNITS.forEach(u=>{
   LESSONS.push({n:(u.u-1)*2+1,type:'A',u:u.u,s:u.s,tech:u.tech,focus:u.a,unit:u});
   LESSONS.push({n:(u.u-1)*2+2,type:'B',u:u.u,s:u.s,tech:u.tech,focus:u.b,unit:u});
 });
+/* R 型补强课：复用同单元的 lesson_no（大纲 lesson_type='R' 时用），
+   教案主体来自 REMUNITS，只练「上节点评里未达标」的判据，不引入新技术点。 */
+const REM_LESSON={};
+REMUNITS.forEach(r=>{REM_LESSON[r.u]=r;});
+function lessonFor(unitNo,lessonType){
+  const u=Number(unitNo);
+  // R 课在库里的 lesson_no 与同单元 B 课相同（见 008 迁移的 lesson_type 约定）
+  const base=LESSONS.find(l=>l.u===u&&l.type===(lessonType==='A'?'A':'B'));
+  if(lessonType==='R'){
+    const r=REM_LESSON[u];
+    const n=base?base.n:((u-1)*2+2);
+    if(r)return {n,type:'R',u:r.u,s:r.s,tech:r.tech,focus:r.a,unit:r,unitNo:r.u};
+    return null;
+  }
+  return base||LESSONS.find(l=>l.n===(u-1)*2+1)||null;
+}
 const ZONES=[
   {id:'fit',name:'独立体能区',risk:'high',gear:'药球、弹力带'},
   {id:'multi',name:'多球区（发球机）',risk:'high',gear:'发球机、球筐'},
@@ -600,6 +617,35 @@ const BLOCK_RATIOS={
 };
 
 /* 参数解析：教案只输出最终实数，不再出现方括号占位 */
+/* ============================================================
+   难度表 → 教案剂量（P7 收尾）
+   A 部分审阅结论：难度 5 的单元按 20 球/人 喂球，单节课只能覆盖 3 个判据里的一半，
+   「学不会」不是学员问题，是剂量不够。这里让 24 单元的 difficulty / newPoints
+   直接参与球数计算，规则如下（单次时长与 48 课次主线不变）：
+
+   dosageFactor = 难度 1-2 → 0.9（基础技术不需要堆量，宁可留时间纠错）
+                  难度 3   → 1.0（基准）
+                  难度 4   → 1.15
+                  难度 5   → 1.3 + 每多 1 个并列新授点再 +0.1（上限 1.5）
+   同时：并列新授点 > 3 时，教案会提示「拆课」而不是继续加球数——
+   加球数解决不了课时不够，只有拆课。
+   ============================================================ */
+const DEFAULT_DIFF_UNITS=[{"u":1,"difficulty":1,"newPoints":6,"repsToUsable":200,"revisedLessons":1,"prereq":[],"gate":"准备姿势定格连续 3 次稳定；两跳规则快问 3/3 全对","splitAdvice":"6 个点里握拍/准备姿势/两跳/NVZ/报分/站位轮转，其中「规则类」并入热身快问即可，不必占新授额度","risk":"低"},{"u":2,"difficulty":2,"newPoints":2,"repsToUsable":400,"revisedLessons":2,"prereq":[1],"gate":"定点喂球 10 球中 ≥7 球过网且落在单打区；击球点稳定在身前 30 cm","splitAdvice":"无需拆分，剂量可由作业补足（对墙 30×2 组）","risk":"低"},{"u":3,"difficulty":3,"newPoints":3,"repsToUsable":600,"revisedLessons":2,"prereq":[2],"gate":"反手 10 球中 ≥6 球过网；拍面不翻（教练侧视 5 球观察）","splitAdvice":"单反/双反只做认知，不要求两种都成型；基础差者固定一种","risk":"中"},{"u":4,"difficulty":2,"newPoints":3,"repsToUsable":400,"revisedLessons":2,"prereq":[2],"gate":"下手发球连续 5 次不失误；接发后 3 拍内到达 NVZ 线后","splitAdvice":"发球与接发各占一半课次，不要一节课各练一半又都不熟","risk":"低"},{"u":5,"difficulty":4,"newPoints":2,"repsToUsable":800,"revisedLessons":2,"prereq":[2,4],"gate":"第三拍 10 球中 ≥4 球落进对方 NVZ 且弧线过网不低于 30 cm","splitAdvice":"先只练「落进厨房」，不要同时要求弧线与深度","risk":"高"},{"u":6,"difficulty":4,"newPoints":3,"repsToUsable":800,"revisedLessons":2,"prereq":[5],"gate":"斜线 dink 连续 6 回合不失误；脚不触 NVZ 线","splitAdvice":"斜线单独 1 课、直线单独 1 课，比 A/B 两课混练更有效","risk":"高"},{"u":7,"difficulty":3,"newPoints":4,"repsToUsable":600,"revisedLessons":2,"prereq":[1],"gate":"中速球挡截 10 球中 ≥7 球回球过网；零 NVZ 踩线","splitAdvice":"block volley 与 NVZ 规则边界拆成两段练，规则部分用快问不占球数","risk":"中"},{"u":8,"difficulty":3,"newPoints":4,"repsToUsable":500,"revisedLessons":2,"prereq":[7],"gate":"两人不站重叠；「我的/你的」口令零冲突；reset 认知口述正确","splitAdvice":"本单元含初阶考核，建议把考核独立成 1 节考评课，不挤占教学时间","risk":"中"},{"u":9,"difficulty":4,"newPoints":4,"repsToUsable":700,"revisedLessons":2,"prereq":[5],"gate":"能口述 drop/drive/drip 的选择条件；落点分散 ≥3 格","splitAdvice":"选择树先做「口头判断」再上手，判断错时不许击球","risk":"高"},{"u":10,"difficulty":4,"newPoints":5,"repsToUsable":800,"revisedLessons":2,"prereq":[8],"gate":"被攻时软挡回 NVZ 成功 10 球中 ≥5 球；击球前身体停稳","splitAdvice":"block reset 先单独练到能用，再引入 drop reset / half-volley reset","risk":"高"},{"u":11,"difficulty":4,"newPoints":3,"repsToUsable":800,"revisedLessons":2,"prereq":[6],"gate":"上旋与下旋各 10 球中 ≥5 球落点不变且不过网过高","splitAdvice":"上旋单独 1 课、下旋单独 1 课；两种同日学通常都学不成","risk":"高"},{"u":12,"difficulty":4,"newPoints":3,"repsToUsable":700,"revisedLessons":2,"prereq":[11],"gate":"双反上旋 10 球中 ≥5 球过网下坠；单反下旋不甩腕","splitAdvice":"反手侧剂量本身偏低（多数人反手触球少），建议作业加倍","risk":"高"},{"u":13,"difficulty":5,"newPoints":6,"repsToUsable":1200,"revisedLessons":3,"prereq":[6,11],"gate":"roll / slice / 双反 dink 三种手法各 10 球中 ≥5 球可用；能认出高丁克并主动进攻","splitAdvice":"三种短丁克手法 + 可攻丁克识别，是本体系最挤的一课，建议拆 3 课（roll dink / slice dink / 识别与惩罚）","risk":"很高"},{"u":14,"difficulty":5,"newPoints":9,"repsToUsable":1500,"revisedLessons":3,"prereq":[7],"gate":"flick 与 roll volley 各 10 球中 ≥5 球达到判据；能按来球高度选手法","splitAdvice":"9 个并列点（block/punch/swinging/half volley + flick + roll volley + 高度判据 + 徒手 + 实打）分 2 课仍不够，强行同课必然「每项 9 球」；建议拆 3 课","risk":"很高"},{"u":15,"difficulty":4,"newPoints":6,"repsToUsable":900,"revisedLessons":2,"prereq":[13,14],"gate":"lob 过对手头顶且落底线区 10 球中 ≥5 球；退到位不仰身","splitAdvice":"lob 与 overhead 是两个方向的技术，建议 lob 1 课、overhead 1 课","risk":"高"},{"u":16,"difficulty":3,"newPoints":5,"repsToUsable":500,"revisedLessons":2,"prereq":[8],"gate":"能说出 stacking 启动条件；轮转路线默写正确；两人不重叠","splitAdvice":"含中阶考核，建议考评独立成 1 节","risk":"中"},{"u":17,"difficulty":5,"newPoints":8,"repsToUsable":1200,"revisedLessons":3,"prereq":[4,9],"gate":"≥3 种发球变化可用；接发变体按指定执行 10 球中 ≥5 球；能按对手接发选第三拍分支","splitAdvice":"发球旋转 + 4 种接发变体 + 战术树同课，属于典型的「演示型教案」，建议拆 3 课","risk":"很高"},{"u":18,"difficulty":4,"newPoints":3,"repsToUsable":600,"revisedLessons":2,"prereq":[17],"gate":"第三拍 drive 后能用第五拍补吊重新进网前 10 球中 ≥4 球","splitAdvice":"第五拍依赖第三拍质量，若 U9 未达标应先回补 U9","risk":"高"},{"u":19,"difficulty":5,"newPoints":7,"repsToUsable":1200,"revisedLessons":3,"prereq":[14],"gate":"≥3 种提速手法可按球高选用；被提速能挡回并反制 10 球中 ≥4 球","splitAdvice":"提速 + 反提速 + hands battle + 落点四点合一，建议拆 3 课","risk":"很高"},{"u":20,"difficulty":5,"newPoints":6,"repsToUsable":1000,"revisedLessons":3,"prereq":[13,19],"gate":"限时 8 回合相持中能至少 1 次主动变速且拍面不变形","splitAdvice":"变速与反制是两件事；变速先练节奏、再练旋转、最后练深度","risk":"很高"},{"u":21,"difficulty":4,"newPoints":6,"repsToUsable":800,"revisedLessons":2,"prereq":[15],"gate":"高位球终结 10 球中 ≥6 球得分；对手 lob 后退到位率 ≥70%","splitAdvice":"反手高压单独加练，不与正手高压同课","risk":"高"},{"u":22,"difficulty":5,"newPoints":3,"repsToUsable":800,"revisedLessons":2,"prereq":[21],"gate":"能执行 1 次 ATP 或 Erne 并安全回位；零 NVZ 违规","splitAdvice":"ATP 与 Erne 拆分；且必须明确「这不是必过项」","risk":"很高"},{"u":23,"difficulty":5,"newPoints":8,"repsToUsable":1000,"revisedLessons":3,"prereq":[16,19],"gate":"中路球归属零犹豫；能执行 poach / shake & bake；按对手弱侧选落点","splitAdvice":"poach / stacking 进阶 / 中路归属 / shake & bake / 假动作 / 目标选择 六件事，建议拆 3 课","risk":"很高"},{"u":24,"difficulty":3,"newPoints":3,"repsToUsable":500,"revisedLessons":2,"prereq":[23],"gate":"决胜分前完成呼吸流程；4.0 清单逐项可观察达标","splitAdvice":"含高级考核，建议考评独立成 1 节","risk":"中"}];
+let DIFF_INDEX=(()=>{const m={};const src=(window.PKB_DIFFICULTY&&window.PKB_DIFFICULTY.units)||DEFAULT_DIFF_UNITS;try{src.forEach(u=>{m[Number(u.u)]=u})}catch(e){}return m})();
+function difficultyOf(p){
+ const u=p&&p.lesson&&p.lesson.u?Number(p.lesson.u):0;
+ const d=DIFF_INDEX[u];
+ if(d)return d;
+ return {u,difficulty:3,newPoints:3,repsToUsable:600,risk:'中'};
+}
+function dosageFactor(p){
+ // R 补强课只复测未达标判据，不额外加球数
+ if(p&&p.lesson&&p.lesson.type==='R')return 1;
+ const d=difficultyOf(p);
+ const base=d.difficulty<=2?0.9:d.difficulty===3?1:d.difficulty===4?1.15:1.3;
+ const extra=d.difficulty>=5?Math.min(0.2,Math.max(0,((d.newPoints||3)-3)*0.1)):0;
+ return Math.round((base+extra)*100)/100;
+}
 function paramVal(key,p){
  const def=PARAMS[key];if(!def)return '';
  let v=Number((state.params&&state.params[key]!=null&&state.params[key]!=='')?state.params[key]:def.v);
@@ -610,6 +656,9 @@ function paramVal(key,p){
   if(k==='reps'||k==='balls'||k==='rally')v=v*(pr.loadGuard?Math.min(1,pr.techMul):pr.techMul);
   if(k==='sets'||k==='secs'||k==='points')v=v*(pr.loadGuard?Math.min(1,pr.fitMul):pr.fitMul);
   if(k==='balls'&&pr.goal==='专项补强')v=v*1.3;
+  // 难度表驱动：难单元的喂球量随 difficulty 上调，但单节课上限 40 球/人（再多就是排队看）
+  const df=dosageFactor(p);
+  if(k==='balls'&&key!=='gridBalls'&&df!==1)v=Math.min(40,v*df);
   if(k==='points'&&pr.goal==='比赛备战')v=v*1.2;
   if(k==='sets'&&pr.goal==='减脂塑形')v=v*1.2;
   if(k==='rally'&&pr.goal==='兴趣体验')v=v*0.8;
@@ -626,8 +675,9 @@ function paramVal(key,p){
 function resolve(t,p){return String(t==null?'':t).replace(/\{p:([A-Za-z0-9_]+)\}/g,(m,k)=>String(paramVal(k,p)))}
 function fill(t,p){
  const u=(p&&p.unit)||{};
- const kp=String(u.kp||'本课次要点').split('|'),dr=String(u.drill||'本课次分解练习').split('|');
- const map={'{topic}':u.tech||'本课次技术','{kp1}':kp[0]||'本课次要点一','{kp2}':kp[1]||'本课次要点二','{kp3}':kp[2]||'本课次要点三',
+ const isR=p&&p.lessonType==='R';
+ const kp=String(u.kp||'本课次要点').split('|').filter(Boolean),dr=String(u.drill||'本课次分解练习').split('|');
+ const map={'{topic}':u.tech||'本课次技术','{kp1}':kp[0]||'本课次要点一','{kp2}':kp[1]||(isR?'（只练以上未达标判据，不追加第 2 项）':'本课次要点二'),'{kp3}':kp[2]||(isR?'（只复测以上未达标判据，达标即可结束）':'本课次要点三'),
   '{d1}':dr[0]||'本课次徒手分解练习','{d2}':dr[1]||'本课次定点喂球练习','{d3}':dr[2]||'本课次移动中击球练习',
   '{fit}':u.fit||'', '{foot}':u.foot||'', '{play}':(p&&p.playNow)||u.play||'',
   '{hw}':u.hw||'', '{next}':(p&&p.nextLabel)||'', '{focus}':(p&&p.lesson&&p.lesson.focus)||''};
@@ -746,7 +796,14 @@ const ENR_STATE = { difficulty: null, busy: false, err: '', adjust: '' };
 async function loadDifficulty() {
   if (ENR_STATE.difficulty) return ENR_STATE.difficulty;
   if (!(window.PKB_API && window.PKB_API.online())) return null;
-  try { ENR_STATE.difficulty = await window.PKB_API.request('/curriculum-difficulty'); } catch (e) { ENR_STATE.difficulty = null; }
+  try {
+    ENR_STATE.difficulty = await window.PKB_API.request('/curriculum-difficulty');
+    // 与 state.difficulty 同一份数据，合并进教案剂量用的索引，避免两处口径不一致
+    if (ENR_STATE.difficulty && ENR_STATE.difficulty.units) {
+      window.PKB_DIFFICULTY = ENR_STATE.difficulty;
+      ENR_STATE.difficulty.units.forEach(u => { DIFF_INDEX[Number(u.u)] = u; });
+    }
+  } catch (e) { ENR_STATE.difficulty = null; }
   return ENR_STATE.difficulty;
 }
 
@@ -857,16 +914,26 @@ function prepLesson(enrollId, outlineId) {
   const ol = (e.outline || []).find(o => o.id === outlineId);
   if (!ol) return;
   const s = state.students.find(x => x.id === e.studentId);
+  // 大纲里真正排的下一节：R 课之后仍然是同单元 B 课，不能按 48 课次编号 +1 猜
+  const later = (e.outline || []).filter(o => o.seq > ol.seq).sort((a, b) => a.seq - b.seq);
+  const nx = later[0];
+  const nxLabel = nx
+    ? ('大纲第 ' + nx.seq + ' 节 · 第 ' + nx.lessonNo + ' 课（' + outlineTypeName(nx.lessonType) + '）· ' +
+       ((UNITS[nx.unitNo - 1] || {}).tech || ''))
+    : '本课程包已排满，建议续包并把本节未达标判据作为续包第 1 节复查';
   state.ui.planForm = {
     studentIds: [e.studentId], lesson: ol.lessonNo, minutes: ol.minutes || e.minutesPerLesson || 90,
     date: ol.plannedDate || today(), size: e.packageType, age: (s && s.age) || 'adult',
-    focus: 'tech', fitMode: 'auto', goal: e.goal || (s && s.goal) || '技术晋级'
+    focus: 'tech', fitMode: 'auto', goal: e.goal || (s && s.goal) || '技术晋级',
+    unitNo: ol.unitNo, lessonType: ol.lessonType
   };
   state.ui.lastPlan = null;
   state.ui.execCtx = {
     enrollmentId: enrollId, outlineLessonId: ol.id, studentId: e.studentId,
     lessonNo: ol.lessonNo, minutes: ol.minutes || e.minutesPerLesson, seq: ol.seq,
-    unitNo: ol.unitNo, lessonType: ol.lessonType, planId: null
+    unitNo: ol.unitNo, lessonType: ol.lessonType, planId: null,
+    nextLessonLabel: nxLabel, nextLessonSeq: nx ? nx.seq : null,
+    studentName: (s && s.name) || '', packageType: e.packageType
   };
   navigate('plan');
   setTimeout(() => { try { generate(); } catch (e2) { /* 生成失败已由 generate 内部提示 */ } }, 20);
@@ -929,17 +996,79 @@ async function executePlan() {
 }
 
 /* ---------- 课次页（教案 + 点评入口） ---------- */
+/* 这节课对应的「大纲条目」——R 补强课要靠它才认得出课型 */
+function outlineOfSession(s) {
+  if (!s || !s.enrollmentId || !s.outlineLessonId) return null;
+  const enr = enrollments().find(e => e.id === s.enrollmentId);
+  return enr ? (enr.outline || []).find(o => o.id === s.outlineLessonId) || null : null;
+}
+
+/* 从大纲里上一节已点评记录提取「未达标」判据（备课预览与本次课共用，并把 {p:...} 展开成实数） */
+function failedCriteriaForOutline(enrollmentId, seq, p, depth = 0) {
+  const enr = enrollments().find(e => e.id === enrollmentId);
+  const prev = (enr && enr.outline) || [];
+  const priorOl = prev.filter(o => o.seq < Number(seq) && o.sessionId)
+    .sort((a, b) => b.seq - a.seq)[0];
+  const prior = priorOl ? state.sessions.find(x => x.id === priorOl.sessionId) : null;
+  if (!prior) return { prior: null, failed: [] };
+  let kpSrc = [];
+  if (priorOl && priorOl.lessonType === 'R' && depth < 8) {
+    const inner = failedCriteriaForOutline(enrollmentId, priorOl.seq, p, depth + 1);
+    kpSrc = inner.failed.length
+      ? inner.failed
+      : String((REM_LESSON[Number(priorOl.unitNo)] || {}).kp || '').split('|').filter(Boolean);
+  } else if (prior.lesson) {
+    kpSrc = planForLessonOnly(prior.lesson) || [];
+  }
+  const failed = [];
+  if (prior.judgeVals) {
+    Object.keys(prior.judgeVals).sort().forEach(k => {
+      if (prior.judgeVals[k] === false) {
+        const idx = Number(String(k).replace('kp', '')) - 1;
+        if (kpSrc[idx]) failed.push(fill(kpSrc[idx], p));
+      }
+    });
+  }
+  return { prior, failed };
+}
+
+function applyRemedialCriteria(p, enrollmentId, seq) {
+  if (!p || p.lessonType !== 'R' || p._remedialApplied) return;
+  p._remedialApplied = true;
+  if (!enrollmentId || seq == null) return;
+  const { prior, failed } = failedCriteriaForOutline(enrollmentId, seq, p, 0);
+  if (failed.length) {
+    p.unit.kp = failed.join('|');
+    p.remedialFrom = prior.date || '';
+    p.notes = (p.notes || []).concat(['本课判据取自 ' + (prior.date || '上节课') + ' 点评里评为「未达标」的 ' + failed.length + ' 条，不是模板默认判据；复测通过即视为达标，不再重复上一节整节课内容。']);
+  } else {
+    p.notes = (p.notes || []).concat(['未找到上一节的未达标判据勾选记录，本节按 R 课模板判据复测；上完请立刻点评，下次补强课才能精确到具体判据。']);
+  }
+}
+
 function planForSession(s) {
   const st = state.students.find(x => x.id === s.studentId);
   const enr = enrollments().find(e => e.id === s.enrollmentId);
-  const L = LESSONS.find(l => l.n === Number(s.lesson)) || LESSONS[0];
-  if (!st) return null;
+  const ol = outlineOfSession(s);
+  const L = (ol && ol.lessonType === 'R' ? lessonFor(ol.unitNo, 'R') : null)
+    || LESSONS.find(l => l.n === Number(s.lesson)) || LESSONS[0];
+  if (!st || !L) return null;
   const f = {
     studentIds: [st.id], lesson: L.n, minutes: s.minutes || 90, date: s.date || today(),
     size: enr ? enr.packageType : 'small', age: st.age || 'adult', focus: 'tech', fitMode: 'auto',
     goal: (enr && enr.goal) || st.goal || '技术晋级'
   };
-  return buildPlan(f, null, null);
+  if (ol && ol.lessonType === 'R') { f.unitNo = ol.unitNo; f.lessonType = 'R'; }
+  const p = buildPlan(f, null, null);
+  if (p && ol && ol.lessonType === 'R') applyRemedialCriteria(p, s.enrollmentId, ol.seq);
+  return p;
+}
+
+/* 只取某课次的默认判据文本（用于把上节课的 kp 索引映射回文字） */
+function planForLessonOnly(lessonNo) {
+  const L = LESSONS.find(l => l.n === Number(lessonNo));
+  if (!L) return null;
+  return String(L.unit.kp || '').split('|');
 }
 
 function renderLesson() {
@@ -994,7 +1123,7 @@ function reviewModal(sessionId) {
   const judgeOpt = v => '<option value="' + v + '"' + ((s.judge || '部分达标') === v ? ' selected' : '') + '>' + v + '</option>';
   openModal('<div class="modal-head"><h3>课后点评 · 第 ' + s.lesson + ' 课</h3><button class="x" data-act="close-modal">×</button></div><div class="modal-body">' +
     '<div class="notice" style="margin-bottom:12px">60 秒内完成：3 个要点打勾 → 一句话反馈 → 作业与下节重点。判据未达标时，自适应节奏会自动把下一节改成同单元补强课。</div>' +
-    (kp.length ? '<div class="field"><label>本课 3 个可观察判据</label>' + kp.map((k, i) => {
+    (kp.length ? '<div class="field"><label>' + (p && p.lessonType === 'R' ? '本课复测判据（仅未达标项）' : '本课 3 个可观察判据') + '</label>' + kp.map((k, i) => {
       const cur = jv['kp' + (i + 1)];
       return '<div style="display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--hairline)"><div style="flex:1;font-size:12px">' + esc(k) + '</div>' +
         '<select data-jv="kp' + (i + 1) + '" style="max-width:120px"><option value="yes"' + (cur === true ? ' selected' : '') + '>达标</option><option value="no"' + (cur === false ? ' selected' : '') + '>未达标</option></select></div>';
@@ -1064,7 +1193,7 @@ function renderTodayBoard() {
    ============================================================ */
 const KEY='pkbmgr.v2';
 const defaultState=()=>({
- students:[],plans:[],sessions:[],assessments:[],demo:false,
+ students:[],plans:[],sessions:[],assessments:[],enrollments:[],demo:false,
  thresholds:{},params:{},defaults:{minutes:90,size:'small',age:'adult',freq:2,unitsPerStage:8,courts:1,renewWarn:3},
  ui:{view:'dash',planview:'timeline',planForm:null,lastPlan:null,detailId:null,enrollId:null,enrollStudent:null,execCtx:null,sessionId:null,adjust:''},
  prefs:{theme:'dark',accent:'lime',density:'comfortable',motion:'on'}
@@ -1079,6 +1208,11 @@ function normalize(p){
   if(x.pkLevel==null)x.pkLevel=x.techScore==null?0:num(x.techScore,0);
   if(x.racketBase==null)x.racketBase=0;
  });
+ // 难度表：随 state 下发，离线也能按同一张表算剂量
+ if(p.difficulty&&Array.isArray(p.difficulty.units)&&p.difficulty.units.length){
+  window.PKB_DIFFICULTY=p.difficulty;
+  DIFF_INDEX={};p.difficulty.units.forEach(u=>{DIFF_INDEX[Number(u.u)]=u});
+ }
  if(p.ui){
   if(p.ui.lastPlan&&(!p.ui.lastPlan.lesson||!p.ui.lastPlan.students))p.ui.lastPlan=null;
   if(p.ui.planForm){const pf=p.ui.planForm;if(!pf.studentIds)pf.studentIds=pf.studentId?[pf.studentId]:[];delete pf.zones;if(!pf.fitMode)pf.fitMode='auto';pf.lesson=undefined;}
@@ -1104,6 +1238,7 @@ function fitDecision(f,lesson,fitEff){
  if(m==='no')return {hasFit:false,reason:'教练指定：本课不安排 ④ 专项体能 / 步伐段'};
  if(fitEff<=1)return {hasFit:false,reason:'入班体能 '+fitEff+' 分：自动取消 ④ 段、热身步伐激活减半（安全优先）'};
  if([16,32,48].includes(lesson.n))return {hasFit:false,reason:'考核课自动减量：不设 ④ 段，时间并入技术复习与流程演练'};
+ if(lesson.type==='R')return {hasFit:false,reason:'R 补强课：不新增负荷，不设 ④ 段，全部时间用于未达标判据的复测与纠正'};
  if(lesson.type==='A')return {hasFit:true,reason:'A 新授课：新技术需配套步法，安排 ④ 专项体能 / 步伐段'};
  return {hasFit:false,reason:'B 巩固课：不设 ④ 段，热身仍含 2-3 min 步伐激活，时间并入 ③ 分解练习与 ⑤ 对抗应用'};
 }
@@ -1129,14 +1264,21 @@ function venuePlan(p){
 }
 function buildPlan(f,trainingRecommendations,fitnessReports){
  const students=(f.studentIds||[]).map(id=>state.students.find(x=>x.id===id)).filter(Boolean);
- const lesson=LESSONS.find(l=>l.n===Number(f.lesson));
+ // 大纲来的课（execCtx）可能是 R 补强课，lesson 号落在同单元的 B 课上，必须按 unitNo + lessonType 取教案
+ const lesson=(f.lessonType==='R'&&f.unitNo)
+   ? lessonFor(f.unitNo,'R')
+   : LESSONS.find(l=>l.n===Number(f.lesson));
  if(!students.length||!lesson)return null;
  const u=lesson.unit;
  const minutes=[60,90].includes(Number(f.minutes))?Number(f.minutes):90;
  const parts=String(u.play).split(/；|;\s*/).filter(Boolean);
- const playNow=lesson.type==='A'?(parts[0]||u.play):(parts[1]||parts[0]||u.play);
+ const playNow=lesson.type==='B'?(parts[1]||parts[0]||u.play):(parts[0]||u.play);
+ // 下一课预告：从大纲进来时按「大纲里真正排的下一节」说，而不是按 48 课次编号猜
+ const exec=state.ui&&state.ui.execCtx;
  const nextL=LESSONS.find(l=>l.n===lesson.n+1);
- const nextLabel=nextL?('第 '+nextL.n+' 课（'+nextL.type+' 课）· '+nextL.tech):'本阶段已结业，进入下一阶段第 1 课';
+ const nextLabel=(exec&&exec.nextLessonLabel)
+  ?exec.nextLessonLabel
+  :(nextL?('第 '+nextL.n+' 课（'+nextL.type+' 课）· '+nextL.tech):'本阶段已结业，进入下一阶段第 1 课');
  const age=f.age||'adult';
  const agesInClass=[...new Set(students.map(x=>x.age||'adult'))];
  const autoMixed=agesInClass.length>1;
@@ -1188,7 +1330,7 @@ function buildPlan(f,trainingRecommendations,fitnessReports){
  p.notes=[];
  const spread=Math.max.apply(null,tScores)-Math.min.apply(null,tScores);
  p.spread=spread;
- if(students.length>1&&spread>=2)p.notes.push('分层任务：技术分差 '+spread+' 分，同一动作给两档球数 / 距离（低分档 '+Math.round(paramVal('feedBalls',{profile:Object.assign({},profile,{techMul:0.6})}) )+' 球/人，标准档 '+paramVal('feedBalls',p)+' 球/人），教练统一发令，仍在同一场地、不分组到不同区域。');
+ if(students.length>1&&spread>=2)p.notes.push('分层任务：技术分差 '+spread+' 分，同一动作给两档球数 / 距离（低分档 '+Math.round(paramVal('feedBalls',{lesson,profile:Object.assign({},profile,{techMul:0.6})}) )+' 球/人，标准档 '+paramVal('feedBalls',p)+' 球/人），教练统一发令，仍在同一场地、不分组到不同区域。');
  if(mixedGoal)p.notes.push('目标不一致：本教案以「技术晋级」为主线，对抗段给不同计分约束；混合目标建议分班。');
  if(transfer)p.notes.push('挥拍类迁移纠错（B≥3 且 A 匹克球专项 ≤2）：① 限制引拍幅度，改短引拍；② 强制上网站位，接完即上 NVZ 线后；③ 增加 soft hands 拍面缓冲练习，避免 dink 顶高；④ 每球复诵两跳规则与 NVZ 不凌空。已压缩握拍 / 手眼协调类基础讲解。');
  if(techAvg===5){
@@ -1199,6 +1341,9 @@ function buildPlan(f,trainingRecommendations,fitnessReports){
    'flick / roll 连击：先 roll volley 引对手上手，再 flick 打空档，各 '+paramVal('feedBalls',p)+' 球。'
   ];
  }
+ /* 难度表 → 本课剂量自检：告诉教练「这节课够不够」，而不是让他自己猜 */
+ if(lesson.type==='R'&&exec&&exec.enrollmentId&&exec.seq!=null)applyRemedialCriteria(p,exec.enrollmentId,exec.seq);
+ p.pacing=buildPacing(p);
  p.trainingReview=buildTrainingReview(p,trainingRecommendations);
  /* 体能测评报告 → ④ 段重点与负荷上限（不改变 48 课次主线） */
  p.fitness=buildFitnessBridge(p,fitnessReports);
@@ -1219,6 +1364,43 @@ function buildPlan(f,trainingRecommendations,fitnessReports){
  return p;
 }
 
+
+/* ---------- 剂量自检：难度表 → 本课球数是否够学会 ---------- */
+function buildPacing(p){
+ const d=difficultyOf(p);
+ const balls=Number(paramVal('feedBalls',p))||0;
+ const moveBalls=Number(paramVal('moveBalls',p))||0;
+ const repsPerLesson=balls+moveBalls;                       // 课堂实球触球（不含徒手）
+ const newPoints=Number(d.newPoints)||3;
+ const maxNew=3;
+ const repsNeeded=Number(d.repsToUsable)||600;
+ const shouldCarry=Math.round(repsNeeded*0.35);             // 课堂承担约 35%
+ const lessonType=p.lessonType;
+ // R 课不承担新点，全部用于复测
+ const effPoints=lessonType==='R'?0:newPoints;
+ const needLessons=lessonType==='R'?1:Math.max(1,Math.ceil(effPoints/maxNew));
+ const rows=[];
+ rows.push({k:'本课难度',v:String(d.difficulty)+' / 5（'+(d.risk||'中')+'风险）'});
+ rows.push({k:'并列新授点',v:lessonType==='R'?'0 个新授（R 课：只复测上节未达标判据）':(effPoints+' 个')});
+ rows.push({k:'单课球数',v:balls+' 球/人（定点喂球）+ '+moveBalls+' 球/人（移动中）＝ '+repsPerLesson+' 次实球触球'});
+ rows.push({k:'学会该技术约需',v:repsNeeded+' 次实球触球，课堂承担约 35%（'+shouldCarry+' 次）'});
+ rows.push({k:'按当前剂量',v:lessonType==='R'?('本课只复测未达标判据（每节 '+repsPerLesson+' 次实球触球，不加球数、不新增点）'):('约需 '+needLessons+' 节（本课每节 '+repsPerLesson+' 次 × '+needLessons+' 节 = '+(repsPerLesson*needLessons)+' 次）')});
+ const warn=[];
+ if(lessonType!=='R'&&newPoints>maxNew){
+  warn.push('本单元并列新授点 '+newPoints+' 个，超过单课上限 3 个。加球数解决不了这个问题——建议在大纲里拆成 '+Math.ceil(newPoints/maxNew)+' 节，每节只教 2-3 个点。');
+ }
+ if(lessonType!=='R'&&repsPerLesson*needLessons<shouldCarry){
+  const gap=shouldCarry-repsPerLesson*needLessons;
+  warn.push('课堂剂量差 '+gap+' 次。两条路：① 大纲里给本单元多排 1 节（R 课）；② 作业补 '+Math.round(gap/needLessons)+' 次/课（对墙 / 徒手 / 抛球）。不要靠延长单次课时。');
+ }
+ if(lessonType==='R'){
+  warn.push('这是 R 补强课：不引入新技术点、不设 ④ 体能段、不加球数，只把上次评为「未达标」的判据逐条复测。达标记为达标，未达标就再排 1 节 R，或退阶到前置单元（见下方前置链）。');
+ }
+ const prereq=(d.prereq||[]).map(x=>'U'+x).join('、');
+ return {available:true,difficulty:d.difficulty,risk:d.risk||'',newPoints:effPoints,rawNewPoints:newPoints,
+  maxNew,repsPerLesson,repsNeeded,shouldCarry,needLessons,rows,warn,prereq,
+  gate:d.gate||'',splitAdvice:d.splitAdvice||''};
+}
 
 function buildTrainingReview(p,recommendations){
  if(!recommendations||!recommendations.available)return null;
@@ -1290,9 +1472,17 @@ function planText(p){
   if(p.trainingReview.mastered.length)L.push('稳定掌握（最近连续三次 ≥4 分，保留常规观察，不据此跳课）：'+p.trainingReview.mastered.map(x=>x.studentName+'·'+x.skillName).join('；'));
   if(p.trainingReview.safety.reasons.length)L.push('负荷 / 安全提醒：'+p.trainingReview.safety.reasons.join('；'));
  }
+ if(p.pacing&&p.pacing.available){
+  const c=p.pacing;
+  L.push('');L.push('【剂量自检】难度 '+c.difficulty+'/5 · 并列新授点 '+c.newPoints+' 个 · 本课实球触球 '+c.repsPerLesson+' 次');
+  L.push('  学会该技术约需 '+c.repsNeeded+' 次（课堂承担约 35% = '+c.shouldCarry+' 次），按当前剂量约需 '+c.needLessons+' 节。');
+  if(c.gate)L.push('  达标闸门：'+c.gate);
+  if(c.prereq)L.push('  前置单元：'+c.prereq);
+  c.warn.forEach(x=>L.push('  ！'+x));
+ }
  L.push('');L.push('【当课次技术拆解】'+p.unit.tech);
  L.push('  本课次重点：'+p.lesson.focus);
- L.push('  3 个可观察判据：'+p.unit.kp.split('|').join(' / '));
+ L.push('  '+(p.lessonType==='R'?'复测判据（只查未达标项）':'3 个可观察判据')+'：'+String(p.unit.kp||'').split('|').filter(Boolean).join(' / '));
  L.push('  分解练习三步：'+p.unit.drill.split('|').join(' → '));
  L.push('  定位：② 讲解示范讲它、③ 分解练习练它、⑤ 对抗应用只评它。');
  L.push('');
@@ -1476,13 +1666,23 @@ function renderPicker(){
 function refreshLessonOptions(){
  const f=state.ui.planForm;if(!f)return;
  const ids=(f.studentIds||[]).map(id=>state.students.find(x=>x.id===id)).filter(Boolean);
- const stage=ids.length?Number(ids[0].stage):1;
+ const ec=state.ui.execCtx;
+ // 若从课程包大纲带入，阶段以大纲课次为准，避免跨阶排课被学员当前 stage 重置回第 1 课
+ const ecLesson=ec&&ec.lessonNo?LESSONS.find(l=>l.n===Number(ec.lessonNo)):null;
+ const stage=ecLesson?ecLesson.s:(ids.length?Number(ids[0].stage):1);
  const st=STAGES[stage];
  const suggested=ids.length?Math.min(Math.max(st.from,Number(ids[0].used)+1),st.to):st.from;
  const cur=f.lesson&&f.lesson>=st.from&&f.lesson<=st.to?Number(f.lesson):suggested;
  f.lesson=cur;
  const ls=LESSONS.filter(l=>l.s===stage);
- $('#fLesson').innerHTML=ls.map(l=>'<option value="'+l.n+'" '+(l.n===cur?'selected':'')+'>第 '+l.n+' 课（'+l.type+'）· '+esc(l.tech.slice(0,14))+(l.n===suggested?'（推荐）':'')+'</option>').join('');
+ const isR=Boolean(ec&&ec.lessonType==='R');
+ let opts=ls.map(l=>'<option value="'+l.n+'" '+(!isR&&l.n===cur?'selected':'')+'>第 '+l.n+' 课（'+l.type+'）· '+esc(l.tech.slice(0,14))+(l.n===suggested?'（推荐）':'')+'</option>').join('');
+ // 大纲的 R 补强课不在 48 课次编号里，单独给一条，避免教练以为在上 B 课
+ if(isR){
+  const r=REM_LESSON[Number(ec.unitNo)];
+  opts='<option value="'+cur+'" data-rem="1" selected>第 '+cur+' 课（R 补强）· '+esc((r?r.tech:'补强课').slice(0,16))+'</option>'+opts;
+ }
+ $('#fLesson').innerHTML=opts;
 }
 function segCardHTML(sg,p){
  const d=SEGMENTS[sg.id];
@@ -1498,6 +1698,18 @@ function segCardHTML(sg,p){
 /* 调整说明 / 高阶加练的共用渲染块（三种视图都显示） */
 function planExtraHTML(p){
  let h='';
+ if(p.pacing&&p.pacing.available){
+  const c=p.pacing;
+  h+='<div class="block"><h3><span class="idx">03A</span>剂量自检 · 这节课够不够学会 <span class="chip chip-accent">来自难度表</span></h3>'+
+   '<div class="why">口径：每节课每人实球触球 '+c.repsPerLesson+' 次；该技术从「能做出来」到「敢在比赛里用」约需 '+c.repsNeeded+' 次，课堂承担约 35%。三个并列新授点是硬上限，超过就该拆课，而不是加球数。</div>'+
+   '<div class="table-wrap"><table><thead><tr><th>项</th><th>本课次</th></tr></thead><tbody>'+
+   c.rows.map(r=>'<tr><td>'+esc(r.k)+'</td><td class="sec">'+esc(r.v)+'</td></tr>').join('')+
+   '</tbody></table></div>'+
+   (c.gate?'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)"><b>达标闸门（下节能不能进下一单元就看这个）</b><br><span class="sec">'+esc(c.gate)+'</span></div>':'')+
+   (c.prereq?'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)"><b>前置单元</b>　<span class="sec">'+esc(c.prereq)+'——没达标先回补前置单元，不要在这里硬顶</span></div>':'')+
+   (c.warn.length?'<div class="notice notice-warn" style="margin-top:10px">'+c.warn.map(x=>'<div>· '+esc(x)+'</div>').join('')+'</div>':'')+
+   '</div>';
+ }
  if(p.trainingReview){
   h+='<div class="block"><h3><span class="idx">04A</span>动态训练调整 · 技术复习与负荷保护</h3>';
   if(p.trainingReview.weak.length){
@@ -1536,7 +1748,11 @@ function renderPlanHTML(p){
  const v=state.ui.planview||'timeline';
  const names=p.students.map(s=>esc(s.name)).join(' / ');
  const sizeName=p.size==='large'?'8-12 人团课':p.size==='solo'?'私教 1 人':'4-6 人小班';
- const head='<div class="plan-head no-print"><div class="eyebrow">AUTO-GENERATED · 第 '+p.lesson.n+' 课 · '+p.lessonType+' 课</div><h2>'+esc(p.unit.tech)+'</h2><div style="font-size:12px;color:var(--text-2)">阶段 '+p.lesson.s+' '+STAGES[p.lesson.s].name+' · 本课次重点：'+esc(p.lesson.focus)+'</div><div class="meta"><span class="chip chip-accent">'+esc(p.date)+'</span><span class="chip">'+p.minutes+' 分钟</span><span class="chip chip-accent">'+esc(p.ageName)+'</span><span class="chip">'+sizeName+'</span><span class="chip">'+p.students.length+' 名学员</span><span class="chip">'+(p.hasFit?'含 ④ 体能段':'不设 ④ 体能段')+'</span><span class="chip">教练 1 人 · 统一带练</span><span class="chip chip-accent">目标 '+esc(p.goal)+'</span><span class="chip">技术 '+p.techAvg+' / 体能 '+p.fitEff+'</span>'+(p.fitness&&p.fitness.available?'<span class="chip chip-accent">体测报告已接入</span>':'')+'</div><div class="students"><strong>学员名单：</strong>'+names+(p.autoMixed?' <span class="chip chip-warn">混合年龄段 · 已按最保守负荷处理</span>':'')+'</div>'+execInlineHTML(p)+'</div>';
+ const ec=state.ui.execCtx;
+ const _enr=ec&&ec.enrollmentId?enrollments().find(e=>e.id===ec.enrollmentId):null;
+ const _total=_enr?(_enr.outline||[]).length:0;
+ const ctxChip=(ec&&ec.enrollmentId)?'<span class="chip chip-accent">课程包 · 第 '+ec.seq+' 节'+( _total?' / 共 '+_total+' 节':'')+'</span>'+(ec.studentName?'<span class="chip">'+esc(ec.studentName)+'</span>':''):'';
+ const head='<div class="plan-head no-print"><div class="eyebrow">AUTO-GENERATED · 第 '+p.lesson.n+' 课 · '+p.lessonType+' 课</div><h2>'+esc(p.unit.tech)+'</h2><div style="font-size:12px;color:var(--text-2)">阶段 '+p.lesson.s+' '+STAGES[p.lesson.s].name+' · 本课次重点：'+esc(p.lesson.focus)+'</div><div class="meta">'+ctxChip+'<span class="chip chip-accent">'+esc(p.date)+'</span><span class="chip">'+p.minutes+' 分钟</span><span class="chip chip-accent">'+esc(p.ageName)+'</span><span class="chip">'+sizeName+'</span><span class="chip">'+p.students.length+' 名学员</span><span class="chip">'+(p.hasFit?'含 ④ 体能段':'不设 ④ 体能段')+'</span><span class="chip">教练 1 人 · 统一带练</span><span class="chip chip-accent">目标 '+esc(p.goal)+'</span><span class="chip">技术 '+p.techAvg+' / 体能 '+p.fitEff+'</span>'+(p.fitness&&p.fitness.available?'<span class="chip chip-accent">体测报告已接入</span>':'')+'</div><div class="students"><strong>学员名单：</strong>'+names+(p.autoMixed?' <span class="chip chip-warn">混合年龄段 · 已按最保守负荷处理</span>':'')+'</div>'+execInlineHTML(p)+'</div>';
  if(v==='print')return head+'<div class="plan-body"><div class="block"><h3>打印稿（含全部详细动作）</h3><pre class="card">'+esc(planText(p))+'</pre></div>'+planExtraHTML(p)+'</div>';
  if(v==='table'){
   let rows='';
@@ -1546,9 +1762,9 @@ function renderPlanHTML(p){
    '<div class="block"><h3><span class="idx">02</span>场地与器材动线</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>说明</th></tr></thead><tbody>'+venueRows+'</tbody></table></div></div>'+
    '<div class="block"><h3><span class="idx">03</span>安全与退阶</h3>'+p.safety.map(x=>'<div style="font-size:11.5px;color:var(--text-2);padding:5px 0">— '+esc(x)+'</div>').join('')+'</div>'+planExtraHTML(p)+'</div>';
  }
- const kp=p.unit.kp.split('|'),dr=p.unit.drill.split('|');
+ const kp=String(p.unit.kp||'').split('|').filter(Boolean),dr=String(p.unit.drill||'').split('|').filter(Boolean);
  let body='<div class="block"><h3><span class="idx">00</span>本课次怎么带</h3><div class="why"><b>当课次技术拆解</b>决定「练什么」→ ② 讲、③ 练、⑤ 只评它；<b>下面逐段动作</b>决定「每个时段具体带什么」；<b>场地与器材动线</b>只说明哪几步需要整队移步功能区。全员在同一场地由教练统一带练，不分组、不分区轮转。</div><div class="why" style="margin-top:10px"><b>体能段判定：</b>'+esc(p.fitReason)+'</div></div>';
- body+='<div class="block"><h3><span class="idx">01</span>当课次技术拆解 <span class="chip chip-accent">第 '+p.lesson.n+' 课 · '+p.lessonType+' 课</span></h3><div class="lead">这一块就是 ② 讲解示范要讲、③ 分解练习要练、⑤ 对抗应用只评的内容。下面逐段会告诉你每个时段具体怎么带。</div><div class="kv"><div class="item"><div class="k">本课次重点</div><div class="v">'+esc(p.lesson.focus)+'</div></div><div class="item"><div class="k">对抗形式（本课次）</div><div class="v">'+esc(p.playNow)+'</div></div><div class="item"><div class="k">家庭作业</div><div class="v">'+esc(p.unit.hw)+'</div></div><div class="item"><div class="k">常见错误 → 纠正</div><div class="v">'+esc(p.unit.err)+' → '+esc(p.unit.fix)+'</div></div></div><div style="margin-top:14px"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px">3 个可观察判据（② 讲 / ③ 查 / ⑤ 评）</div>'+kp.map((k,i)=>'<div style="font-size:12px;padding:6px 0;border-bottom:1px dashed var(--hairline)"><span class="mono" style="color:var(--accent)">0'+(i+1)+'</span>　'+esc(k)+'</div>').join('')+'</div><div style="margin-top:14px"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px">③ 分解练习三步递进</div>'+dr.map((d,i)=>'<div style="font-size:12px;padding:6px 0;border-bottom:1px dashed var(--hairline)"><span class="mono" style="color:var(--accent)">STEP '+(i+1)+'</span>　'+esc(d)+'</div>').join('')+'</div></div>';
+ body+='<div class="block"><h3><span class="idx">01</span>当课次技术拆解 <span class="chip chip-accent">第 '+p.lesson.n+' 课 · '+p.lessonType+' 课</span></h3><div class="lead">这一块就是 ② 讲解示范要讲、③ 分解练习要练、⑤ 对抗应用只评的内容。下面逐段会告诉你每个时段具体怎么带。</div><div class="kv"><div class="item"><div class="k">本课次重点</div><div class="v">'+esc(p.lesson.focus)+'</div></div><div class="item"><div class="k">对抗形式（本课次）</div><div class="v">'+esc(p.playNow)+'</div></div><div class="item"><div class="k">家庭作业</div><div class="v">'+esc(p.unit.hw)+'</div></div><div class="item"><div class="k">常见错误 → 纠正</div><div class="v">'+esc(p.unit.err)+' → '+esc(p.unit.fix)+'</div></div></div><div style="margin-top:14px"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px">'+(p.lessonType==='R'?'复测判据（只查上节未达标项，② 讲 / ③ 查 / ⑤ 评）':'3 个可观察判据（② 讲 / ③ 查 / ⑤ 评）')+'</div>'+kp.map((k,i)=>'<div style="font-size:12px;padding:6px 0;border-bottom:1px dashed var(--hairline)"><span class="mono" style="color:var(--accent)">0'+(i+1)+'</span>　'+esc(k)+'</div>').join('')+'</div><div style="margin-top:14px"><div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px">③ 分解练习三步递进</div>'+dr.map((d,i)=>'<div style="font-size:12px;padding:6px 0;border-bottom:1px dashed var(--hairline)"><span class="mono" style="color:var(--accent)">STEP '+(i+1)+'</span>　'+esc(d)+'</div>').join('')+'</div></div>';
  body+='<div class="block"><h3><span class="idx">02</span>逐段详细动作 · '+p.struct.length+' 段 / '+p.minutes+' 分钟</h3><div class="lead">按时间顺序照着带即可；每段含具体动作、组次、口令、年龄段调整、判据与错误纠正。'+(p.hasFit?'':'本课次不设 ④ 独立体能 / 步伐段，时间已并入 ③ 分解练习与 ⑤ 对抗应用。')+'</div>'+p.struct.map(sg=>segCardHTML(sg,p)).join('')+'</div>';
  body+='<div class="block"><h3><span class="idx">03</span>场地与器材动线</h3><div class="why">功能区不用在生成时勾选：系统按本课次「课堂组织」自动判定可能用到的区域，教练按当天实际需要选 1-2 处，<b>整队前往、整队返回</b>，始终全员同一步骤。</div>'+p.venue.map(x=>'<div style="font-size:12px;padding:7px 0;border-bottom:1px dashed var(--hairline)">'+esc(x)+'</div>').join('')+'</div>';
  body+='<div class="block"><h3><span class="idx">04</span>安全与退阶</h3>'+p.safety.map(x=>'<div style="font-size:11.5px;color:var(--text-2);padding:6px 0;border-bottom:1px dashed var(--hairline)">— '+esc(x)+'</div>').join('')+'</div>';
@@ -1820,6 +2036,12 @@ function generate(){
  const f=state.ui.planForm;$('#planErr').textContent='';
  if(!f||!f.studentIds||!f.studentIds.length){$('#planErr').textContent='请至少选择 1 名学员（多人班可多选）';return}
  f.age=$('#fAge').value;f.size=$('#fSize').value;f.minutes=Number($('#fMinutes').value);f.lesson=Number($('#fLesson').value);f.date=$('#fDate').value;f.focus=$('#fFocus').value;
+ // 从大纲的 R 补强课进来时，课次号沿用同单元 B 课，但教案必须取 R 版（只复测、不新授）
+ const ec=state.ui.execCtx;
+ const selOpt=$('#fLesson')&&$('#fLesson').selectedOptions&&$('#fLesson').selectedOptions[0];
+ const pickR=selOpt&&selOpt.dataset?selOpt.dataset.rem==='1':true;
+ if(ec&&ec.lessonType==='R'&&pickR){f.lessonType='R';f.unitNo=ec.unitNo;}
+ else {delete f.lessonType;delete f.unitNo;}
  f.fitMode=$('#fFitMode').value;f.goal=$('#fGoal').value;
  if(f.size==='solo'&&f.studentIds.length>1){$('#planErr').textContent='私教仅能选 1 名学员，请取消多余勾选或改班型';return}
  const btn=$('#genBtn');btn.disabled=true;btn.textContent='读取训练历史…';
@@ -2220,7 +2442,7 @@ document.addEventListener('click',e=>{
  }
  if(act==='print-plan'){if(!state.ui.lastPlan){toast('请先生成计划');return}window.print();return}
  if(act==='fit-login'){if(window.PKB_API)window.PKB_API.login?window.PKB_API.login({expired:true}):location.reload();return}
- if(act==='relogin'){if(window.PKB_API&&window.PKB_API.login)window.PKB_API.login({expired:true});return}
+ if(act==='relogin'){if(window.PKB_API&&window.PKB_API.login)window.PKB_API.login({expired:true}).then(ok=>{if(ok)refreshState().then(()=>renderView(state.ui.view))});return}
  if(act==='fit-for'){const st=(state.students||[]).find(x=>x.id===id);FIT_STATE.studentId=id;FIT_STATE.assessment=null;navigate('fitness');if(st)toast('已带入 '+st.name+'，可开始体能测评');return}
  if(act==='fit-create'){fitCreate();return}
  if(act==='fit-save'){fitSave();return}

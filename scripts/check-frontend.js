@@ -2,7 +2,7 @@
 const fs = require('fs'), vm = require('vm');
 const path = require('path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'index.html'), 'utf8');
-const code = (html.match(/<script>([\s\S]*?)<\/script>/) || [])[1] + '\n;globalThis.__X={UNITS,LESSONS,SEGMENTS,PARAMS,GOALS,SCORE_MATRIX,TECH_A,RACKET_B,FIT_ANCHOR,STAGES,AGE_GROUPS,ZONES,state,fitPreview,fitRadarSVG,fitBarsHTML,fitLevelOf,buildFitnessBridge,FIT_LEVEL_LABEL_LOCAL};';
+const code = (html.match(/<script>([\s\S]*?)<\/script>/) || [])[1] + '\n;globalThis.__X={UNITS,LESSONS,SEGMENTS,PARAMS,GOALS,SCORE_MATRIX,TECH_A,RACKET_B,FIT_ANCHOR,STAGES,AGE_GROUPS,ZONES,state,fitPreview,fitRadarSVG,fitBarsHTML,fitLevelOf,buildFitnessBridge,FIT_LEVEL_LABEL_LOCAL,REMUNITS,REM_LESSON,lessonFor,dosageFactor,difficultyOf,buildPacing,planExtraHTML,planForSession,refreshLessonOptions,DIFF:()=>DIFF_INDEX,setDiff:(d)=>{window.PKB_DIFFICULTY=d;DIFF_INDEX={};(d.units||[]).forEach(u=>{DIFF_INDEX[Number(u.u)]=u})}};';
 if (!code) { console.error('NO SCRIPT'); process.exit(1); }
 
 function el() {
@@ -236,6 +236,80 @@ ok('低分体能触发负荷保护说明', (() => {
   } }] });
   return low.p && low.p.fitness && low.p.fitness.loadGuard === true && low.p.notes.some(x => /体能负荷保护/.test(x));
 })());
+
+// ---- P7 收尾：R 补强课教案 + 难度表驱动剂量 ----
+const DIFF = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'database', 'seeds', 'curriculum-difficulty.json'), 'utf8'));
+ok('难度表 24 单元齐全', DIFF.units.length === 24);
+ok('离线未登录时默认 DIFF_INDEX 已带入 24 单元', Object.keys(X.DIFF()).length === 24 && X.difficultyOf({ lesson: { u: 14 } }).difficulty === 5);
+ok('补强课教案 24 条齐全', Array.isArray(X.REMUNITS) && X.REMUNITS.length === 24 && X.REMUNITS.every(r => r.kp && r.drill && /补强/.test(r.tech)));
+ok('R 课判据只两三条，不与整单元重复', X.REMUNITS.every(r => r.kp.split('|').length <= 3));
+
+const rLesson = X.lessonFor(19, 'R');
+ok('lessonFor(R) 取到补强课模板', !!rLesson && rLesson.type === 'R' && /补强/.test(rLesson.tech), rLesson && rLesson.tech);
+// 与后端一致：R 课在 outline_lessons 里的 lesson_no 取同单元的 B 课号（(unit-1)*2+2）
+ok('lessonFor(R) 课次号取同单元 B 课号', rLesson.n === 38, rLesson && rLesson.n);
+ok('lessonFor(A/B) 与 48 课次一致', X.lessonFor(19, 'A').n === 37 && X.lessonFor(19, 'B').n === 38, [X.lessonFor(19, 'A').n, X.lessonFor(19, 'B').n].join('/'));
+
+function genR(unitNo) {
+  vm.runInContext('state.students = ' + JSON.stringify([mk({ techScore: 2, fitScore: 3 })]), ctx);
+  const s = JSON.parse(vm.runInContext('JSON.stringify(state.students)', ctx));
+  const p = ctx.buildPlan({
+    studentIds: [s[0].id], lesson: (unitNo - 1) * 2 + 2, minutes: 90, age: 'adult', size: 'solo',
+    date: '2026-11-18', fitMode: 'auto', focus: 'tech', goal: '技术晋级', unitNo, lessonType: 'R'
+  }, undefined, undefined);
+  return { p, text: p ? ctx.planText(p) + ctx.renderPlanHTML(p) : '' };
+}
+const r19 = genR(19);
+ok('R 课教案可生成', !!r19.p && r19.p.lessonType === 'R');
+ok('R 课标题写明「补强」', /补强/.test(r19.p.unit.tech));
+ok('R 课不设 ④ 体能段（不新增负荷）', r19.p.hasFit === false && /R 补强课/.test(r19.p.fitReason));
+ok('R 课教案无占位残留', !/\{p:|\[N\]/.test(r19.text));
+ok('R 课正文说明只复测未达标判据', /不引入新技术点|只练未达标判据/.test(r19.text));
+ok('R 课带剂量自检块', !!r19.p.pacing && r19.p.pacing.available);
+ok('R 课提示「这是补强课」', r19.p.pacing.warn.some(x => /R 补强课/.test(x)));
+
+ok('R 课不额外放大球数（dosageFactor=1）', X.dosageFactor({ lesson: { u: 13, type: 'R' } }) === 1 && X.dosageFactor({ lesson: { u: 13, type: 'A' } }) === 1.5);
+ok('R 课剂量自检标注 0 个新授且不加球数', r19.p.pacing.newPoints === 0 && /0 个新授/.test(r19.text) && /不加球数/.test(r19.text));
+
+// 跨阶备课：Stage 1 学员备 Stage 2 课次不被重置回 Stage 1
+vm.runInContext('state.students = ' + JSON.stringify([mk({ id: 'S-STG', stage: 1, used: 0 })]), ctx);
+vm.runInContext("state.ui.planForm = { studentIds: ['S-STG'], lesson: 26, minutes: 90, date: '2026-11-18', size: 'solo', age: 'adult', focus: 'tech', fitMode: 'auto', goal: '技术晋级', unitNo: 13, lessonType: 'R' }; state.ui.execCtx = { enrollmentId: 'E1', outlineLessonId: 'OL99', studentId: 'S-STG', lessonNo: 26, minutes: 90, seq: 10, unitNo: 13, lessonType: 'R' };", ctx);
+X.refreshLessonOptions();
+ok('跨阶大纲备课不被学员 stage 重置回第 1 课', X.state.ui.planForm.lesson === 26, X.state.ui.planForm.lesson);
+vm.runInContext('state.ui.execCtx = null;', ctx);
+
+// R 补强课动态提取上节「未达标」判据并展开参数占位
+vm.runInContext('state.students = ' + JSON.stringify([mk({ id: 'S-REM', techScore: 2, fitScore: 3 })]), ctx);
+vm.runInContext('state.enrollments = ' + JSON.stringify([{ id: 'E-REM', studentId: 'S-REM', packageType: 'solo', goal: '技术晋级', outline: [{ id: 'OL-B', seq: 1, unitNo: 2, lessonNo: 4, lessonType: 'B', sessionId: 'SES-B', status: 'reviewed' }, { id: 'OL-R', seq: 2, unitNo: 2, lessonNo: 4, lessonType: 'R', sessionId: 'SES-R', status: 'planned' }] }]), ctx);
+vm.runInContext('state.sessions = ' + JSON.stringify([{ id: 'SES-B', studentId: 'S-REM', lesson: 4, minutes: 90, date: '2026-11-17', enrollmentId: 'E-REM', outlineLessonId: 'OL-B', judge: '部分达标', judgeVals: { kp1: true, kp2: false, kp3: true } }, { id: 'SES-R', studentId: 'S-REM', lesson: 4, minutes: 90, date: '2026-11-18', enrollmentId: 'E-REM', outlineLessonId: 'OL-R', judge: '部分达标', reviewStatus: 'pending' }]), ctx);
+const rDyn = X.planForSession(X.state.sessions[1]);
+ok('R 课精确提取上节未达标的第 2 条判据并展开实数', !!rDyn && /击球点在身前 \d+ cm/.test(rDyn.unit.kp) && !/拍头低于手腕|肩转过来/.test(rDyn.unit.kp), rDyn && rDyn.unit.kp);
+ok('R 课提取判据后无 {p:} 占位残留', !/\{p:/.test(ctx.planText(rDyn) + ctx.renderPlanHTML(rDyn)));
+
+// 难度表驱动剂量：同技术分下，难度 5 的单元球数 > 难度 2 的单元
+vm.runInContext('__X.setDiff(' + JSON.stringify(DIFF) + ')', ctx);
+function ballsFor(lessonNo) {
+  vm.runInContext('state.students = ' + JSON.stringify([mk({ techScore: 3, fitScore: 3, pkLevel: 3 })]), ctx);
+  const s = JSON.parse(vm.runInContext('JSON.stringify(state.students)', ctx));
+  const p = ctx.buildPlan({ studentIds: [s[0].id], lesson: lessonNo, minutes: 90, age: 'adult', size: 'small', date: '2026-11-18', fitMode: 'auto', focus: 'tech', goal: '技术晋级' }, undefined, undefined);
+  return { balls: ctx.paramVal('feedBalls', p), p };
+}
+const u2 = 2, u5 = 5, u13 = 13;
+const bU2 = ballsFor((u2 - 1) * 2 + 1), bU5 = ballsFor((u5 - 1) * 2 + 1), bU13 = ballsFor((u13 - 1) * 2 + 1);
+ok('难度 5 单元球数 > 难度 2 单元', bU13.balls > bU2.balls, bU2.balls + ' vs ' + bU13.balls);
+ok('难度 5 单元球数 > 难度 4 单元', bU13.balls > bU5.balls, bU5.balls + ' vs ' + bU13.balls);
+ok('难度系数落在 0.9-1.5', (() => { const f = [1, 2, 3, 4, 5].map(d => ctx.dosageFactor({ lesson: { u: d } })); return f.every(x => x >= 0.9 && x <= 1.5); })());
+ok('球数有 40 球/人 上限', (() => {
+  vm.runInContext('state.params = {feedBalls: 100}', ctx);
+  const r = ballsFor((u13 - 1) * 2 + 1);
+  vm.runInContext('state.params = {}', ctx);
+  return r.balls <= 40;
+})(), 'cap');
+ok('难度表驱动后教案仍无占位残留', !/\{p:/.test(bU13.p ? ctx.planText(bU13.p) : ''));
+ok('难单元会提示拆课或补作业', (() => {
+  const w = bU13.p.pacing.warn.join(' ');
+  return /拆成|补 \d+ 次|多排 1 节/.test(w);
+})(), bU13.p.pacing.warn.join(' | ').slice(0, 120));
 
 // ---- 全 48 课次 × 多组合批量 ----
 let combos = 0, errs = [];

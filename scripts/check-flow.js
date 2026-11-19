@@ -118,6 +118,7 @@ const plan = X.buildPlan(form);
 X.state.ui.execCtx = { enrollmentId: 'E1', outlineLessonId: 'OL1', studentId: 'S1', lessonNo: 13, minutes: 90, seq: 4, unitNo: 7, lessonType: 'A', planId: null };
 const withExec = X.renderPlanHTML(plan);
 ok('教案预览出现「执行此计划 →」', /执行此计划 →/.test(withExec));
+ok('教案头部标出「课程包 · 第 4 节」上下文徽章', /课程包 · 第 4 节/.test(withExec));
 ok('执行区说明会跳到本次课并等待点评', /本次课/.test(withExec) && /点评/.test(withExec));
 ok('执行区标出「来自课程大纲 第 4 节」', /第 4 节/.test(withExec));
 ok('执行区给出取消按钮（不会强迫执行）', /data-act="cancel-exec"/.test(withExec));
@@ -230,6 +231,33 @@ ok('过期弹窗文案说明原因（不再让人困惑）', /会话已过期，
 const config = require('../backend/src/config');
 ok('令牌默认 12 小时（不是 15 分钟）', config.jwtTtlSeconds === 43200, config.jwtTtlSeconds);
 ok('续期宽限期 >= 10 分钟', config.jwtRefreshGraceSeconds >= 600, config.jwtRefreshGraceSeconds);
+
+// R 补强课端到端：prepLesson → nextLessonLabel + R 课教案 + 提取未达标判据进点评弹窗
+X.state.enrollments = [{
+  id: 'E-RFLOW', studentId: 'S1', studentName: '测试甲', packageType: 'solo', totalLessons: 4, usedLessons: 1,
+  lessonsPerWeek: 2, minutesPerLesson: 90, startDate: '2026-11-18', paceMode: 'adaptive', status: 'active', goal: '技术晋级',
+  outline: [
+    { id: 'OLR1', seq: 1, unitNo: 2, lessonNo: 4, lessonType: 'B', plannedDate: '2026-11-18', minutes: 90, status: 'reviewed', sessionId: 'RR1' },
+    { id: 'OLR2', seq: 2, unitNo: 2, lessonNo: 4, lessonType: 'R', plannedDate: '2026-11-21', minutes: 90, status: 'planned' },
+    { id: 'OLR3', seq: 3, unitNo: 3, lessonNo: 5, lessonType: 'A', plannedDate: '2026-11-25', minutes: 90, status: 'planned' }
+  ]
+}];
+X.state.sessions = [
+  { id: 'RR1', studentId: 'S1', studentName: '测试甲', lesson: 4, minutes: 90, date: '2026-11-18',
+    attend: '出勤', judge: '部分达标', reviewStatus: 'done', enrollmentId: 'E-RFLOW', outlineLessonId: 'OLR1',
+    judgeVals: { kp1: true, kp2: false, kp3: false } }
+];
+X.prepLesson('E-RFLOW', 'OLR2');
+ok('prepLesson 对 R 课写入大纲下一节提示（第 3 节）', !!X.state.ui.execCtx && /大纲第 3 节/.test(X.state.ui.execCtx.nextLessonLabel));
+const rPlan = X.buildPlan(X.state.ui.planForm);
+ok('prepLesson 生成的 R 课教案已切换为补强版且不含 ④ 体能段', !!rPlan && rPlan.lessonType === 'R' && /补强/.test(rPlan.unit.tech) && rPlan.hasFit === false);
+ok('R 课备课预览已提取上节未达标的两条判据', rPlan.unit.kp.split('|').length === 2 && !/肩转过来/.test(rPlan.unit.kp), rPlan.unit.kp);
+ok('R 课预告下一节读自大纲而非 +1 猜数', /大纲第 3 节/.test(rPlan.nextLabel));
+X.state.enrollments[0].outline[1].status = 'taught';
+X.state.enrollments[0].outline[1].sessionId = 'RR2';
+X.state.sessions.push({ id: 'RR2', studentId: 'S1', studentName: '测试甲', lesson: 4, minutes: 90, date: '2026-11-21', attend: '出勤', judge: '部分达标', reviewStatus: 'pending', enrollmentId: 'E-RFLOW', outlineLessonId: 'OLR2' });
+X.reviewModal('RR2');
+ok('R 课点评弹窗只显示上节未达标的 2 条复测判据', (q('#modalRoot').innerHTML.match(/data-jv="kp\d"/g) || []).length === 2 && /复测判据/.test(q('#modalRoot').innerHTML));
 
 console.log(`[check:flow] pass=${pass} fail=${fail}`);
 process.exit(fail ? 1 : 0);
