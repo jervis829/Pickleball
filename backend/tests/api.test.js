@@ -818,3 +818,50 @@ test('37 P7：课程包与大纲随 state 下发（离线也能看今天上哪�
   });
   assert.equal(wrongOutline.status, 404, '不能执行不属于该课程包的大纲课次');
 });
+
+/* ============================================================
+   P7 · 可嵌入与监听地址（云预览相关，安全默认不变）
+   ============================================================ */
+
+test('38 默认禁止被嵌入；显式配置 ALLOW_EMBED_ORIGINS 时只放开白名单来源', async () => {
+  // 默认（未配置）：必须仍然是 DENY + frame-ancestors 'none'
+  const def = await api('/');
+  assert.equal(def.headers.get('x-frame-options'), 'DENY', '默认必须禁止被嵌入');
+  assert.match(def.headers.get('content-security-policy') || '', /frame-ancestors 'none'/);
+
+  // 配置后：移除 DENY，改为精确白名单；非法值（含 *）被过滤掉
+  const cfgPath = require.resolve('../src/config');
+  const cfg = require(cfgPath);
+  const mwPath = require.resolve('../src/middlewares');
+  const saved = cfg.allowEmbedOrigins;
+  try {
+    cfg.allowEmbedOrigins = ['https://8787-abc.e2b.app'];
+    delete require.cache[mwPath];
+    const mw = require(mwPath);
+    const headers = {};
+    mw.applySecurity({ path: '/', res: { setHeader: (k, v) => { headers[k] = v; } } });
+    assert.equal(headers['X-Frame-Options'], undefined, '放开后不应再发 DENY（会覆盖 CSP）');
+    assert.match(headers['Content-Security-Policy'], /frame-ancestors 'self' https:\/\/8787-abc\.e2b\.app/);
+    assert.ok(!/\*/.test(headers['Content-Security-Policy'].split('frame-ancestors')[1].split(';')[0]),
+      'frame-ancestors 不允许出现通配符');
+  } finally {
+    cfg.allowEmbedOrigins = saved;
+    delete require.cache[mwPath];
+  }
+});
+
+test('39 ALLOW_EMBED_ORIGINS 不接受通配符或非法来源', async () => {
+  const { execFileSync } = require('node:child_process');
+  const read = (val) => execFileSync(process.execPath, ['-e',
+    `process.env.ALLOW_EMBED_ORIGINS=${JSON.stringify(val)};process.env.ADMIN_PASSWORD='x';` +
+    `console.log(JSON.stringify(require('./backend/src/config').allowEmbedOrigins))`
+  ], { cwd: require('node:path').join(__dirname, '..', '..'), encoding: 'utf8' }).trim();
+  assert.deepEqual(JSON.parse(read('*')), [], '不能接受通配符');
+  assert.deepEqual(JSON.parse(read('https://a.com,http://b.com,*.foo.com')), ['https://a.com'],
+    '只保留精确 https 来源');
+  assert.deepEqual(JSON.parse(read('https://preview.e2b.app,https://other.app')),
+    ['https://preview.e2b.app', 'https://other.app']);
+  // https 子域通配是合法的 CSP host-source，允许；裸 * 与 http 公网仍拒绝
+  assert.deepEqual(JSON.parse(read('https://*.e2b.app,*')), ['https://*.e2b.app']);
+  assert.deepEqual(JSON.parse(read('http://evil.com')), [], '公网 http 来源不接受（会被中间人篡改）');
+});

@@ -8,9 +8,14 @@ const BODY_LIMIT = 5 * 1024 * 1024; // 5 MB
 
 function applySecurity(ctx) {
   const h = ctx.res;
+  // 默认禁止被嵌入（防点击劫持）。仅当显式配置了 ALLOW_EMBED_ORIGINS 时才放开，
+  // 用于在云预览 / 内嵌工作台等可信宿主里显示界面；放开范围按白名单精确匹配，不用 *。
+  const embedOrigins = config.allowEmbedOrigins || [];
+  const frameAncestors = embedOrigins.length
+    ? "frame-ancestors 'self' " + embedOrigins.join(' ')
+    : "frame-ancestors 'none'";
   const headers = {
     'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'no-referrer',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
     // 前端为单文件应用（含内联脚本/样式）；抽离后才可升级为严格 nonce CSP
@@ -18,9 +23,11 @@ function applySecurity(ctx) {
       "default-src 'self'; script-src 'self' 'unsafe-inline'; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; " +
-      "connect-src 'self'; frame-ancestors 'none'; base-uri 'self'",
+      "connect-src 'self'; " + frameAncestors + "; base-uri 'self'",
     'Cache-Control': ctx.path.startsWith('/api/') ? 'no-store' : 'no-cache'
   };
+  // 未显式放开时保留 DENY（比 ALLOW-FROM 更可靠，且是被审计的默认值）
+  if (!embedOrigins.length) headers['X-Frame-Options'] = 'DENY';
   for (const [k, v] of Object.entries(headers)) h.setHeader(k, v);
 }
 

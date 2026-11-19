@@ -61,6 +61,13 @@ module.exports = {
   dbFile: path.resolve(ROOT, E('DB_FILE', 'data/pickleball.db')),
   frontendDir: path.join(ROOT, 'frontend'),
   corsOrigins: String(E('CORS_ORIGINS', '')).split(',').map(s => s.trim()).filter(Boolean),
+  // 允许把界面嵌入到哪些宿主来源（云预览 / 内嵌工作台）。留空 = 禁止被嵌入（默认）。
+  // 只接受精确的 https 来源或本机 http，避免出现 * 或过于宽泛的通配。
+  // 允许 https 精确来源、https 子域通配（https://*.example.com，CSP host-source 合法写法）
+  // 或本机 http；拒绝裸 * 与 http 公网来源。
+  allowEmbedOrigins: String(E('ALLOW_EMBED_ORIGINS', '')).split(',')
+    .map(s => s.trim())
+    .filter(s => /^https:\/\/(\*\.)?[^\s*/]+$/.test(s) || /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(s)),
   jwtSecret: jwt.value,
   jwtTtlSeconds: num(E('JWT_TTL_SECONDS', 900), 900),
   adminUser: String(E('ADMIN_USER', 'admin')),
