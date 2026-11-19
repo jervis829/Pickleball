@@ -30,6 +30,7 @@ module.exports = {
   health: ctx => ok(ctx.res, { status: 'ok', service: 'pickleball-academy', time: new Date().toISOString() }),
   login: ctx => ok(ctx.res, auth.login(ctx.body)),
   me: ctx => ok(ctx.res, auth.me(ctx)),
+  refresh: ctx => ok(ctx.res, auth.refresh(ctx)),
   changePassword: ctx => ok(ctx.res, auth.changePassword(ctx, ctx.body)),
   logout: ctx => noContent(ctx.res),
   stateGet: ctx => ok(ctx.res, stateSvc.get()),

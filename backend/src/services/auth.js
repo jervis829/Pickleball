@@ -1,7 +1,7 @@
 'use strict';
 const config = require('../config');
 const { users } = require('../repositories/misc');
-const { verifyPassword, signToken } = require('../utils/crypto');
+const { verifyPassword, signToken, verifyToken, verifyTokenAllowExpired } = require('../utils/crypto');
 const { validate } = require('../utils/validate');
 const { HttpError } = require('../utils/response');
 
@@ -23,7 +23,8 @@ function login(body) {
   return {
     token: signToken({ sub: u.id, username: u.username, role: u.role }),
     user: users.public(u),
-    expires_in: config.jwtTtlSeconds
+    expires_in: config.jwtTtlSeconds,
+    refresh_grace: config.jwtRefreshGraceSeconds
   };
 }
 
@@ -43,6 +44,28 @@ function changePassword(ctx, body) {
   return { changed: true, username: u.username };
 }
 
+/**
+ * 静默续期：用当前令牌换一张新令牌（不要求重新输密码）。
+ * - 签名必须有效；过期时间最多放宽 jwtRefreshGraceSeconds（默认 1 小时），
+ *   所以合盖休眠后回来还能续上，但超过宽限期仍必须重新登录。
+ * - 账号被停用 / 删除时拒绝续期。
+ * - 前端在页面可见、请求成功、以及「快到期的前 30 分钟」自动调用。
+ */
+function refresh(ctx) {
+  const header = ctx.req.headers['authorization'] || '';
+  const raw = header.startsWith('Bearer ') ? header.slice(7) : (ctx.query.token || '');
+  const payload = verifyTokenAllowExpired(raw, config.jwtRefreshGraceSeconds);
+  if (!payload) throw new HttpError(401, 'REFRESH_EXPIRED', '登录已过期，请重新输入密码');
+  const u = users.findById(payload.sub);
+  if (!u || !u.is_active) throw new HttpError(401, 'ACCOUNT_DISABLED', '账号不可用，请重新登录');
+  return {
+    token: signToken({ sub: u.id, username: u.username, role: u.role }),
+    user: users.public(u),
+    expires_in: config.jwtTtlSeconds,
+    refreshed: true
+  };
+}
+
 const me = (ctx) => ({ user: { sub: ctx.user.sub, username: ctx.user.username, role: ctx.user.role }, exp: ctx.user.exp });
 
-module.exports = { ensureAdmin, login, changePassword, me };
+module.exports = { ensureAdmin, login, changePassword, refresh, me };

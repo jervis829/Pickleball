@@ -201,5 +201,35 @@ ok('导航含 今日 / 课程包 / 备课（不再叫「计划生成」）', /da
 ok('快捷键提示与视图顺序一致（1-8）', /<span class="key">3<\/span>/.test(html) && /<span class="key">8<\/span>/.test(html));
 ok('总览「使用路径」已是新流程', /执行此计划/.test(html) && /课程包 → 登记/.test(html));
 
+/* ---------- 8. 登录不再反复弹窗（api.js 的行为契约） ---------- */
+const apiSrc = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'api.js'), 'utf8');
+const idxSrc = html;
+
+ok('401 先静默续期，不直接弹窗', /refreshToken\(\)/.test(apiSrc) && /const renewed = await refreshToken\(\)/.test(apiSrc));
+ok('只有前台交互才弹登录框', /interactive = opts\.interactive === true/.test(apiSrc) && /if \(interactive && !autoPromptDisabled\)/.test(apiSrc));
+ok('点过「离线继续」后不再自动弹框', /autoPromptDisabled = true/.test(apiSrc) && /autoPromptDisabled = false/.test(apiSrc));
+ok('后台同步不标记 interactive', (() => {
+  const m = apiSrc.match(/request\('\/state', \{[\s\S]{0,120}?\}\)/);
+  return m && !/interactive: true/.test(m[0]);
+})());
+ok('启动拉取后台续期、失败静默', /await ensureFreshToken\(\)/.test(apiSrc) && /bootstrap/.test(apiSrc));
+ok('续期失败置 sessionExpired，不再反复弹窗', /sessionExpired = true/.test(apiSrc));
+ok('存储不可用时降级且不崩溃', /pickStorage\('localStorage'\)/.test(apiSrc) && /pickStorage\('sessionStorage'\)/.test(apiSrc) && /storageMode/.test(apiSrc));
+ok('令牌带到期时间，可判断剩余时长', /EXP_KEY/.test(apiSrc) && /minutesLeft/.test(apiSrc));
+ok('页面可见时主动续期', /visibilitychange/.test(apiSrc) && /ensureFreshToken/.test(apiSrc));
+ok('登录成功后记录 expires_in', /setToken\(r\.token, r\.expires_in\)/.test(apiSrc));
+
+// 界面层：过期提示条 + 重新登录入口
+ok('界面有会话过期提示条容器', /id="sessionBanner"/.test(idxSrc));
+ok('提示条说明「数据没丢，登录后继续同步」', /本机数据仍在|本机数据没有丢/.test(html));
+ok('提示条提供「重新登录」按钮', /data-act="relogin"/.test(html));
+ok('过期时不再用弹窗打断：relogin 才调 login', /act==='relogin'.*PKB_API\.login/.test(html));
+ok('过期弹窗文案说明原因（不再让人困惑）', /会话已过期，请重新登录/.test(apiSrc));
+
+// 服务端契约
+const config = require('../backend/src/config');
+ok('令牌默认 12 小时（不是 15 分钟）', config.jwtTtlSeconds === 43200, config.jwtTtlSeconds);
+ok('续期宽限期 >= 10 分钟', config.jwtRefreshGraceSeconds >= 600, config.jwtRefreshGraceSeconds);
+
 console.log(`[check:flow] pass=${pass} fail=${fail}`);
 process.exit(fail ? 1 : 0);

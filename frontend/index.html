@@ -257,6 +257,7 @@ pre.card{white-space:pre-wrap;word-break:break-word;font-family:'IBM Plex Mono',
       <div><div class="crumb mono" id="crumb">01 / OVERVIEW</div><h1 id="pageTitle">总览</h1></div>
       <div class="topbar-actions" id="topActions"></div>
     </header>
+    <div id="sessionBanner"></div>
 
     <section class="view" id="view-dash">
       <div class="section-title"><h2>今日工作台</h2><span class="note" id="todayNote"></span></div>
@@ -1353,8 +1354,29 @@ function renderStorageNote(){
  const n=state.students.length;
  const base=n?('SQLite 数据库 · '+n+' 名学员 / '+state.plans.length+' 份计划 / 48 课次体系'):'SQLite 数据库 · 未录入数据';
  const st=window.PKB_API?window.PKB_API.status():{online:false,lastSync:'',lastError:'数据服务未启动'};
- const tail=st.online?('已连接'+(st.lastSync?' · 同步于 '+st.lastSync:'')):('离线 · 仅本机'+(st.lastError?'（'+st.lastError+'）':''));
+ const tail=st.online?('已连接'+(st.lastSync?' · 同步于 '+st.lastSync:'')+(st.minutesLeft!=null&&st.minutesLeft<=60?' · 会话剩 '+st.minutesLeft+' 分':'')):('离线 · 仅本机'+(st.lastError?'（'+st.lastError+'）':''));
  const el=$('#storageNote');if(el){el.textContent=base+' · '+tail;el.title=tail}
+ renderSessionBanner(st);
+}
+/* 会话过期提示条：不打断上课，只在页面顶部提示「重新登录后继续同步」 */
+function renderSessionBanner(st){
+ const host=$('#sessionBanner');if(!host)return;
+ const expired=Boolean(st&&st.sessionExpired);
+ const soon=Boolean(st&&st.authenticated&&st.minutesLeft!=null&&st.minutesLeft<=15);
+ // 存储器不可用（第三方 iframe 里 localStorage 会被禁）：刷新页面就掉登录，
+ // 这种情况必须提前说，不能让教练在课中途突然发现要重登。
+ const vol=Boolean(window.PKB_API&&window.PKB_API.storageMode&&window.PKB_API.storageMode()==='memory');
+ if(vol&&st&&st.authenticated){
+  host.innerHTML='<div class="notice no-print" style="margin-bottom:16px">当前浏览环境禁止浏览器存储，登录状态只保留在本页内存里：<strong>请不要刷新或关闭本页</strong>，需要长期使用请用浏览器直接打开本平台地址。</div>';
+  return;
+ }
+ if(expired){
+  host.innerHTML='<div class="notice notice-warn no-print" style="margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">'+
+   '<div style="flex:1;min-width:220px"><strong>登录已过期。</strong>本机数据仍在，继续录入不会丢；重新登录后会自动把这段时间的改动同步到数据库。</div>'+
+   '<button class="btn btn-sm btn-primary" data-act="relogin">重新登录</button></div>';
+ }else if(soon){
+  host.innerHTML='<div class="notice no-print" style="margin-bottom:16px">会话将在 '+st.minutesLeft+' 分钟内到期，系统会在后台自动续期，无需操作。</div>';
+ }else host.innerHTML='';
 }
 document.addEventListener('pkb:sync',()=>renderStorageNote());
 function isThisWeek(d){const t=new Date(d),n=new Date();if(isNaN(t))return false;const diff=(n-t)/86400000;return diff>=0&&diff<=7}
@@ -2197,7 +2219,8 @@ document.addEventListener('click',e=>{
   else fallbackCopy(txt);return;
  }
  if(act==='print-plan'){if(!state.ui.lastPlan){toast('请先生成计划');return}window.print();return}
- if(act==='fit-login'){if(window.PKB_API)window.PKB_API.promptLogin?window.PKB_API.promptLogin():location.reload();return}
+ if(act==='fit-login'){if(window.PKB_API)window.PKB_API.login?window.PKB_API.login({expired:true}):location.reload();return}
+ if(act==='relogin'){if(window.PKB_API&&window.PKB_API.login)window.PKB_API.login({expired:true});return}
  if(act==='fit-for'){const st=(state.students||[]).find(x=>x.id===id);FIT_STATE.studentId=id;FIT_STATE.assessment=null;navigate('fitness');if(st)toast('已带入 '+st.name+'，可开始体能测评');return}
  if(act==='fit-create'){fitCreate();return}
  if(act==='fit-save'){fitSave();return}

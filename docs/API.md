@@ -37,16 +37,18 @@
 
 ## 2. 认证
 
-除 `GET /health` 与 `POST /auth/login` 外，全部端点需要 `Authorization: Bearer <JWT>`。
+除 `GET /health`、`POST /auth/login` 与 `POST /auth/refresh` 外，全部端点需要 `Authorization: Bearer <JWT>`。
+
+令牌有效期默认 **12 小时**（`JWT_TTL_SECONDS=43200`），前端在剩余不足 5 分钟、页面重新可见、以及任何请求收到 401 时会先调 `/auth/refresh` **静默续期**；只有续期也失败、且是用户主动操作时才会弹登录框。后台自动同步遇到 401 一律静默降级为离线，不会打断上课。
 
 ```bash
 curl -X POST http://127.0.0.1:8787/api/v1/auth/login \
   -H 'content-type: application/json' \
   -d '{"username":"admin","password":"<首次密码见 data/initial-admin.txt>"}'
-# => { "success":true, "data": { "token":"...", "user":{...}, "expires_in":900 } }
+# => { "success":true, "data": { "token":"...", "user":{...}, "expires_in":43200, "refresh_grace":3600 } }
 ```
 
-密码用 scrypt + 随机盐存储；JWT 为 HS256，默认 15 分钟过期。角色：`admin` / `coach` 可写，`viewer` 只读。
+密码用 scrypt + 随机盐存储；JWT 为 HS256，默认 12 小时过期并支持静默续期。角色：`admin` / `coach` 可写，`viewer` 只读。
 
 ## 3. 端点清单
 
@@ -55,6 +57,7 @@ curl -X POST http://127.0.0.1:8787/api/v1/auth/login \
 | GET | `/health` | 健康检查（免鉴权） |
 | POST | `/auth/login` | 登录（免鉴权） |
 | GET | `/auth/me` | 当前账号与过期时间 |
+| POST | `/auth/refresh` | **静默续期**：用当前令牌换新令牌。允许已过期但不超过 `JWT_REFRESH_GRACE_SECONDS`（默认 1 小时）的令牌，签名错误一律拒绝；账号停用返回 401 `ACCOUNT_DISABLED`，宽限期外返回 401 `REFRESH_EXPIRED` |
 | POST | `/auth/change-password` | 修改密码（`old_password` / `new_password`，新密码 ≥ 10 位） |
 | POST | `/auth/logout` | 前端清 Token 即可，服务端返回 204 |
 | GET | `/state` | 拉取全量 state + `revision` |

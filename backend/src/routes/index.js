@@ -25,6 +25,8 @@ function add(method, url, handler, opts = {}) {
 add('GET', '/api/v1/health', C.health, { auth: false });
 add('POST', '/api/v1/auth/login', C.login, { auth: false, write: false });
 add('GET', '/api/v1/auth/me', C.me);
+// 续期：允许过期 grace 内的令牌换新令牌，因此不走 requireAuth（签名仍强制校验）
+add('POST', '/api/v1/auth/refresh', C.refresh, { auth: false, write: false });
 add('POST', '/api/v1/auth/change-password', C.changePassword);
 add('POST', '/api/v1/auth/logout', C.logout, { write: false });
 

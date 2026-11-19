@@ -46,6 +46,20 @@ async function api(path, opts = {}, useToken = true) {
   return { status: res.status, body, headers: res.headers };
 }
 
+/**
+ * 用「指定令牌」发请求。
+ * 注意不能用 api()：它会把全局 token 覆盖到 authorization 头上，
+ * 导致「过期令牌应被拒绝」这类断言永远拿不到 401。
+ */
+async function apiAs(path, token, opts = {}) {
+  const headers = Object.assign({ 'content-type': 'application/json' }, opts.headers || {});
+  if (token) headers.authorization = 'Bearer ' + token;
+  const res = await fetch(base + path, Object.assign({}, opts, { headers }));
+  let body = null;
+  try { body = await res.json(); } catch (_) { /* 204 */ }
+  return { status: res.status, body, headers: res.headers };
+}
+
 const snapshot = () => ({
   students: [
     { id: 'S001', name: '测试学员 · 陈一', age: 'adult', stage: 1, used: 6, total: 48, status: '在训', injury: '' },
@@ -864,4 +878,102 @@ test('39 ALLOW_EMBED_ORIGINS 不接受通配符或非法来源', async () => {
   // https 子域通配是合法的 CSP host-source，允许；裸 * 与 http 公网仍拒绝
   assert.deepEqual(JSON.parse(read('https://*.e2b.app,*')), ['https://*.e2b.app']);
   assert.deepEqual(JSON.parse(read('http://evil.com')), [], '公网 http 来源不接受（会被中间人篡改）');
+});
+
+/* ============================================================
+   P8 · 登录不再反复弹窗：长有效期 + 静默续期
+   ============================================================ */
+
+test('40 令牌默认 12 小时，登录返回到期时间与续期宽限期', async () => {
+  const { signToken, verifyToken } = require('../src/utils/crypto');
+  const config = require('../src/config');
+  assert.equal(config.jwtTtlSeconds, 43200, '默认应为 12 小时，而不是 15 分钟');
+  assert.ok(config.jwtRefreshGraceSeconds >= 600, '应留出续期宽限期');
+
+  const r = await api('/api/v1/auth/login', {
+    method: 'POST', body: JSON.stringify({ username: 'admin', password: 'test-password-123' })
+  });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.data.expires_in, 43200);
+  assert.equal(r.body.data.refresh_grace, config.jwtRefreshGraceSeconds);
+
+  const payload = verifyToken(r.body.data.token);
+  assert.ok(payload.exp - payload.iat === 43200, 'JWT 内的有效期也要是 12 小时');
+
+  // 4 小时后的令牌仍然可用（老版本 15 分钟时这里早就 401 了）
+  const later = signToken({ sub: payload.sub, username: payload.username, role: payload.role }, 4 * 3600);
+  const mid = await api('/api/v1/state', { headers: { authorization: 'Bearer ' + later } });
+  assert.equal(mid.status, 200, '营业中途不应因为令牌过期而要求重新登录');
+});
+
+test('41 续期接口：有效令牌换新令牌，签名错一律拒绝', async () => {
+  const { signToken } = require('../src/utils/crypto');
+  const login = await api('/api/v1/auth/login', {
+    method: 'POST', body: JSON.stringify({ username: 'admin', password: 'test-password-123' })
+  });
+  const oldToken = login.body.data.token;
+
+  const before = JSON.parse(Buffer.from(oldToken.split('.')[1], 'base64url').toString());
+  const r = await apiAs('/api/v1/auth/refresh', oldToken, { method: 'POST', body: '{}' });
+  assert.equal(r.status, 200);
+  assert.ok(r.body.data.token, '应返回令牌');
+  // 同一秒内签发的 JWT 内容完全相同（iat/exp 精度为秒），因此只校验「有效期不倒退」，
+  // 不强行要求字符串不同——否则这个断言会变成不稳定测试。
+  assert.ok(r.body.data.token.split('.').length === 3);
+  assert.equal(r.body.data.refreshed, true);
+  const after = JSON.parse(Buffer.from(r.body.data.token.split('.')[1], 'base64url').toString());
+  assert.ok(after.exp >= before.exp, '续期后到期时间不应倒退');
+
+  // 新令牌可用
+  const used = await apiAs('/api/v1/state', r.body.data.token);
+  assert.equal(used.status, 200);
+
+  // 伪造签名：即使未过期也拒绝
+  const forged = signToken({ sub: 'U-FAKE', username: 'x', role: 'admin' });
+  const bad = await apiAs('/api/v1/auth/refresh', forged.slice(0, -3) + 'AAA', { method: 'POST', body: '{}' });
+  assert.equal(bad.status, 401);
+
+  // 没有令牌
+  const none = await apiAs('/api/v1/auth/refresh', '', { method: 'POST', body: '{}' });
+  assert.equal(none.status, 401);
+});
+
+test('42 续期宽限期：刚过期可续，超过宽限期必须重新登录', async () => {
+  const { signToken, verifyTokenAllowExpired } = require('../src/utils/crypto');
+  const config = require('../src/config');
+  const user = require('../src/db/connection').get("SELECT * FROM users WHERE username = 'admin' AND deleted_at IS NULL");
+  const claims = { sub: user.id, username: user.username, role: user.role };
+
+  // 已过期 5 分钟：仍在宽限期内 → 续期成功
+  const justExpired = signToken(claims, -300);
+  const ok = await apiAs('/api/v1/auth/refresh', justExpired, { method: 'POST', body: '{}' });
+  assert.equal(ok.status, 200, '合盖休眠回来应能静默续期，不打断用户');
+
+  // 已过期超过宽限期 → 拒绝，前端据此显示「重新登录」提示条而不是反复弹窗
+  const longExpired = signToken(claims, -(config.jwtRefreshGraceSeconds + 60));
+  const expired = await apiAs('/api/v1/auth/refresh', longExpired, { method: 'POST', body: '{}' });
+  assert.equal(expired.status, 401);
+  assert.equal(expired.body.error.code, 'REFRESH_EXPIRED');
+
+  // 但普通接口此时仍必须拒绝（宽限只对续期接口生效，不放宽数据访问）
+  const data = await apiAs('/api/v1/state', justExpired);
+  assert.equal(data.status, 401, '过期令牌不能直接访问数据');
+
+  assert.equal(verifyTokenAllowExpired(justExpired, 3600) !== null, true);
+  assert.equal(verifyTokenAllowExpired(justExpired, 0), null);
+});
+
+test('43 停用账号不能通过续期绕过', async () => {
+  const { signToken } = require('../src/utils/crypto');
+  const conn = require('../src/db/connection');
+  const u = conn.get("SELECT * FROM users WHERE username = 'admin' AND deleted_at IS NULL");
+  conn.run('UPDATE users SET is_active = 0 WHERE id = ?', [u.id]);
+  try {
+    const tok = signToken({ sub: u.id, username: u.username, role: u.role }, 3600);
+    const r = await apiAs('/api/v1/auth/refresh', tok, { method: 'POST', body: '{}' });
+    assert.equal(r.status, 401);
+    assert.equal(r.body.error.code, 'ACCOUNT_DISABLED');
+  } finally {
+    conn.run('UPDATE users SET is_active = 1 WHERE id = ?', [u.id]);
+  }
 });
