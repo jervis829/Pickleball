@@ -524,3 +524,23 @@ test('27 P5-D：教练复核后生成补训计划，并仅复测指定未达标�
     '复测不得覆盖原评估原始成绩');
   assert.equal(original.body.data.conclusion, null, '补训闭环不得自动晋级');
 });
+
+
+test('28 P5-E athlete profile aggregation', async () => {
+ const r=await api('/api/v1/students/S001/athlete-profile');
+ assert.equal(r.status,200);
+ const p=r.body.data;
+ assert.equal(p.student.id,'S001');
+ assert.ok(Array.isArray(p.skillDevelopment));
+ assert.ok(Array.isArray(p.stageAssessments));
+ assert.ok(Array.isArray(p.stageSummary));
+ assert.ok(Array.isArray(p.remediationPlans));
+ assert.ok(Array.isArray(p.timeline));
+ assert.ok(p.stageAssessments.some(a=>a.id==='AT-P5D-01'));
+ assert.ok(p.remediationPlans.some(x=>x.sourceAttemptId==='AT-P5D-01'));
+ assert.ok(p.evidence.assessmentResults>=1);
+ assert.ok(p.evidence.reviewedResults>=1);
+ assert.match(p.interpretation.scale,/0–5/);
+ assert.match(p.interpretation.scale,/0–4/);
+ assert.equal(p.stageAssessments.find(a=>a.id==='AT-P5D-01').conclusion,null);
+});
