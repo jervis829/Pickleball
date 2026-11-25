@@ -30,13 +30,23 @@ const plans = crud('plans');
 const sessions = crud('sessions');
 const assessments = crud('assessments');
 
+function setAuthCookie(ctx, token, maxAgeSec) {
+  const h = (ctx.req && ctx.req.headers) || {};
+  const isHttps = String(h['x-forwarded-proto'] || '').includes('https');
+  const attrs = isHttps
+    ? 'Path=/api/v1; HttpOnly; SameSite=None; Secure'
+    : 'Path=/api/v1; HttpOnly; SameSite=Lax';
+  const val = token ? encodeURIComponent(token) : '';
+  ctx.res.setHeader('Set-Cookie', `pkb_token=${val}; Max-Age=${Math.max(0, Number(maxAgeSec) || 0)}; ${attrs}`);
+}
+
 module.exports = {
   health: ctx => ok(ctx.res, { status: 'ok', service: 'pickleball-academy', time: new Date().toISOString() }),
-  login: ctx => ok(ctx.res, auth.login(ctx.body)),
+  login: ctx => { const d = auth.login(ctx.body); setAuthCookie(ctx, d.token, d.expires_in); return ok(ctx.res, d); },
   me: ctx => ok(ctx.res, auth.me(ctx)),
-  refresh: ctx => ok(ctx.res, auth.refresh(ctx)),
+  refresh: ctx => { const d = auth.refresh(ctx); setAuthCookie(ctx, d.token, d.expires_in); return ok(ctx.res, d); },
   changePassword: ctx => ok(ctx.res, auth.changePassword(ctx, ctx.body)),
-  logout: ctx => noContent(ctx.res),
+  logout: ctx => { setAuthCookie(ctx, '', 0); return noContent(ctx.res); },
   stateGet: ctx => ok(ctx.res, stateSvc.get()),
   statePut: ctx => ok(ctx.res, stateSvc.put(ctx.body), 200, 'State synced'),
   exportAll: ctx => ok(ctx.res, stateSvc.exportAll()),

@@ -52,9 +52,12 @@ function changePassword(ctx, body) {
  * - 前端在页面可见、请求成功、以及「快到期的前 30 分钟」自动调用。
  */
 function refresh(ctx) {
-  const header = ctx.req.headers['authorization'] || '';
-  const raw = header.startsWith('Bearer ') ? header.slice(7) : (ctx.query.token || '');
-  const payload = verifyTokenAllowExpired(raw, config.jwtRefreshGraceSeconds);
+  const { tokenCandidates } = require('../middlewares/auth');
+  let payload = null;
+  for (const raw of tokenCandidates(ctx)) {
+    const p = verifyTokenAllowExpired(raw, config.jwtRefreshGraceSeconds);
+    if (p) { payload = p; break; }
+  }
   if (!payload) throw new HttpError(401, 'REFRESH_EXPIRED', '登录已过期，请重新输入密码');
   const u = users.findById(payload.sub);
   if (!u || !u.is_active) throw new HttpError(401, 'ACCOUNT_DISABLED', '账号不可用，请重新登录');

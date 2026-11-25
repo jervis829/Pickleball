@@ -250,3 +250,41 @@ test('V3-07 大纲热配置扩展高阶赛道：新模块同步生效，历史�
   assert.equal(rst.status, 200);
   assert.equal(rst.data.config.modules.length, 34);
 });
+
+test('V3-08 代理覆盖或剥离 Authorization 头时，X-PKB-Auth 与 HttpOnly Cookie 仍可正常认证与续期', async () => {
+  // 1) 登录应下发 Set-Cookie
+  const loginRes = await fetch(base + '/api/v1/auth/login', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ username: 'admin', password: process.env.ADMIN_PASSWORD })
+  });
+  assert.equal(loginRes.status, 200);
+  const setCookie = loginRes.headers.get('set-cookie') || '';
+  assert.match(setCookie, /pkb_token=/);
+  const loginJson = await loginRes.json();
+  const tk = loginJson.data.token;
+
+  // 2) 模拟反向代理把 Authorization 覆盖成无效值，但保留 X-PKB-Auth
+  const r1 = await fetch(base + '/api/v1/v3/students', {
+    headers: {
+      authorization: 'Bearer invalid-gateway-token',
+      'x-pkb-auth': 'Bearer ' + tk
+    }
+  });
+  assert.equal(r1.status, 200);
+
+  // 3) 模拟反向代理完全剥离 Authorization，只保留 Cookie
+  const cookiePair = setCookie.split(';')[0];
+  const r2 = await fetch(base + '/api/v1/v3/students', {
+    headers: { cookie: cookiePair }
+  });
+  assert.equal(r2.status, 200);
+
+  // 4) refresh 同样兼容 X-PKB-Auth
+  const r3 = await fetch(base + '/api/v1/auth/refresh', {
+    method: 'POST',
+    headers: { 'x-pkb-auth': 'Bearer ' + tk }
+  });
+  assert.equal(r3.status, 200);
+});
+

@@ -63,7 +63,7 @@ function applyCors(ctx) {
   ctx.res.setHeader('Access-Control-Allow-Origin', origin);
   ctx.res.setHeader('Vary', 'Origin');
   ctx.res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS');
-  ctx.res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  ctx.res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-PKB-Auth');
   if (ctx.req.method === 'OPTIONS') { ctx.res.writeHead(204); ctx.res.end(); return false; }
   return true;
 }

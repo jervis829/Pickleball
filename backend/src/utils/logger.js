@@ -3,7 +3,7 @@
 // 敏感字段绝不写入日志
 const REDACT = new Set([
   'password', 'password_hash', 'admin_password', 'jwt_secret', 'secret',
-  'token', 'authorization', 'cookie', 'new_password', 'old_password'
+  'token', 'authorization', 'x-pkb-auth', 'cookie', 'new_password', 'old_password'
 ]);
 
 function scrub(value, depth = 0) {

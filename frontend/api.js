@@ -128,9 +128,12 @@
 
   async function raw(path, opts) {
     const headers = Object.assign({ 'content-type': 'application/json' }, opts.headers || {});
-    if (token && !opts.anonymous) headers.authorization = 'Bearer ' + token;
+    if (token && !opts.anonymous) {
+      headers.authorization = 'Bearer ' + token;
+      headers['x-pkb-auth'] = 'Bearer ' + token;
+    }
     let res;
-    try { res = await fetch(BASE + path, Object.assign({}, opts, { headers })); }
+    try { res = await fetch(BASE + path, Object.assign({ credentials: 'same-origin' }, opts, { headers })); }
     catch (_) {
       const e = new Error('无法连接数据服务，请先运行 npm start');
       e.offline = true; throw e;
@@ -164,8 +167,8 @@
         const renewed = await refreshToken();
         if (renewed) return request(path, opts, true);
       }
-      // 续期失败：只有前台交互才打扰用户；教练主动点保存/导入时才弹框
-      if (interactive && !autoPromptDisabled) {
+      // 续期失败：只有前台交互且本次尚未重新登录过才弹框，防止异常代理下死循环弹窗
+      if (!retried && interactive && !autoPromptDisabled) {
         const ok = await promptLogin({ expired: true });
         if (ok) return request(path, Object.assign({}, opts, { interactive: true }), true);
       }
@@ -324,6 +327,9 @@
 
   const logout = () => {
     setToken(''); online = false; lastError = '已退出登录 · 离线模式'; emit();
+    if (typeof window !== 'undefined' && window.location && /^https?:/.test(String(window.location.protocol || ''))) {
+      try { fetch(BASE + '/auth/logout', { method: 'POST', credentials: 'same-origin', keepalive: true }).catch(() => {}); } catch (_) {}
+    }
   };
 
   /* ---------- 页面可见 / 定时器：提前续期，避免在操作时才发现过期 ---------- */
