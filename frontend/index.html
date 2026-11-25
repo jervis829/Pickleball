@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>匹克球教学管理平台 V3.0 · 配置驱动教学与测评工作台</title>
-<script src="/api.js?v=3.0.3"></script>
-<script src="/v3-defaults.js?v=3.0.3"></script>
+<script src="/api.js?v=3.0.4"></script>
+<script src="/v3-defaults.js?v=3.0.4"></script>
+<script src="/report-pdf.js?v=3.0.4"></script>
 <style>
 :root{
   --ground:#0B0C0D; --surface-1:#141518; --surface-2:#1B1D21; --surface-3:#24272C;
@@ -88,6 +89,13 @@ button{cursor:pointer}
 .chip-warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent);background:color-mix(in srgb,var(--warn) 8%,transparent)}
 .chip-danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent);background:color-mix(in srgb,var(--danger) 8%,transparent)}
 .chip-info{color:var(--info);border-color:color-mix(in srgb,var(--info) 40%,transparent);background:color-mix(in srgb,var(--info) 8%,transparent)}
+@media print{
+  .sidebar,.topbar,.tabs,.btn,.modal-backdrop,.toast{display:none!important}
+  .app{display:block}
+  .view{padding:0!important;max-width:none!important}
+  body{background:#fff!important;color:#111!important}
+  .panel{break-inside:avoid;border-color:#ccc!important;background:#fff!important}
+}
 .panel{border:1px solid var(--hairline);border-radius:var(--rm);background:var(--surface-1);overflow:hidden;margin-bottom:16px}
 .panel-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--hairline)}
 .panel-head h2,.panel-head h3{font-size:14px;font-weight:600;margin:0}
@@ -274,7 +282,14 @@ applyPrefs();
 /* ==================== 工具函数 ==================== */
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const escJs = (s) => esc(JSON.stringify(String(s == null ? '' : s)));
 const todayStr = () => new Date().toISOString().slice(0, 10);
+
+async function withBusy(btn, fn) {
+  if (btn && btn.disabled) return;
+  if (btn) btn.disabled = true;
+  try { return await fn(); } finally { if (btn) btn.disabled = false; }
+}
 
 function toast(msg) {
   const el = $('#v3Toast');
@@ -891,6 +906,10 @@ function renderStudentReportTab(rpt, curSnap, prevSnap, snaps) {
         <h2>7 大技术类别 0–10 分报告</h2>
         <span class="chip chip-accent mono">综合均分 ${curScore.toFixed(1)} / 10</span>
         ${totalDelta !== 0 ? `<span class="chip ${totalDelta > 0 ? 'chip-ok' : 'chip-danger'} mono">较对比基线 ${totalDelta > 0 ? '+' : ''}${totalDelta}</span>` : ''}
+        <div class="right" style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="exportStudentTechReport('pdf')">导出技术报告 PDF</button>
+          <button class="btn btn-sm" onclick="openReportExportModal('tech')">预览 / 转发网页版</button>
+        </div>
       </div>
       <div class="panel-body">
         ${snapSelectHTML}
@@ -1034,6 +1053,10 @@ function renderStudentFitnessTab(rpt) {
         <div class="panel-head">
           <h2>6 维体能六边形雷达图</h2>
           ${latest ? `<span class="chip chip-accent mono">综合指数 ${latest.totalIndex}/100</span>` : ''}
+          ${latest ? `<div class="right" style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="exportStudentFitnessReport('pdf')">导出体能报告 PDF</button>
+            <button class="btn btn-sm" onclick="openReportExportModal('fitness')">预览 / 转发网页版</button>
+          </div>` : ''}
         </div>
         <div class="panel-body">
           <div class="radar-wrap">${hexSVG}</div>
@@ -1058,44 +1081,46 @@ function renderStudentFitnessTab(rpt) {
             </div>
           </div>
           ${formInputs}
-          <button class="btn btn-primary" style="width:100%" onclick="submitStudentFitness('${esc(s.id)}')">保存 6 维体能测评并生成六边形报告</button>
+          <button class="btn btn-primary" style="width:100%" onclick="submitStudentFitness('${esc(s.id)}', this)">保存 6 维体能测评并生成六边形报告</button>
         </div>
       </div>
     </div>
   `;
 }
 
-window.submitStudentFitness = async function(studentId) {
-  const gender = $('#fit_gender').value;
-  const ageGroup = $('#fit_age').value;
-  const testDate = $('#fit_date').value || todayStr();
-  const raw = {};
-  for (const dim of (V3.battery.dimensions || [])) {
-    const skipped = $('#fit_skip_' + dim.key).checked;
-    const skipReason = ($('#fit_skip_reason_' + dim.key).value || '').trim();
-    if (skipped) { raw[dim.key] = { skipped: true, skipReason: skipReason || '安全保护跳过' }; continue; }
-    if (dim.key === 'flexibility') {
-      const b = $('#fit_flex_bend').value;
-      const sh = $('#fit_flex_sh').value;
-      if (b || sh) raw.flexibility = { bendLevel: b ? Number(b) : null, shoulderLevel: sh ? Number(sh) : null };
-    } else {
-      const val = $('#fit_val_' + dim.key).value;
-      const altEl = $('#fit_alt_' + dim.key);
-      const altUsed = altEl ? altEl.checked : false;
-      if (val !== '') raw[dim.key] = { value: Number(val), altUsed, autoScaleAlt: altUsed };
+window.submitStudentFitness = async function(studentId, btn) {
+  return withBusy(btn, async () => {
+    const gender = $('#fit_gender').value;
+    const ageGroup = $('#fit_age').value;
+    const testDate = $('#fit_date').value || todayStr();
+    const raw = {};
+    for (const dim of (V3.battery.dimensions || [])) {
+      const skipped = $('#fit_skip_' + dim.key).checked;
+      const skipReason = ($('#fit_skip_reason_' + dim.key).value || '').trim();
+      if (skipped) { raw[dim.key] = { skipped: true, skipReason: skipReason || '安全保护跳过' }; continue; }
+      if (dim.key === 'flexibility') {
+        const b = $('#fit_flex_bend').value;
+        const sh = $('#fit_flex_sh').value;
+        if (b || sh) raw.flexibility = { bendLevel: b ? Number(b) : null, shoulderLevel: sh ? Number(sh) : null };
+      } else {
+        const val = $('#fit_val_' + dim.key).value;
+        const altEl = $('#fit_alt_' + dim.key);
+        const altUsed = altEl ? altEl.checked : false;
+        if (val !== '') raw[dim.key] = { value: Number(val), altUsed, autoScaleAlt: altUsed };
+      }
     }
-  }
-  try {
-    await api(`/v3/students/${encodeURIComponent(studentId)}/fitness`, {
-      method: 'POST',
-      body: JSON.stringify({ testDate, gender, ageGroup, raw })
-    });
-    await refreshAll();
-    V3.studentTab = 'fitness';
-    await loadStudentReport(studentId);
-    toast('已保存 6 维球场体能报告，并联动 60 分钟课堂适配！');
-    renderStudents();
-  } catch (e) { toast('体能提交失败：' + e.message); }
+    try {
+      await api(`/v3/students/${encodeURIComponent(studentId)}/fitness`, {
+        method: 'POST',
+        body: JSON.stringify({ testDate, gender, ageGroup, raw })
+      });
+      await refreshAll();
+      V3.studentTab = 'fitness';
+      await loadStudentReport(studentId);
+      toast('已保存 6 维球场体能报告，并联动 60 分钟课堂适配！');
+      renderStudents();
+    } catch (e) { toast('体能提交失败：' + e.message); }
+  });
 };
 
 /* ==================== 3. 教学计划与 60 分钟教案 + 课后独立打分 ==================== */
@@ -1337,7 +1362,7 @@ function renderLessonWorkspaceHTML(plan, detail) {
               </div>
             </div>
           `).join('')}
-          <button class="btn btn-primary" style="width:100%" onclick="submitLessonCompletion('${esc(plan.id)}','${esc(les.id)}')">确认完成上课：各自更新评分 + 锁定课次 + 生成快照</button>
+          <button class="btn btn-primary" style="width:100%" onclick="submitLessonCompletion('${esc(plan.id)}','${esc(les.id)}', this)">确认完成上课：各自更新评分 + 锁定课次 + 生成快照</button>
         </div>
       </div>
     `;
@@ -1362,38 +1387,40 @@ function renderLessonWorkspaceHTML(plan, detail) {
   `;
 }
 
-window.submitLessonCompletion = async function(planId, lessonId) {
-  const detail = V3.activeLessonDetail;
-  if (!detail) return;
-  const studentReviews = (detail.students || []).map(st => {
-    const attend = $('#rev_att_' + st.id).value;
-    const score = Number($('#rev_sc_' + st.id).value);
-    const secEl = $('#rev_sec_' + st.id);
-    const rpeEl = $('#rev_rpe_' + st.id);
-    return {
-      studentId: st.id,
-      attend,
-      score,
-      secondaryScore: secEl ? Number(secEl.value) : undefined,
-      rpe: rpeEl ? Number(rpeEl.value) : 6,
-      feedback: ($('#rev_fb_' + st.id).value || '').trim(),
-      homework: ($('#rev_hw_' + st.id).value || '').trim()
-    };
-  });
-  try {
-    const res = await api(`/v3/plans/${encodeURIComponent(planId)}/lessons/${encodeURIComponent(lessonId)}/complete`, {
-      method: 'POST',
-      body: JSON.stringify({
-        completedDate: $('#rev_date').value || todayStr(),
-        coachNote: ($('#rev_coach_note').value || '').trim(),
-        studentReviews
-      })
+window.submitLessonCompletion = async function(planId, lessonId, btn) {
+  return withBusy(btn, async () => {
+    const detail = V3.activeLessonDetail;
+    if (!detail) return;
+    const studentReviews = (detail.students || []).map(st => {
+      const attend = $('#rev_att_' + st.id).value;
+      const score = Number($('#rev_sc_' + st.id).value);
+      const secEl = $('#rev_sec_' + st.id);
+      const rpeEl = $('#rev_rpe_' + st.id);
+      return {
+        studentId: st.id,
+        attend,
+        score,
+        secondaryScore: secEl ? Number(secEl.value) : undefined,
+        rpe: rpeEl ? Number(rpeEl.value) : 6,
+        feedback: ($('#rev_fb_' + st.id).value || '').trim(),
+        homework: ($('#rev_hw_' + st.id).value || '').trim()
+      };
     });
-    await refreshAll();
-    await loadLessonDetail(planId, lessonId);
-    toast(`课次已锁定！为 ${(res.generatedSnapshots || []).length} 名出勤学员自动生成了历史成长快照`);
-    renderPlans();
-  } catch (e) { toast('结算失败：' + e.message); }
+    try {
+      const res = await api(`/v3/plans/${encodeURIComponent(planId)}/lessons/${encodeURIComponent(lessonId)}/complete`, {
+        method: 'POST',
+        body: JSON.stringify({
+          completedDate: $('#rev_date').value || todayStr(),
+          coachNote: ($('#rev_coach_note').value || '').trim(),
+          studentReviews
+        })
+      });
+      await refreshAll();
+      await loadLessonDetail(planId, lessonId);
+      toast(`课次已锁定！为 ${(res.generatedSnapshots || []).length} 名出勤学员自动生成了历史成长快照`);
+      renderPlans();
+    } catch (e) { toast('结算失败：' + e.message); }
+  });
 };
 
 /* ==================== 4. 大纲热配置中心 ==================== */
@@ -1406,7 +1433,7 @@ function renderCurriculumConfig() {
     return `<span class="chip">${esc(c.name)} (初${w.basic||0}/进${w.advanced||0}, topK=${c.advTopK||2})</span>`;
   }).join(' ');
 
-  const modRows = (cfg.modules || []).slice().sort((a, b) => (a.seq || 0) - (b.seq || 0)).map((m, idx) => `
+  const modRows = (cfg.modules || []).slice().sort((a, b) => (a.seq || 0) - (b.seq || 0)).map((m) => `
     <tr>
       <td class="mono"><strong>${esc(m.code)}</strong></td>
       <td>${esc(m.track)}</td>
@@ -1415,8 +1442,8 @@ function renderCurriculumConfig() {
       <td class="mono">Lv.${m.difficulty}</td>
       <td class="sec" style="font-size:11.5px">${esc((m.kp || []).slice(0, 2).join('；'))}</td>
       <td>
-        <button class="btn btn-sm" onclick="openEditModuleModal(${idx})">编辑</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteConfigModule(${idx})">删</button>
+        <button class="btn btn-sm" onclick="openEditModuleModal(${escJs(m.code)})">编辑</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteConfigModule(${escJs(m.code)})">删</button>
       </td>
     </tr>
   `).join('');
@@ -1427,7 +1454,7 @@ function renderCurriculumConfig() {
         <h2>配置驱动课程体系（修改保存后全平台立即同步 · 历史报告不受影响）</h2>
         <div class="right">
           <button class="btn btn-sm" onclick="openAddTrackModal()">+ 新增高阶/赛道</button>
-          <button class="btn btn-sm btn-primary" onclick="openEditModuleModal(-1)">+ 新增技术模块</button>
+          <button class="btn btn-sm btn-primary" onclick="openEditModuleModal(null)">+ 新增技术模块</button>
           <button class="btn btn-sm btn-danger" onclick="resetDefaultCurriculum()">恢复出厂默认大纲</button>
         </div>
       </div>
@@ -1451,14 +1478,17 @@ async function persistCurriculumConfig(newCfg, msg) {
   try {
     await api('/v3/curriculum/config', { method: 'PUT', body: JSON.stringify(newCfg) });
     V3.config = newCfg;
+    V3.activeLessonDetail = null;
     await refreshAll();
     toast(msg || '大纲配置已热更新并同步全平台');
   } catch (e) { toast('配置保存失败：' + e.message); }
 }
 
-window.deleteConfigModule = async function(idx) {
+window.deleteConfigModule = async function(code) {
   const cfg = JSON.parse(JSON.stringify(V3.config));
   if (cfg.modules.length <= 1) return toast('至少保留 1 个模块');
+  const idx = cfg.modules.findIndex(m => m.code === code);
+  if (idx < 0) return toast('未找到该模块');
   const removed = cfg.modules.splice(idx, 1)[0];
   cfg.bundles = (cfg.bundles || []).map(b => ({ ...b, codes: (b.codes || []).filter(c => c !== removed.code) }));
   await persistCurriculumConfig(cfg, `已删除模块 ${removed.code} 并同步`);
@@ -1528,8 +1558,38 @@ function renderSettings() {
         </div>
       </div>
     </div>
+    <div class="panel">
+      <div class="panel-head"><h2>安全设置 · 修改管理员密码（改密后将注销旧会话令牌）</h2></div>
+      <div class="panel-body">
+        <div class="grid-3">
+          <div class="field"><label>当前密码</label><input type="password" id="pw_old" autocomplete="current-password" placeholder="输入原密码"></div>
+          <div class="field"><label>新密码（至少 10 位）</label><input type="password" id="pw_new" autocomplete="new-password" placeholder="建议字母+数字+符号组合"></div>
+          <div class="field"><label>确认新密码</label><input type="password" id="pw_new2" autocomplete="new-password" placeholder="再次输入新密码"></div>
+        </div>
+        <button class="btn btn-primary" onclick="submitChangePassword(this)">更新管理员密码</button>
+      </div>
+    </div>
   `;
 }
+
+window.submitChangePassword = async function(btn) {
+  return withBusy(btn, async () => {
+    const old_password = $('#pw_old').value || '';
+    const new_password = $('#pw_new').value || '';
+    const new2 = $('#pw_new2').value || '';
+    if (!old_password || new_password.length < 10) return toast('请填写原密码，且新密码不少于 10 位');
+    if (new_password !== new2) return toast('两次输入的新密码不一致');
+    try {
+      await api('/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ old_password, new_password })
+      });
+      if (window.PKB_API) window.PKB_API.logout();
+      toast('密码修改成功，旧令牌已全部吊销，请使用新密码重新登录');
+      await refreshAll();
+    } catch (e) { toast('改密失败：' + e.message); }
+  });
+};
 
 window.setTheme = (v) => { V3.prefs.theme = v; applyPrefs(); };
 window.setAccent = (v) => { V3.prefs.accent = v; applyPrefs(); };
@@ -1581,7 +1641,7 @@ window.openNewStudentModal = function() {
     <div style="max-height:290px;overflow:auto;border:1px solid var(--hairline);border-radius:8px">${modInputs}</div>
   `, `
     <button class="btn" onclick="closeModal()">取消</button>
-    <button class="btn btn-primary" onclick="submitNewStudent()">建档并自动生成基线报告快照</button>
+    <button class="btn btn-primary" onclick="submitNewStudent(this)">建档并自动生成基线报告快照</button>
   `);
 };
 
@@ -1603,35 +1663,37 @@ window.applyModalScorePreset = function(kind) {
   });
 };
 
-window.submitNewStudent = async function() {
-  const name = ($('#ns_name').value || '').trim();
-  if (!name) return toast('请填写学员姓名');
-  const initialScores = {};
-  document.querySelectorAll('[data-mod-score]').forEach(grp => {
-    const active = grp.querySelector('.score-pill.active');
-    initialScores[grp.dataset.modScore] = active ? Number(active.dataset.val) : 0;
-  });
-  try {
-    const created = await api('/v3/students', {
-      method: 'POST',
-      body: JSON.stringify({
-        name,
-        gender: $('#ns_gender').value,
-        fitnessAgeGroup: $('#ns_age').value,
-        phone: $('#ns_phone').value,
-        racketBg: $('#ns_racket').value,
-        target: $('#ns_target').value,
-        injury: $('#ns_injury').value,
-        initialScores
-      })
+window.submitNewStudent = async function(btn) {
+  return withBusy(btn, async () => {
+    const name = ($('#ns_name').value || '').trim();
+    if (!name) return toast('请填写学员姓名');
+    const initialScores = {};
+    document.querySelectorAll('[data-mod-score]').forEach(grp => {
+      const active = grp.querySelector('.score-pill.active');
+      initialScores[grp.dataset.modScore] = active ? Number(active.dataset.val) : 0;
     });
-    closeModal();
-    V3.activeStudentId = created.student.id;
-    V3.studentTab = 'report';
-    await refreshAll();
-    switchView('students');
-    toast(`学员 ${name} 建档完成，已冻结首份基线报告快照！`);
-  } catch (e) { toast('建档失败：' + e.message); }
+    try {
+      const created = await api('/v3/students', {
+        method: 'POST',
+        body: JSON.stringify({
+          name,
+          gender: $('#ns_gender').value,
+          fitnessAgeGroup: $('#ns_age').value,
+          phone: $('#ns_phone').value,
+          racketBg: $('#ns_racket').value,
+          target: $('#ns_target').value,
+          injury: $('#ns_injury').value,
+          initialScores
+        })
+      });
+      closeModal();
+      V3.activeStudentId = created.student.id;
+      V3.studentTab = 'report';
+      await refreshAll();
+      switchView('students');
+      toast(`学员 ${name} 建档完成，已冻结首份基线报告快照！`);
+    } catch (e) { toast('建档失败：' + e.message); }
+  });
 };
 
 window.openNewPlanModal = function(preStudentId) {
@@ -1666,33 +1728,35 @@ window.openNewPlanModal = function(preStudentId) {
     </div>
   `, `
     <button class="btn" onclick="closeModal()">取消</button>
-    <button class="btn btn-primary" onclick="submitNewPlan()">生成 N 节教学计划</button>
+    <button class="btn btn-primary" onclick="submitNewPlan(this)">生成 N 节教学计划</button>
   `);
 };
 
-window.submitNewPlan = async function() {
-  const studentIds = [...document.querySelectorAll('.np_stu:checked')].map(c => c.value);
-  if (!studentIds.length) return toast('请至少选择 1 名学员');
-  try {
-    const plan = await api('/v3/plans', {
-      method: 'POST',
-      body: JSON.stringify({
-        studentIds,
-        name: ($('#np_name').value || '').trim(),
-        totalLessons: Number($('#np_total').value) || 12,
-        defaultMinutes: Number($('#np_min').value) || 60,
-        startDate: $('#np_start').value || todayStr(),
-        trackMode: $('#np_mode').value,
-        bundleId: $('#np_bundle').value
-      })
-    });
-    closeModal();
-    V3.activePlanId = plan.id;
-    V3.activeLessonId = plan.lessons && plan.lessons[0] ? plan.lessons[0].id : null;
-    await refreshAll();
-    switchView('plans');
-    toast(`已生成 ${plan.totalLessons} 节教学计划！`);
-  } catch (e) { toast('创建计划失败：' + e.message); }
+window.submitNewPlan = async function(btn) {
+  return withBusy(btn, async () => {
+    const studentIds = [...document.querySelectorAll('.np_stu:checked')].map(c => c.value);
+    if (!studentIds.length) return toast('请至少选择 1 名学员');
+    try {
+      const plan = await api('/v3/plans', {
+        method: 'POST',
+        body: JSON.stringify({
+          studentIds,
+          name: ($('#np_name').value || '').trim(),
+          totalLessons: Number($('#np_total').value) || 12,
+          defaultMinutes: Number($('#np_min').value) || 60,
+          startDate: $('#np_start').value || todayStr(),
+          trackMode: $('#np_mode').value,
+          bundleId: $('#np_bundle').value
+        })
+      });
+      closeModal();
+      V3.activePlanId = plan.id;
+      V3.activeLessonId = plan.lessons && plan.lessons[0] ? plan.lessons[0].id : null;
+      await refreshAll();
+      switchView('plans');
+      toast(`已生成 ${plan.totalLessons} 节教学计划！`);
+    } catch (e) { toast('创建计划失败：' + e.message); }
+  });
 };
 
 window.openEditLessonModal = function(planId, lessonId) {
@@ -1846,17 +1910,19 @@ window.submitNewTrack = async function() {
   await persistCurriculumConfig(cfg, `已新增赛道「${name}」`);
 };
 
-window.openEditModuleModal = function(idx) {
+window.openEditModuleModal = function(code) {
   const cfg = V3.config || { tracks: [], categories: [], modules: [] };
-  const isNew = idx < 0;
+  const isNew = !code;
+  const found = !isNew ? (cfg.modules || []).find(x => x.code === code) : null;
+  if (!isNew && !found) return toast('未找到该模块');
   const m = isNew ? {
     code: 'A' + String((cfg.modules || []).length + 1).padStart(2, '0'),
     seq: (cfg.modules || []).length + 1,
     track: (cfg.tracks[1] || cfg.tracks[0] || {}).id || 'advanced',
     categoryId: (cfg.categories[0] || {}).id || 'C1',
     title: '', difficulty: 3, kp: ['核心动作判据'], remedialFocus: '',
-    plan60: { goal: '', warmup: '动态热身 5 分钟 + 小碎步激活 3 分钟', microTalk: '核心要领微讲', drills: [{ title: '定点多球分解', ballsPerMin: 16, sets: '3组×12球', note: '循序加速' }], game: '限制条件半场实战', wrapup: '动作复盘与居家作业' }
-  } : cfg.modules[idx];
+    plan60: { goal: '', warmupFocus: '动态热身 5 分钟 + 小碎步激活 3 分钟', explainFocus: '核心要领微讲', drills: ['定点多球分解练习，每人 {balls} 球×2 组'], play: '限制条件半场实战', hw: '动作复盘与居家作业' }
+  } : found;
 
   openModal(isNew ? '新增技术模块' : `编辑模块 ${m.code}`, `
     <div class="grid-3">
@@ -1873,19 +1939,21 @@ window.openEditModuleModal = function(idx) {
     <div class="field"><label>常见纠错补强重点</label><input type="text" id="em_rem" value="${esc(m.remedialFocus || '')}"></div>
   `, `
     <button class="btn" onclick="closeModal()">取消</button>
-    <button class="btn btn-primary" onclick="submitModuleConfig(${idx})">保存并同步全平台</button>
+    <button class="btn btn-primary" onclick="submitModuleConfig(${escJs(isNew ? '' : m.code)})">保存并同步全平台</button>
   `);
 };
 
-window.submitModuleConfig = async function(idx) {
+window.submitModuleConfig = async function(editCode) {
   const cfg = JSON.parse(JSON.stringify(V3.config));
   const code = ($('#em_code').value || '').trim();
   const title = ($('#em_title').value || '').trim();
   const kp = ($('#em_kp').value || '').split('\n').map(x => x.trim()).filter(Boolean);
   if (!code || !title || !kp.length) return toast('编号、标题与至少一条判据必填');
+  const idx = editCode ? cfg.modules.findIndex(x => x.code === editCode) : -1;
+  if (!editCode && cfg.modules.some(x => x.code === code)) return toast(`模块编号 ${code} 已存在`);
   const existing = idx >= 0 ? cfg.modules[idx] : {
     seq: cfg.modules.length + 1,
-    plan60: { warmup: '动态热身 5 分钟 + 小碎步激活 3 分钟', microTalk: `${title} 核心原理`, drills: [{ title: '定点多球分解', ballsPerMin: 16, sets: '3组×12球', note: '循序加压' }], game: '条件限制实战', wrapup: '动作复盘与居家作业' }
+    plan60: { warmupFocus: '动态热身 5 分钟 + 小碎步激活 3 分钟', explainFocus: `${title} 核心原理`, drills: ['定点多球分解练习，每人 {balls} 球×2 组'], play: '条件限制实战', hw: '动作复盘与居家作业' }
   };
   const nextMod = {
     ...existing,
@@ -1902,6 +1970,131 @@ window.submitModuleConfig = async function(idx) {
   else cfg.modules.push(nextMod);
   closeModal();
   await persistCurriculumConfig(cfg, `模块 ${code} 已保存并全平台同步`);
+};
+
+/* ==================== 报告文档生成与预览导出（技术报告 + 6维体能报告） ==================== */
+function getActiveReportContext(kind) {
+  const rpt = V3.activeStudentReport;
+  if (!rpt || !rpt.student) throw new Error('请先选择一名学员');
+  const ageGroupName = getAgeGroupName(rpt.student.fitnessAgeGroup);
+  const scaleArr = (V3.config && (V3.config.scoringScale || V3.config.scoreScale)) || [];
+  const scoreLabels = {};
+  for (const x of scaleArr) {
+    const sc = x.score != null ? x.score : x.value;
+    if (sc != null) scoreLabels[Number(sc)] = `${sc}·${x.label}`;
+  }
+
+  if (kind === 'tech') {
+    const snaps = rpt.snapshots || [];
+    const curSnap = snaps.find(x => x.id === V3.compareSnapshotIds.current) || rpt.latestSnapshot || snaps[0] || null;
+    const prevSnap = snaps.find(x => x.id === V3.compareSnapshotIds.prev) || (snaps.length > 1 ? snaps[snaps.length - 1] : curSnap);
+    const cats = (curSnap && curSnap.categories) || (rpt.liveAssessment && rpt.liveAssessment.categories) || [];
+    const prevCatMap = new Map(((prevSnap && prevSnap.categories) || []).map(c => [c.id, Number(c.score) || 0]));
+    const radarSvg = renderPolygonRadarSVG(
+      cats.map(c => ({ label: c.name.slice(0, 4) })),
+      cats.map(c => c.score),
+      prevSnap && curSnap && prevSnap.id !== curSnap.id ? cats.map(c => prevCatMap.get(c.id) || 0) : null,
+      { size: 300, maxVal: 10, refVal: 6, ariaLabel: '7大技术类别能力雷达图' }
+    );
+    return {
+      kind,
+      opts: {
+        report: rpt,
+        currentSnapshot: curSnap,
+        prevSnapshot: prevSnap,
+        ageGroupName,
+        triggerLabel: curSnap ? getTriggerLabel(curSnap.triggerType) : '实时评估',
+        scoreLabels,
+        radarSvg
+      }
+    };
+  }
+
+  const hist = rpt.fitnessHistory || [];
+  const latest = hist[0] || rpt.latestFitness;
+  if (!latest) throw new Error('该学员暂无已保存的 6 维体能测评记录');
+  const prev = hist.length > 1 ? hist[hist.length - 1] : null;
+  const radarSvg = renderFitnessHexagonSVG(latest, prev);
+  return {
+    kind: 'fitness',
+    opts: {
+      report: rpt,
+      fitness: latest,
+      ageGroupName: getAgeGroupName(latest.ageGroup || rpt.student.fitnessAgeGroup),
+      radarSvg
+    }
+  };
+}
+
+window.exportStudentTechReport = function(format) {
+  try {
+    if (!window.PKB_REPORT) throw new Error('报告生成模块尚未加载，请刷新页面');
+    const ctx = getActiveReportContext('tech');
+    if (format === 'html') {
+      const html = window.PKB_REPORT.buildTechnicalReportHtml(ctx.opts);
+      const fname = `${ctx.opts.report.student.name}-技术类别能力报告-${todayStr()}.html`;
+      window.PKB_REPORT.downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), fname);
+      toast(`已生成并导出分享网页：${fname}`);
+      return;
+    }
+    const { blob, filename } = window.PKB_REPORT.generateTechnicalPdfBlob(ctx.opts);
+    window.PKB_REPORT.downloadBlob(blob, filename);
+    toast(`已生成并开始下载技术报告 PDF：${filename}`);
+  } catch (e) { toast('导出失败：' + e.message); }
+};
+
+window.exportStudentFitnessReport = function(format) {
+  try {
+    if (!window.PKB_REPORT) throw new Error('报告生成模块尚未加载，请刷新页面');
+    const ctx = getActiveReportContext('fitness');
+    if (format === 'html') {
+      const html = window.PKB_REPORT.buildFitnessReportHtml(ctx.opts);
+      const fname = `${ctx.opts.report.student.name}-6维体能测评报告-${ctx.opts.fitness.testDate}.html`;
+      window.PKB_REPORT.downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), fname);
+      toast(`已生成并导出分享网页：${fname}`);
+      return;
+    }
+    const { blob, filename } = window.PKB_REPORT.generateFitnessPdfBlob(ctx.opts);
+    window.PKB_REPORT.downloadBlob(blob, filename);
+    toast(`已生成并开始下载体能报告 PDF：${filename}`);
+  } catch (e) { toast('导出失败：' + e.message); }
+};
+
+window.openReportExportModal = function(kind) {
+  try {
+    if (!window.PKB_REPORT) throw new Error('报告生成模块尚未加载');
+    const ctx = getActiveReportContext(kind);
+    const res = kind === 'tech'
+      ? window.PKB_REPORT.generateTechnicalPdfBlob(ctx.opts)
+      : window.PKB_REPORT.generateFitnessPdfBlob(ctx.opts);
+    const previewImgs = (res.pages || []).map((pg, idx) =>
+      `<div style="margin-bottom:14px">
+        <div class="muted" style="font-size:11.5px;margin-bottom:6px">第 ${idx + 1} / ${res.pages.length} 页（A4 高清排版预览）</div>
+        <img src="${pg.dataUrl}" alt="报告第${idx + 1}页" style="width:100%;border-radius:8px;border:1px solid var(--hairline-2);background:#fff">
+      </div>`
+    ).join('');
+
+    const pdfUrl = URL.createObjectURL(res.blob);
+    window._lastReportPdfUrl && URL.revokeObjectURL(window._lastReportPdfUrl);
+    window._lastReportPdfUrl = pdfUrl;
+
+    const dlAction = kind === 'tech' ? "exportStudentTechReport('pdf')" : "exportStudentFitnessReport('pdf')";
+    const htmlAction = kind === 'tech' ? "exportStudentTechReport('html')" : "exportStudentFitnessReport('html')";
+    openModal(
+      kind === 'tech' ? `技术类别报告导出预览 · ${ctx.opts.report.student.name}` : `6 维体能测评报告导出预览 · ${ctx.opts.report.student.name}`,
+      `<div class="notice notice-accent" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <span>可直接下载标准 <strong>.pdf 文档</strong> 或单文件 <strong>.html 分享网页</strong> 发给学员微信查看。</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="${dlAction}">下载 PDF (.pdf)</button>
+          <a class="btn btn-sm" href="${pdfUrl}" target="_blank" rel="noopener">新窗口打开 PDF</a>
+          <button class="btn btn-sm" onclick="${htmlAction}">下载微信网页版 (.html)</button>
+        </div>
+      </div>
+      <div>${previewImgs}</div>`,
+      `<button class="btn" onclick="closeModal()">关闭</button>
+       <button class="btn btn-primary" onclick="${dlAction}">立即下载 PDF</button>`
+    );
+  } catch (e) { toast('无法生成报告预览：' + e.message); }
 };
 
 /* ==================== 一键导入示范数据 ==================== */

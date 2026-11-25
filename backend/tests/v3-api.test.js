@@ -303,3 +303,177 @@ test('V3-08 代理覆盖或剥离 Authorization 头时，X-PKB-Session / X-PKB-A
   assert.equal(r3.status, 200);
 });
 
+test('V3-09 60分钟教案模板字段映射完整：warmupFocus/explainFocus/drills({balls})/play/hw 全部完整渲染', async () => {
+  const lesDetail = await req('GET', `/api/v1/v3/plans/${planId}/lessons/${firstLessonId}`);
+  assert.equal(lesDetail.status, 200);
+  const pc = lesDetail.data.planContent;
+  assert.ok(pc.segments[0].content && pc.segments[0].content.includes('步伐重点'), '热身段应包含 warmupFocus 与 footworkFocus');
+  assert.ok(pc.segments[1].content && pc.segments[1].content.includes('常见易错'), '精讲段应包含 explainFocus 与纠错');
+  assert.ok(Array.isArray(pc.segments[2].drills) && pc.segments[2].drills.length >= 2);
+  for (const d of pc.segments[2].drills) {
+    assert.ok(d.title && d.note && !d.note.includes('{balls}'), 'drills 应解析为结构化练习并替换 {balls}');
+  }
+  assert.ok(pc.segments[3].content && pc.segments[3].content.length > 5, '实战对抗段 play 不应为空');
+  assert.ok(pc.segments[4].content && pc.segments[4].content.length > 5, '课后总结段 hw 不应为空');
+});
+
+test('V3-10 业务边界与数据一致性：防重复扣课、防重排重复ID、体能边界与非法日期校验', async () => {
+  // 1) 同一课次提交重复 studentId 必须被拒绝（防止双倍扣课时+重复快照）
+  const dupRev = await req('POST', `/api/v1/v3/plans/${planId}/lessons/${secondLessonId}/complete`, {
+    completedDate: '2026-11-19',
+    studentReviews: [
+      { studentId: stuAId, attend: 'present', score: 2 },
+      { studentId: stuAId, attend: 'present', score: 3 }
+    ]
+  });
+  assert.equal(dupRev.status, 422);
+  assert.equal(dupRev.payload.error.code, 'DUPLICATE_STUDENT_REVIEW');
+
+  // 2) reorderPlanLessons 包含重复 lessonId 必须拒绝
+  const p = await req('GET', `/api/v1/v3/plans/${planId}`);
+  const ids = p.data.lessons.map(l => l.id);
+  const dupIds = [ids[0], ids[1], ids[1], ...ids.slice(3)];
+  const dupReo = await req('POST', `/api/v1/v3/plans/${planId}/reorder`, { orderedLessonIds: dupIds });
+  assert.equal(dupReo.status, 422);
+
+  // 3) 重复自定义学员 ID 返回 409 而非 500
+  const dupStu = await req('POST', '/api/v1/v3/students', { id: stuAId, name: '冲突测试' });
+  assert.equal(dupStu.status, 409);
+
+  // 4) 体能负值 / 越界值 / 非法日期均返回 422
+  const badFit1 = await req('POST', `/api/v1/v3/students/${stuAId}/fitness`, {
+    testDate: '2026-11-18', gender: 'female', ageGroup: 'a18', raw: { power: { value: -5 } }
+  });
+  assert.equal(badFit1.status, 422);
+  const badFit2 = await req('POST', `/api/v1/v3/students/${stuAId}/fitness`, {
+    testDate: '2026-11-18', gender: 'female', ageGroup: 'a18', raw: { reaction: { value: 99 } }
+  });
+  assert.equal(badFit2.status, 422);
+  const badFitDate = await req('POST', `/api/v1/v3/students/${stuAId}/fitness`, {
+    testDate: 'not-a-date', gender: 'female', ageGroup: 'a18', raw: { reaction: { value: 4 } }
+  });
+  assert.equal(badFitDate.status, 422);
+
+  // 5) 计划非法日期拒绝
+  const badPlanDate = await req('POST', '/api/v1/v3/plans', {
+    studentIds: [stuAId], totalLessons: 4, startDate: '2026-99-99'
+  });
+  assert.equal(badPlanDate.status, 422);
+});
+
+test('V3-11 系统安全防护：畸形URI/Cookie防崩、隐藏文件拦截、禁用URL令牌、防XSS/原型污染', async () => {
+  // 1) 畸形百分号 URL 不崩溃进程，优雅返回 400
+  const badUri = await fetch(base + '/api/v1/%E0%A4%A');
+  assert.equal(badUri.status, 400);
+
+  // 2) 畸形 Cookie 不崩溃进程
+  const badCk = await fetch(base + '/api/v1/v3/students', { headers: { cookie: 'pkb_token=%ZZ%E0' } });
+  assert.equal(badCk.status, 401);
+
+  // 3) 隐藏路径 / 点文件拦截
+  const dotRes = await fetch(base + '/.env');
+  assert.equal(dotRes.status, 403);
+
+  // 4) 禁止 URL query ?token= 传递 JWT
+  const qTok = await fetch(base + '/api/v1/v3/students?token=' + encodeURIComponent(token));
+  assert.equal(qTok.status, 401);
+
+  // 5) 课程配置拒绝包含 XSS 字符的模块编号与原型污染键名
+  const cfgRes = await req('GET', '/api/v1/v3/curriculum/config');
+  const evilCfg = JSON.parse(JSON.stringify(cfgRes.data));
+  evilCfg.modules.push({
+    code: '<script>', seq: 99, track: 'basic', categoryId: 'C1', title: 'xss', difficulty: 1,
+    kp: ['test'], plan60: { drills: ['d1'] }
+  });
+  const evilSave = await req('PUT', '/api/v1/v3/curriculum/config', evilCfg);
+  assert.equal(evilSave.status, 422);
+
+  const protoCfg = JSON.parse(JSON.stringify(cfgRes.data));
+  protoCfg.tracks.push({ id: 'constructor', name: 'bad', order: 9, mode: 'elective' });
+  const protoSave = await req('PUT', '/api/v1/v3/curriculum/config', protoCfg);
+  assert.equal(protoSave.status, 422);
+});
+
+test('V3-12 改密立即吊销旧令牌 + 登录连续失败触发限流防护', async () => {
+  const newPass = 'v3-rotated-password-456';
+  const ch = await req('POST', '/api/v1/auth/change-password', {
+    old_password: process.env.ADMIN_PASSWORD,
+    new_password: newPass
+  });
+  assert.equal(ch.status, 200);
+
+  // 旧令牌必须立即失效（普通接口与续期接口均拒绝）
+  const oldAccess = await req('GET', '/api/v1/v3/students');
+  assert.equal(oldAccess.status, 401);
+  const oldRefresh = await req('POST', '/api/v1/auth/refresh', {});
+  assert.equal(oldRefresh.status, 401);
+  assert.equal(oldRefresh.payload.error.code, 'TOKEN_REVOKED');
+
+  // 使用新密码登录并恢复原密码
+  const loginNew = await req('POST', '/api/v1/auth/login', { username: 'admin', password: newPass });
+  assert.equal(loginNew.status, 200);
+  token = loginNew.data.token;
+  const restore = await req('POST', '/api/v1/auth/change-password', {
+    old_password: newPass,
+    new_password: process.env.ADMIN_PASSWORD
+  });
+  assert.equal(restore.status, 200);
+  const loginBack = await req('POST', '/api/v1/auth/login', { username: 'admin', password: process.env.ADMIN_PASSWORD });
+  assert.equal(loginBack.status, 200);
+  token = loginBack.data.token;
+
+  // 验证连续错误登录触发 429 限流（用独立测试账号名避免影响 admin 测试流）
+  for (let i = 0; i < 10; i++) {
+    const r = await req('POST', '/api/v1/auth/login', { username: 'brute_probe_user', password: 'wrong-password' });
+    assert.equal(r.status, 401);
+  }
+  const locked = await req('POST', '/api/v1/auth/login', { username: 'brute_probe_user', password: 'wrong-password' });
+  assert.equal(locked.status, 429);
+  assert.equal(locked.payload.error.code, 'RATE_LIMITED');
+});
+
+test('V3-13 报告文档生成引擎：标准 PDF 1.4 字节流结构校验 + 技术/体能分享网页 XSS 转义', async () => {
+  const reportMod = require('../../frontend/report-pdf.js');
+  const rptA = await req('GET', `/api/v1/v3/students/${stuAId}`);
+  assert.equal(rptA.status, 200);
+
+  // 1) 技术报告模型与独立 HTML（注入恶意脚本测试转义）
+  const xssRpt = JSON.parse(JSON.stringify(rptA.data));
+  xssRpt.student.name = '林小满<script>alert(1)</script>';
+  const techHtml = reportMod.buildTechnicalReportHtml({ report: xssRpt, triggerLabel: '测试快照', radarSvg: '<svg></svg>' });
+  assert.match(techHtml, /技术类别能力评估报告/);
+  assert.match(techHtml, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  assert.equal(techHtml.includes('<script>alert(1)</script>'), false);
+
+  // 2) 6维体能报告模型与独立 HTML
+  const fitHtml = reportMod.buildFitnessReportHtml({ report: xssRpt, ageGroupName: '18–34 青年', radarSvg: '<svg></svg>' });
+  assert.match(fitHtml, /6 维零道具体能测评报告/);
+  assert.match(fitHtml, /爆发力/);
+  assert.equal(fitHtml.includes('<script>alert(1)</script>'), false);
+
+  // 3) PDF 1.4 二进制结构与 xref 精确字节偏移校验（2 页 A4）
+  const fakeJpg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0xff, 0xd9]);
+  const pdfBytes = reportMod.buildPdfFromJpegPages([
+    { bytes: fakeJpg, widthPx: 1488, heightPx: 2105 },
+    { bytes: fakeJpg, widthPx: 1488, heightPx: 2105 }
+  ]);
+  const pdfText = Buffer.from(pdfBytes).toString('latin1');
+  assert.equal(pdfText.startsWith('%PDF-1.4\n'), true);
+  assert.match(pdfText, /\/Count 2/);
+  assert.match(pdfText, /\/MediaBox \[0 0 595\.28 841\.89\]/);
+  assert.match(pdfText, /%%EOF\s*$/);
+
+  // 校验 xref 中记录的每个对象字节偏移量均精确指向 "<id> 0 obj"
+  const xrefMatch = pdfText.match(/xref\n0 (\d+)\n([\s\S]*?)trailer/);
+  assert.ok(xrefMatch);
+  const objCount = Number(xrefMatch[1]);
+  assert.equal(objCount, 9); // 0 + 1(Catalog) + 2(Pages) + 2*3(Page+Img+Content)
+  const lines = xrefMatch[2].trim().split('\n');
+  for (let id = 1; id < objCount; id++) {
+    const off = Number(lines[id].slice(0, 10));
+    const slice = pdfText.slice(off, off + 16);
+    assert.equal(slice.startsWith(`${id} 0 obj\n`), true, `对象 ${id} xref 偏移未对齐: ${JSON.stringify(slice)}`);
+  }
+});
+
+

@@ -129,6 +129,9 @@ const MIME = {
 function serveStatic(ctx) {
   if (ctx.req.method !== 'GET' && ctx.req.method !== 'HEAD') return false;
   const rel = ctx.path === '/' ? '/index.html' : ctx.path;
+  if (rel.includes('\0') || /(^|\/)\./.test(rel)) {
+    fail(ctx.res, 403, 'FORBIDDEN', '禁止访问该路径'); return true;
+  }
   const file = path.resolve(config.frontendDir, '.' + rel);
   // 路径穿越防护
   if (!file.startsWith(config.frontendDir + path.sep)) {

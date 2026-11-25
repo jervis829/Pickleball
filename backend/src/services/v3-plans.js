@@ -30,6 +30,40 @@ function scaleMinutes(baseMins, targetTotal) {
   return Math.max(2, Math.round(baseMins * ratio));
 }
 
+function isValidDateStr(s) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(s || ''))) return false;
+  const d = new Date(s + 'T00:00:00Z');
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+}
+
+function normalizeDrills(rawDrills, recommendedBalls, weakMobility) {
+  const arr = Array.isArray(rawDrills) && rawDrills.length
+    ? rawDrills
+    : [{ title: '定点多球分解', ballsPerMin: recommendedBalls, sets: '3组×12球', note: '先做慢动作定型再提速' }];
+  return arr.map((d, idx) => {
+    if (typeof d === 'string') {
+      const rendered = d.replace(/\{balls\}/g, String(recommendedBalls));
+      const baseNote = rendered;
+      return {
+        title: `专项练球 ${idx + 1}`,
+        ballsPerMin: recommendedBalls,
+        sets: '按组完成',
+        note: baseNote,
+        adjustedNote: weakMobility ? `${baseNote}｜体能联动：每 2 球加入小碎步横移到位再击` : baseNote
+      };
+    }
+    const obj = d && typeof d === 'object' ? d : {};
+    const rawNote = String(obj.note || obj.title || '').replace(/\{balls\}/g, String(recommendedBalls));
+    return {
+      title: String(obj.title || `专项练球 ${idx + 1}`),
+      ballsPerMin: Number(obj.ballsPerMin) || recommendedBalls,
+      sets: String(obj.sets || '3组×12球'),
+      note: rawNote,
+      adjustedNote: weakMobility ? `${rawNote}｜体能联动：每 2 球加入小碎步横移到位再击` : rawNote
+    };
+  });
+}
+
 function buildLessonPlanContent(moduleObj, secondaryObj, minutes, studentsDetail, cfg) {
   const targetMinutes = Number(minutes) || Number(cfg.defaultMinutes) || 60;
   const plan60 = moduleObj.plan60 || {
@@ -87,13 +121,21 @@ function buildLessonPlanContent(moduleObj, secondaryObj, minutes, studentsDetail
       }
     }
   }
+  if (plan60.safetyNote) safetyAlerts.push(plan60.safetyNote);
 
   const dosageModel = cfg.dosageModel || { baseBalls60: 16, maxBalls60: 32 };
-  const baseDose = targetMinutes >= 85 ? Math.round((dosageModel.baseBalls60 || 16) * 1.4) : (dosageModel.baseBalls60 || 16);
+  const diffMult = ((dosageModel.difficultyFactor || {})[String(moduleObj.difficulty || 3)]) || 1.0;
+  const baseDose = Math.round((targetMinutes >= 85 ? (dosageModel.baseBalls60 || 16) * 1.4 : (dosageModel.baseBalls60 || 16)) * diffMult);
   const weakMobility = fitnessAdaptations.some(a => a.dimKey === 'mobility');
   const weakEndurance = fitnessAdaptations.some(a => a.dimKey === 'endurance');
-  const recommendedBalls = weakEndurance ? Math.max(12, baseDose - 3) : baseDose;
+  const recommendedBalls = weakEndurance ? Math.max(10, baseDose - 3) : baseDose;
 
+  const warmupText = [plan60.warmup || plan60.warmupFocus || '动态激活与小碎步热身', plan60.footworkFocus ? `步伐重点：${plan60.footworkFocus}` : '']
+    .filter(Boolean).join('｜');
+  const explainText = [plan60.microTalk || plan60.explainFocus || `${moduleObj.title}核心要领讲解`, plan60.err ? `常见易错：${plan60.err}` : '', plan60.fix ? `纠正口令：${plan60.fix}` : '']
+    .filter(Boolean).join('｜');
+  const gameText = plan60.game || plan60.play || '半场限制条件配合练习与情景收官';
+  const wrapupText = plan60.wrapup || plan60.hw || '2分钟动作复盘与居家微练布置';
   const isFirstBasic = moduleObj.code === 'B01';
 
   return {
@@ -114,22 +156,19 @@ function buildLessonPlanContent(moduleObj, secondaryObj, minutes, studentsDetail
       {
         title: segMinutes[0].name,
         minutes: segMinutes[0].minutes,
-        content: plan60.warmup,
+        content: warmupText,
         fitnessLink: fitnessAdaptations.filter(a => ['power', 'flexibility', 'mobility'].includes(a.dimKey)).map(a => `${a.studentName}(${a.dimName})：${a.classroomHint}`)
       },
       {
         title: segMinutes[1].name,
         minutes: segMinutes[1].minutes,
-        content: plan60.microTalk,
+        content: explainText,
         kp: moduleObj.kp || []
       },
       {
         title: segMinutes[2].name,
         minutes: segMinutes[2].minutes,
-        drills: (plan60.drills || []).map(d => ({
-          ...d,
-          adjustedNote: weakMobility ? `${d.note}｜结合移动激活：每2球加入小碎步横移到位再击` : d.note
-        })),
+        drills: normalizeDrills(plan60.drills, recommendedBalls, weakMobility),
         secondaryContent: secondaryObj ? `【双单元合练】后半段加入「${secondaryObj.code} ${secondaryObj.title}」核心要点：${(secondaryObj.kp || []).slice(0, 2).join('；')}` : null,
         recommendedBallsPerSlot: recommendedBalls,
         restTip: weakEndurance ? '短组多歇：每 6–8 球休息 30 秒喝水换气，保证技术动作不变形' : '每组 10–12 球间歇 20 秒复盘手感',
@@ -138,12 +177,12 @@ function buildLessonPlanContent(moduleObj, secondaryObj, minutes, studentsDetail
       {
         title: segMinutes[3].name,
         minutes: segMinutes[3].minutes,
-        content: plan60.game
+        content: gameText
       },
       {
         title: segMinutes[4].name,
         minutes: segMinutes[4].minutes,
-        content: plan60.wrapup,
+        content: wrapupText,
         homePrescriptions: fitnessAdaptations.map(a => `${a.studentName}·${a.dimName}居家加练：${a.homeTip}`)
       }
     ],
@@ -312,6 +351,9 @@ function createPlan(payload) {
 
   const picked = pickInitialCodes(cfg, studentIds, totalLessons, trackMode, payload.bundleId, payload.customCodes);
   const startDate = payload.startDate ? String(payload.startDate).slice(0, 10) : TS().slice(0, 10);
+  if (!isValidDateStr(startDate)) {
+    throw new HttpError(422, 'INVALID_DATE', '开课日期格式无效，应为 YYYY-MM-DD');
+  }
   const intervalDays = Math.max(1, Math.min(30, Number(payload.intervalDays) || 7));
 
   const planId = newId('PLN');
@@ -437,7 +479,12 @@ function updatePlanLesson(planId, lessonId, payload) {
     }
   }
 
-  const plannedDate = payload.plannedDate !== undefined ? (payload.plannedDate ? String(payload.plannedDate).slice(0, 10) : null) : row.planned_date;
+  const plannedDate = payload.plannedDate !== undefined
+    ? (payload.plannedDate ? String(payload.plannedDate).slice(0, 10) : null)
+    : row.planned_date;
+  if (plannedDate && !isValidDateStr(plannedDate)) {
+    throw new HttpError(422, 'INVALID_DATE', '计划日期格式无效，应为 YYYY-MM-DD');
+  }
   const minutes = payload.minutes !== undefined ? Math.max(30, Math.min(180, Number(payload.minutes) || 60)) : row.minutes;
   const isRemedial = payload.isRemedial !== undefined ? (payload.isRemedial ? 1 : 0) : row.is_remedial;
   const coachNote = payload.coachNote !== undefined ? String(payload.coachNote) : (row.coach_note || '');
@@ -531,8 +578,8 @@ function reorderPlanLessons(planId, orderedLessonIds) {
     throw new HttpError(422, 'INVALID_REORDER', '请提供完整的课次顺序 ID 数组');
   }
   const rows = all('SELECT * FROM training_plan_lessons WHERE plan_id = ? ORDER BY seq ASC', [planId]);
-  if (orderedLessonIds.length !== rows.length) {
-    throw new HttpError(422, 'INVALID_REORDER', '课次数量不匹配');
+  if (orderedLessonIds.length !== rows.length || new Set(orderedLessonIds).size !== rows.length) {
+    throw new HttpError(422, 'INVALID_REORDER', '课次数量不匹配或包含重复课次 ID');
   }
   const byId = new Map(rows.map(r => [r.id, r]));
   for (const id of orderedLessonIds) {
@@ -605,10 +652,24 @@ function completePlanLesson(planId, lessonId, payload) {
   if (!reviewsInput.length) {
     throw new HttpError(422, 'MISSING_REVIEWS', '请至少提交 1 位学员的课后出勤与打分结果');
   }
+  const seenStudents = new Set();
+  for (const rv of reviewsInput) {
+    const sid = String((rv && rv.studentId) || '');
+    if (!sid || !studentMap.has(sid)) {
+      throw new HttpError(422, 'INVALID_STUDENT', `学员 ${sid} 不属于本教学计划`);
+    }
+    if (seenStudents.has(sid)) {
+      throw new HttpError(422, 'DUPLICATE_STUDENT_REVIEW', `同一课次不可重复提交学员 ${sid} 的课后评价`);
+    }
+    seenStudents.add(sid);
+  }
 
-  const completedAt = payload.completedDate ? String(payload.completedDate) : TS();
+  const completedAt = payload.completedDate ? String(payload.completedDate).trim() : TS();
   const practicedDate = completedAt.slice(0, 10);
-  const coachNote = payload.coachNote ? String(payload.coachNote) : (row.coach_note || '');
+  if (!isValidDateStr(practicedDate)) {
+    throw new HttpError(422, 'INVALID_DATE', '上课完成日期格式无效，应为 YYYY-MM-DD');
+  }
+  const coachNote = payload.coachNote ? String(payload.coachNote).slice(0, 1000) : (row.coach_note || '');
   const ts = TS();
 
   const generatedSnapshots = [];

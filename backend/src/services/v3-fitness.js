@@ -116,10 +116,20 @@ function evaluateBattery(rawInput, { gender, ageGroup, legacyAge } = {}) {
     let rawValue = null;
     let effectiveValue = null;
     if (dim.key === 'flexibility') {
-      const b = item.bendLevel != null && item.bendLevel !== '' ? Math.max(1, Math.min(5, Number(item.bendLevel))) : null;
-      const s = item.shoulderLevel != null && item.shoulderLevel !== '' ? Math.max(1, Math.min(4, Number(item.shoulderLevel))) : null;
+      const bRaw = item.bendLevel != null && item.bendLevel !== '' ? Number(item.bendLevel) : null;
+      const sRaw = item.shoulderLevel != null && item.shoulderLevel !== '' ? Number(item.shoulderLevel) : null;
+      if ((bRaw != null && (!Number.isFinite(bRaw) || bRaw < 1 || bRaw > 5)) ||
+          (sRaw != null && (!Number.isFinite(sRaw) || sRaw < 1 || sRaw > 4))) {
+        throw new HttpError(422, 'INVALID_FITNESS_VALUE', `${dim.name}刻度超出合法范围`);
+      }
+      const b = bRaw != null ? Math.max(1, Math.min(5, bRaw)) : null;
+      const s = sRaw != null ? Math.max(1, Math.min(4, sRaw)) : null;
       if (b == null && s == null && item.value != null && item.value !== '') {
-        rawValue = Math.max(1, Math.min(5, Number(item.value)));
+        const vNum = Number(item.value);
+        if (!Number.isFinite(vNum) || vNum < 1 || vNum > 5) {
+          throw new HttpError(422, 'INVALID_FITNESS_VALUE', `${dim.name}综合刻度需在 1–5 之间`);
+        }
+        rawValue = vNum;
         effectiveValue = rawValue;
       } else if (b != null || s != null) {
         const sNorm = s != null ? 1 + ((s - 1) * (4 / 3)) : null;
@@ -130,12 +140,20 @@ function evaluateBattery(rawInput, { gender, ageGroup, legacyAge } = {}) {
       }
       rawStored[dim.key] = { bendLevel: b, shoulderLevel: s, value: effectiveValue, skipped: false, altUsed };
     } else {
-      const num = item.value != null && item.value !== '' ? Number(item.value) : null;
+      const hasVal = item.value != null && item.value !== '';
+      const num = hasVal ? Number(item.value) : null;
+      if (hasVal) {
+        const maxBound = dim.key === 'reaction' ? 6 : Math.max(150, (Number(dim.max) || 60) * 3);
+        if (!Number.isFinite(num) || num < 0 || num > maxBound) {
+          throw new HttpError(422, 'INVALID_FITNESS_VALUE', `${dim.name}实测数值无效，应在 0–${maxBound} 之间`);
+        }
+      }
+      const autoScale = item.autoScaleAlt !== undefined ? Boolean(item.autoScaleAlt) : Boolean(altUsed);
       if (num != null && Number.isFinite(num)) {
         rawValue = num;
-        effectiveValue = altUsed && item.autoScaleAlt && dim.altScale ? Math.round(num * dim.altScale * 100) / 100 : num;
+        effectiveValue = altUsed && autoScale && dim.altScale ? Math.round(num * dim.altScale * 100) / 100 : num;
       }
-      rawStored[dim.key] = { value: rawValue, effectiveValue, skipped: false, altUsed, autoScaleAlt: Boolean(item.autoScaleAlt) };
+      rawStored[dim.key] = { value: rawValue, effectiveValue, skipped: false, altUsed, autoScaleAlt: autoScale };
     }
 
     const anchors = (((bat.anchors || {})[dim.key] || {})[g] || {})[ag];
@@ -205,6 +223,8 @@ function evaluateBattery(rawInput, { gender, ageGroup, legacyAge } = {}) {
 
 function formatFitnessRow(row) {
   if (!row) return null;
+  const bat = getBattery();
+  const agMeta = (bat.ageGroups || []).find(x => x.id === row.age_group);
   return {
     id: row.id,
     studentId: row.student_id,
@@ -212,6 +232,8 @@ function formatFitnessRow(row) {
     gender: row.gender,
     genderName: row.gender === 'female' ? '女' : '男',
     ageGroup: row.age_group,
+    ageGroupName: agMeta ? agMeta.name : row.age_group,
+    rpeCap: agMeta ? agMeta.rpeCap : 7,
     raw: JSON.parse(row.raw_json || '{}'),
     dimensions: JSON.parse(row.dimensions_json || '[]'),
     totalIndex: row.total_index,
@@ -240,10 +262,19 @@ function listFitnessHistory(studentId) {
   return rows.map(formatFitnessRow);
 }
 
+function isValidDateStr(s) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(s || ''))) return false;
+  const d = new Date(s + 'T00:00:00Z');
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+}
+
 function saveFitnessReport(student, payload) {
   const gender = payload.gender || student.gender || 'male';
   const ageGroup = normalizeAgeGroup(payload.ageGroup || student.fitness_age_group, student.age_group);
-  const testDate = String(payload.testDate || TS().slice(0, 10));
+  const testDate = payload.testDate ? String(payload.testDate).trim() : TS().slice(0, 10);
+  if (!isValidDateStr(testDate)) {
+    throw new HttpError(422, 'INVALID_DATE', '测评日期格式无效，应为 YYYY-MM-DD');
+  }
   const evaluated = evaluateBattery(payload.raw || payload.measures || payload, {
     gender,
     ageGroup,

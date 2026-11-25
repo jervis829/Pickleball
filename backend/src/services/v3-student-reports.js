@@ -7,6 +7,45 @@ const v3Curriculum = require('./v3-curriculum');
 const v3Fitness = require('./v3-fitness');
 
 const TS = () => new Date().toISOString();
+const SAFE_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+function validateStudentFields(payload, { isCreate = false } = {}) {
+  const out = {};
+  if (isCreate || payload.name !== undefined) {
+    const name = String(payload.name || '').trim();
+    if (!name || name.length > 60) {
+      throw new HttpError(422, 'INVALID_STUDENT', '学员姓名不能为空且不可超过 60 字');
+    }
+    out.name = name;
+  }
+  const strFields = [
+    ['phone', 40, '手机号'],
+    ['racketBg', 120, '球类基础'],
+    ['target', 40, '目标水平'],
+    ['injury', 500, '伤病备注'],
+    ['notes', 1000, '备注']
+  ];
+  for (const [k, maxLen, label] of strFields) {
+    const srcVal = k === 'target' ? (payload.target !== undefined ? payload.target : payload.goal) : payload[k];
+    if (srcVal !== undefined) {
+      const s = String(srcVal == null ? '' : srcVal).trim();
+      if (s.length > maxLen) {
+        throw new HttpError(422, 'INVALID_STUDENT', `${label}长度不能超过 ${maxLen} 字`);
+      }
+      out[k] = s;
+    }
+  }
+  if (payload.birthYear !== undefined && payload.birthYear !== null && payload.birthYear !== '') {
+    const by = Number(payload.birthYear);
+    if (!Number.isInteger(by) || by < 1910 || by > new Date().getUTCFullYear()) {
+      throw new HttpError(422, 'INVALID_STUDENT', '出生年份无效');
+    }
+    out.birthYear = by;
+  } else if (payload.birthYear === '' || payload.birthYear === null) {
+    out.birthYear = null;
+  }
+  return out;
+}
 
 function requireStudent(studentId) {
   const row = get('SELECT * FROM students WHERE id = ? AND deleted_at IS NULL', [studentId]);
@@ -204,23 +243,32 @@ function compareSnapshots(studentId, newSnapId, oldSnapId) {
 }
 
 function createStudentWithBaseline(payload) {
-  const name = String(payload.name || '').trim();
-  if (!name) throw new HttpError(422, 'INVALID_STUDENT', '学员姓名不能为空');
-
-  const phone = payload.phone ? String(payload.phone).trim() : '';
+  const fields = validateStudentFields(payload, { isCreate: true });
+  const name = fields.name;
+  const phone = fields.phone || '';
   const gender = v3Fitness.normalizeGender(payload.gender);
   const fitnessAgeGroup = v3Fitness.normalizeAgeGroup(payload.fitnessAgeGroup || payload.ageGroup, payload.age);
   const age = deriveLegacyAge(fitnessAgeGroup, payload.age);
-  const birthYear = payload.birthYear ? Number(payload.birthYear) : null;
-  const target = String(payload.target || payload.goal || '3.0');
-  const racketBg = payload.racketBg ? String(payload.racketBg).trim() : '';
-  const injury = payload.injury ? String(payload.injury).trim() : '';
-  const notes = payload.notes ? String(payload.notes).trim() : '';
+  const birthYear = fields.birthYear !== undefined ? fields.birthYear : null;
+  const target = fields.target || '3.0';
+  const racketBg = fields.racketBg || '';
+  const injury = fields.injury || '';
+  const notes = fields.notes || '';
   const total = payload.total != null ? Math.max(0, Math.min(999, Math.round(Number(payload.total) || 0))) : 12;
 
   const cfg = v3Curriculum.getConfig();
   const initialScores = payload.initialScores && typeof payload.initialScores === 'object' ? payload.initialScores : {};
-  const id = payload.id ? String(payload.id) : newId('STU');
+  let id = newId('STU');
+  if (payload.id != null && String(payload.id).trim() !== '') {
+    id = String(payload.id).trim();
+    if (!SAFE_ID_RE.test(id)) {
+      throw new HttpError(422, 'INVALID_STUDENT', '学员 ID 格式不合法');
+    }
+    const dup = get('SELECT id FROM students WHERE id = ?', [id]);
+    if (dup) {
+      throw new HttpError(409, 'DUPLICATE_STUDENT', `学员 ID 已存在: ${id}`);
+    }
+  }
   const ts = TS();
 
   transaction(() => {
@@ -231,8 +279,11 @@ function createStudentWithBaseline(payload) {
     );
 
     for (const m of cfg.modules || []) {
-      const raw = initialScores[m.code];
-      const sc = raw != null ? Math.max(0, Math.min(5, Math.round(Number(raw) || 0))) : 0;
+      const raw = Object.prototype.hasOwnProperty.call(initialScores, m.code) ? initialScores[m.code] : undefined;
+      if (raw !== undefined && raw !== null && raw !== '' && (!Number.isFinite(Number(raw)) || Number(raw) < 0 || Number(raw) > 5)) {
+        throw new HttpError(422, 'INVALID_SCORE', `模块 ${m.code} 初始评分需在 0–5 之间`);
+      }
+      const sc = raw != null && raw !== '' ? Math.max(0, Math.min(5, Math.round(Number(raw)))) : 0;
       run(
         `INSERT INTO student_module_scores (student_id, module_code, score, practice_count, last_practiced_at, note, updated_at)
          VALUES (?, ?, ?, 0, NULL, ?, ?)`,
@@ -246,7 +297,7 @@ function createStudentWithBaseline(payload) {
 
   const snapshot = captureSnapshot(id, {
     triggerType: 'baseline',
-    summaryNote: payload.baselineNote || '建档初始评分档案（口头了解初始基础，未包含场地技术测试）'
+    summaryNote: payload.baselineNote ? String(payload.baselineNote).slice(0, 300) : '建档初始评分档案（口头了解初始基础，未包含场地技术测试）'
   });
 
   meta.bump();
@@ -259,20 +310,20 @@ function createStudentWithBaseline(payload) {
 
 function updateStudentProfile(studentId, payload) {
   const existing = requireStudent(studentId);
-  const name = payload.name !== undefined ? String(payload.name).trim() : existing.name;
-  if (!name) throw new HttpError(422, 'INVALID_STUDENT', '学员姓名不能为空');
+  const fields = validateStudentFields(payload, { isCreate: false });
+  const name = fields.name !== undefined ? fields.name : existing.name;
 
-  const phone = payload.phone !== undefined ? String(payload.phone).trim() : (existing.phone || '');
+  const phone = fields.phone !== undefined ? fields.phone : (existing.phone || '');
   const gender = payload.gender !== undefined ? v3Fitness.normalizeGender(payload.gender) : (existing.gender || 'male');
   const fitnessAgeGroup = payload.fitnessAgeGroup !== undefined
     ? v3Fitness.normalizeAgeGroup(payload.fitnessAgeGroup, existing.age_group)
     : (existing.fitness_age_group || 'a18');
   const age = payload.age !== undefined ? deriveLegacyAge(fitnessAgeGroup, payload.age) : deriveLegacyAge(fitnessAgeGroup, existing.age_group);
-  const birthYear = payload.birthYear !== undefined ? (payload.birthYear ? Number(payload.birthYear) : null) : existing.birth_year;
-  const racketBg = payload.racketBg !== undefined ? String(payload.racketBg) : (existing.racket_bg || '');
-  const target = payload.target !== undefined ? String(payload.target) : (payload.goal !== undefined ? String(payload.goal) : (existing.goal || '3.0'));
-  const injury = payload.injury !== undefined ? String(payload.injury) : (existing.injury_note || '');
-  const notes = payload.notes !== undefined ? String(payload.notes) : (existing.note || '');
+  const birthYear = fields.birthYear !== undefined ? fields.birthYear : existing.birth_year;
+  const racketBg = fields.racketBg !== undefined ? fields.racketBg : (existing.racket_bg || '');
+  const target = fields.target !== undefined ? fields.target : (existing.goal || '3.0');
+  const injury = fields.injury !== undefined ? fields.injury : (existing.injury_note || '');
+  const notes = fields.notes !== undefined ? fields.notes : (existing.note || '');
   const ts = TS();
 
   run(
@@ -293,8 +344,13 @@ function updateStudentScores(studentId, scoresObj, opts = {}) {
   const execWrites = () => {
     for (const [code, val] of entries) {
       if (!validCodes.has(code)) continue;
-      const sc = Math.max(0, Math.min(5, Math.round(Number(val) || 0)));
-      const note = opts.note ? String(opts.note) : '';
+      if (val === undefined || val === null || val === '') continue;
+      const num = Number(val);
+      if (!Number.isFinite(num) || num < 0 || num > 5) {
+        throw new HttpError(422, 'INVALID_SCORE', `模块 ${code} 评分需在 0–5 之间`);
+      }
+      const sc = Math.max(0, Math.min(5, Math.round(num)));
+      const note = opts.note ? String(opts.note).slice(0, 500) : '';
       const incPractice = opts.incrementPractice ? 1 : 0;
       const practicedAt = opts.incrementPractice ? (opts.practicedAt || ts.slice(0, 10)) : null;
       run(

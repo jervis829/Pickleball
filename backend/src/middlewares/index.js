@@ -22,7 +22,7 @@ function applySecurity(ctx) {
     'Content-Security-Policy':
       "default-src 'self'; script-src 'self' 'unsafe-inline'; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-      "font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; " +
+      "font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; " +
       "connect-src 'self'; " + frameAncestors + "; base-uri 'self'",
     'Cache-Control': 'no-store',
     'Pragma': 'no-cache'
@@ -74,6 +74,12 @@ function applyRateLimit(ctx) {
   const ip = ctx.req.socket.remoteAddress || 'unknown';
   const now = Date.now();
   const w = config.rateLimit.windowMs;
+  if (buckets.size > 1000) {
+    for (const [k, v] of buckets.entries()) {
+      if (now - v.start > w) buckets.delete(k);
+    }
+    if (buckets.size > 10000) buckets.clear();
+  }
   const rec = buckets.get(ip);
   if (!rec || now - rec.start > w) { buckets.set(ip, { start: now, count: 1 }); return true; }
   rec.count += 1;
@@ -108,11 +114,22 @@ function handleError(ctx, err) {
 }
 
 function createContext(req, res) {
-  const url = new URL(req.url, 'http://localhost');
+  let pathname = '/';
+  let query = {};
+  let badUri = false;
+  try {
+    const url = new URL(req.url || '/', 'http://localhost');
+    pathname = decodeURIComponent(url.pathname);
+    query = Object.fromEntries(url.searchParams.entries());
+  } catch (_) {
+    badUri = true;
+    pathname = String((req && req.url) || '/').split('?')[0];
+  }
   return {
     req, res,
-    path: decodeURIComponent(url.pathname),
-    query: Object.fromEntries(url.searchParams.entries()),
+    path: pathname,
+    query,
+    _badUri: badUri,
     params: {},
     body: null,
     user: null,
@@ -125,6 +142,10 @@ function createContext(req, res) {
 /** 请求前置链；返回 false 表示响应已结束 */
 async function prepare(ctx) {
   applySecurity(ctx);
+  if (ctx._badUri || String(ctx.path).includes('\0')) {
+    fail(ctx.res, 400, 'INVALID_URL', '请求路径编码无效');
+    return false;
+  }
   if (!applyCors(ctx)) return false;
   if (!applyRateLimit(ctx)) return false;
   parseAuth(ctx);
