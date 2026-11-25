@@ -66,6 +66,8 @@ function readDifficulty() {
 /** 聚合为前端可直接消费的 state（含乐观锁版本号） */
 function readState() {
   const s = settings.all();
+  const v3Curriculum = require('../services/v3-curriculum');
+  const v3Fitness = require('../services/v3-fitness');
   return {
     students: entities.listAll('students'),
     plans: entities.listAll('plans'),
@@ -75,6 +77,9 @@ function readState() {
     enrollments: readEnrollments(),
     // P7：难度表随 state 下发，教案剂量在离线状态下也按同一张表算
     difficulty: readDifficulty(),
+    // V3.0：可热配置课程大纲与零道具 6 维体能常模
+    curriculumConfig: v3Curriculum.getConfig(),
+    courtFitnessBattery: v3Fitness.getBattery(),
     demo: Boolean(s.meta && s.meta.demo),
     thresholds: s.thresholds || {},
     params: Object.assign({}, DEFAULT_PARAMS, s.params || {}),

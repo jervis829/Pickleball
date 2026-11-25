@@ -77,6 +77,36 @@ add('POST', '/api/v1/enrollments/:id/lessons', C.startLesson);
 add('GET', '/api/v1/today', C.todayBoard, { write: false });
 add('POST', '/api/v1/sessions/:id/review', C.saveSessionReview);
 
+/* ---------- V3.0 配置驱动教学平台（大纲热更新 / 6维零道具体能 / 历史快照 / 60分钟计划与课后独立打分） ---------- */
+add('GET', '/api/v1/v3/curriculum/config', C.v3GetCurriculumConfig, { write: false });
+add('PUT', '/api/v1/v3/curriculum/config', C.v3SaveCurriculumConfig);
+add('POST', '/api/v1/v3/curriculum/config/reset', C.v3ResetCurriculumConfig);
+add('GET', '/api/v1/v3/fitness/battery', C.v3GetFitnessBattery, { write: false });
+
+add('GET', '/api/v1/v3/students', C.v3ListStudents, { write: false });
+add('POST', '/api/v1/v3/students', C.v3CreateStudent);
+add('GET', '/api/v1/v3/students/:id', C.v3GetStudentReport, { write: false });
+add('PATCH', '/api/v1/v3/students/:id', C.v3UpdateStudent);
+add('DELETE', '/api/v1/v3/students/:id', C.v3DeleteStudent);
+add('PUT', '/api/v1/v3/students/:id/scores', C.v3UpdateStudentScores);
+add('GET', '/api/v1/v3/students/:id/snapshots', C.v3ListSnapshots, { write: false });
+add('POST', '/api/v1/v3/students/:id/snapshots', C.v3CaptureSnapshot);
+add('GET', '/api/v1/v3/students/:id/snapshots/compare', C.v3CompareSnapshots, { write: false });
+add('POST', '/api/v1/v3/students/:id/fitness', C.v3SaveFitnessReport);
+add('GET', '/api/v1/v3/students/:id/fitness', C.v3ListFitnessReports, { write: false });
+
+add('GET', '/api/v1/v3/plans', C.v3ListPlans, { write: false });
+add('POST', '/api/v1/v3/plans', C.v3CreatePlan);
+add('GET', '/api/v1/v3/plans/:id', C.v3GetPlan, { write: false });
+add('POST', '/api/v1/v3/plans/:id/students', C.v3AddPlanStudents);
+add('POST', '/api/v1/v3/plans/:id/extend', C.v3ExtendPlan);
+add('POST', '/api/v1/v3/plans/:id/reorder', C.v3ReorderPlan);
+add('POST', '/api/v1/v3/plans/:id/lessons', C.v3InsertPlanLesson);
+add('GET', '/api/v1/v3/plans/:id/lessons/:lessonId', C.v3GetPlanLesson, { write: false });
+add('PATCH', '/api/v1/v3/plans/:id/lessons/:lessonId', C.v3UpdatePlanLesson);
+add('DELETE', '/api/v1/v3/plans/:id/lessons/:lessonId', C.v3DeletePlanLesson);
+add('POST', '/api/v1/v3/plans/:id/lessons/:lessonId/complete', C.v3CompletePlanLesson);
+
 /* ---------- 各实体 RESTful CRUD ---------- */
 for (const [name, h] of Object.entries({
   students: C.students, plans: C.plans, sessions: C.sessions, assessments: C.assessments

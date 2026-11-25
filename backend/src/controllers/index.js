@@ -10,6 +10,10 @@ const assessmentProtocols = require('../services/assessment-protocols');
 const assessmentRemediation = require('../services/assessment-remediation');
 const fitness = require('../services/fitness-assessment');
 const outline = require('../services/course-outline');
+const v3Curriculum = require('../services/v3-curriculum');
+const v3Fitness = require('../services/v3-fitness');
+const v3StudentReports = require('../services/v3-student-reports');
+const v3Plans = require('../services/v3-plans');
 
 function crud(entity) {
   return {
@@ -75,5 +79,32 @@ module.exports = {
   startLesson: ctx => created(ctx.res, outline.startLesson(ctx.params.id, ctx.body || {}, ctx.user)),
   saveSessionReview: ctx => ok(ctx.res, outline.saveReview(ctx.params.id, ctx.body || {}, ctx.user)),
   todayBoard: ctx => ok(ctx.res, outline.today(ctx.query.date)),
+  /* ---------- V3.0 配置驱动课程大纲 + 6维零道具体能 + 历史快照 + 教学计划 ---------- */
+  v3GetCurriculumConfig: ctx => ok(ctx.res, v3Curriculum.getConfig()),
+  v3SaveCurriculumConfig: ctx => ok(ctx.res, v3Curriculum.saveConfig(ctx.body)),
+  v3ResetCurriculumConfig: ctx => ok(ctx.res, v3Curriculum.resetConfig()),
+  v3GetFitnessBattery: ctx => ok(ctx.res, v3Fitness.getBattery()),
+  v3ListStudents: ctx => ok(ctx.res, { items: v3StudentReports.listStudentsOverview() }),
+  v3CreateStudent: ctx => created(ctx.res, v3StudentReports.createStudentWithBaseline(ctx.body || {})),
+  v3GetStudentReport: ctx => ok(ctx.res, v3StudentReports.getStudentFullReport(ctx.params.id)),
+  v3UpdateStudent: ctx => ok(ctx.res, v3StudentReports.updateStudentProfile(ctx.params.id, ctx.body || {})),
+  v3DeleteStudent: ctx => { catalog.remove('students', ctx.params.id); noContent(ctx.res); },
+  v3UpdateStudentScores: ctx => ok(ctx.res, v3StudentReports.updateStudentScores(ctx.params.id, (ctx.body && ctx.body.scores) || ctx.body || {}, ctx.body || {})),
+  v3ListSnapshots: ctx => ok(ctx.res, { items: v3StudentReports.listSnapshots(ctx.params.id) }),
+  v3CaptureSnapshot: ctx => created(ctx.res, v3StudentReports.captureSnapshot(ctx.params.id, ctx.body || {})),
+  v3CompareSnapshots: ctx => ok(ctx.res, v3StudentReports.compareSnapshots(ctx.params.id, ctx.query.currentId, ctx.query.prevId)),
+  v3SaveFitnessReport: ctx => created(ctx.res, v3Fitness.saveFitnessReport(v3StudentReports.requireStudent(ctx.params.id), ctx.body || {})),
+  v3ListFitnessReports: ctx => { v3StudentReports.requireStudent(ctx.params.id); return ok(ctx.res, { items: v3Fitness.listFitnessHistory(ctx.params.id) }); },
+  v3ListPlans: ctx => ok(ctx.res, { items: v3Plans.listPlans() }),
+  v3CreatePlan: ctx => created(ctx.res, v3Plans.createPlan(ctx.body || {})),
+  v3GetPlan: ctx => ok(ctx.res, v3Plans.getPlanDetail(ctx.params.id)),
+  v3AddPlanStudents: ctx => ok(ctx.res, v3Plans.addStudentsToPlan(ctx.params.id, (ctx.body && ctx.body.studentIds) || [])),
+  v3ExtendPlan: ctx => ok(ctx.res, v3Plans.extendPlan(ctx.params.id, ctx.body || {})),
+  v3ReorderPlan: ctx => ok(ctx.res, v3Plans.reorderPlanLessons(ctx.params.id, (ctx.body && ctx.body.orderedLessonIds) || [])),
+  v3InsertPlanLesson: ctx => created(ctx.res, v3Plans.insertPlanLesson(ctx.params.id, ctx.body || {})),
+  v3GetPlanLesson: ctx => ok(ctx.res, v3Plans.getLessonDetail(ctx.params.id, ctx.params.lessonId)),
+  v3UpdatePlanLesson: ctx => ok(ctx.res, v3Plans.updatePlanLesson(ctx.params.id, ctx.params.lessonId, ctx.body || {})),
+  v3DeletePlanLesson: ctx => ok(ctx.res, v3Plans.deletePlanLesson(ctx.params.id, ctx.params.lessonId)),
+  v3CompletePlanLesson: ctx => ok(ctx.res, v3Plans.completePlanLesson(ctx.params.id, ctx.params.lessonId, ctx.body || {})),
   students, plans, sessions, assessments
 };
