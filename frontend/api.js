@@ -131,6 +131,7 @@
     if (token && !opts.anonymous) {
       headers.authorization = 'Bearer ' + token;
       headers['x-pkb-auth'] = 'Bearer ' + token;
+      headers['x-pkb-session'] = token;
     }
     let res;
     try { res = await fetch(BASE + path, Object.assign({ credentials: 'same-origin' }, opts, { headers })); }
@@ -169,7 +170,7 @@
       }
       // 续期失败：只有前台交互且本次尚未重新登录过才弹框，防止异常代理下死循环弹窗
       if (!retried && interactive && !autoPromptDisabled) {
-        const ok = await promptLogin({ expired: true });
+        const ok = await promptLogin({ expired: Boolean(token) });
         if (ok) return request(path, Object.assign({}, opts, { interactive: true }), true);
       }
       e.sessionExpired = true;
@@ -351,6 +352,7 @@
   });
 
   window.PKB_API = {
+    version: '3.0.3',
     bootstrap, scheduleSync, status: statusFull, exportAll, importAll,
     changePassword, logout, request, promptLogin,
     online: () => online,

@@ -251,27 +251,42 @@ test('V3-07 大纲热配置扩展高阶赛道：新模块同步生效，历史�
   assert.equal(rst.data.config.modules.length, 34);
 });
 
-test('V3-08 代理覆盖或剥离 Authorization 头时，X-PKB-Auth 与 HttpOnly Cookie 仍可正常认证与续期', async () => {
-  // 1) 登录应下发 Set-Cookie
+test('V3-08 代理覆盖或剥离 Authorization 头时，X-PKB-Session / X-PKB-Auth 与 HttpOnly Cookie 仍可正常认证与续期', async () => {
+  // 0) 静态资源带 Cache-Control: no-store，避免反代或浏览器缓存旧 api.js
+  const jsRes = await fetch(base + '/api.js?v=3.0.3');
+  assert.equal(jsRes.status, 200);
+  assert.equal(jsRes.headers.get('cache-control'), 'no-store');
+
+  // 1) HTTPS 预览域名下登录应下发 SameSite=None; Secure; Partitioned Cookie（即使未显式传 X-Forwarded-Proto）
   const loginRes = await fetch(base + '/api/v1/auth/login', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', origin: 'https://8787-demo.e2b.app', 'x-forwarded-host': '8787-demo.e2b.app' },
     body: JSON.stringify({ username: 'admin', password: process.env.ADMIN_PASSWORD })
   });
   assert.equal(loginRes.status, 200);
   const setCookie = loginRes.headers.get('set-cookie') || '';
   assert.match(setCookie, /pkb_token=/);
+  assert.match(setCookie, /SameSite=None/);
+  assert.match(setCookie, /Partitioned/);
   const loginJson = await loginRes.json();
   const tk = loginJson.data.token;
 
-  // 2) 模拟反向代理把 Authorization 覆盖成无效值，但保留 X-PKB-Auth
+  // 2) 模拟反向代理把 Authorization 覆盖成无效值，但保留 X-PKB-Session / X-PKB-Auth
   const r1 = await fetch(base + '/api/v1/v3/students', {
+    headers: {
+      authorization: 'Bearer invalid-gateway-token',
+      'x-pkb-session': tk
+    }
+  });
+  assert.equal(r1.status, 200);
+
+  const r1b = await fetch(base + '/api/v1/v3/students', {
     headers: {
       authorization: 'Bearer invalid-gateway-token',
       'x-pkb-auth': 'Bearer ' + tk
     }
   });
-  assert.equal(r1.status, 200);
+  assert.equal(r1b.status, 200);
 
   // 3) 模拟反向代理完全剥离 Authorization，只保留 Cookie
   const cookiePair = setCookie.split(';')[0];
@@ -280,10 +295,10 @@ test('V3-08 代理覆盖或剥离 Authorization 头时，X-PKB-Auth 与 HttpOnly
   });
   assert.equal(r2.status, 200);
 
-  // 4) refresh 同样兼容 X-PKB-Auth
+  // 4) refresh 同样兼容 X-PKB-Session 与 X-PKB-Auth
   const r3 = await fetch(base + '/api/v1/auth/refresh', {
     method: 'POST',
-    headers: { 'x-pkb-auth': 'Bearer ' + tk }
+    headers: { 'x-pkb-session': tk }
   });
   assert.equal(r3.status, 200);
 });

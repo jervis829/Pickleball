@@ -32,9 +32,13 @@ const assessments = crud('assessments');
 
 function setAuthCookie(ctx, token, maxAgeSec) {
   const h = (ctx.req && ctx.req.headers) || {};
-  const isHttps = String(h['x-forwarded-proto'] || '').includes('https');
+  const xfProto = String(h['x-forwarded-proto'] || '').toLowerCase();
+  const origin = String(h.origin || '').toLowerCase();
+  const referer = String(h.referer || '').toLowerCase();
+  const host = String(h['x-forwarded-host'] || h.host || '').toLowerCase();
+  const isHttps = xfProto.includes('https') || origin.startsWith('https://') || referer.startsWith('https://') || /\.e2b\.app(?::\d+)?$/i.test(host);
   const attrs = isHttps
-    ? 'Path=/api/v1; HttpOnly; SameSite=None; Secure'
+    ? 'Path=/api/v1; HttpOnly; SameSite=None; Secure; Partitioned'
     : 'Path=/api/v1; HttpOnly; SameSite=Lax';
   const val = token ? encodeURIComponent(token) : '';
   ctx.res.setHeader('Set-Cookie', `pkb_token=${val}; Max-Age=${Math.max(0, Number(maxAgeSec) || 0)}; ${attrs}`);

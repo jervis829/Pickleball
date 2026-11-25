@@ -16,21 +16,48 @@ function extractCookie(req, name) {
 function tokenCandidates(ctx) {
   const h = (ctx && ctx.req && ctx.req.headers) || {};
   const list = [];
+  const sources = [];
+  const ses = String(h['x-pkb-session'] || '').trim();
+  if (ses) {
+    list.push(ses.startsWith('Bearer ') ? ses.slice(7).trim() : ses);
+    sources.push('x-pkb-session');
+  }
   for (const key of ['x-pkb-auth', 'authorization']) {
     const val = String(h[key] || '');
-    if (val.startsWith('Bearer ')) list.push(val.slice(7).trim());
+    if (val.startsWith('Bearer ')) {
+      list.push(val.slice(7).trim());
+      sources.push(key);
+    } else if (val) {
+      sources.push(key + ':non-bearer');
+    }
   }
   const ck = extractCookie(ctx && ctx.req, 'pkb_token');
-  if (ck) list.push(ck);
-  if (ctx && ctx.query && ctx.query.token) list.push(String(ctx.query.token));
+  if (ck) { list.push(ck); sources.push('cookie'); }
+  if (ctx && ctx.query && ctx.query.token) { list.push(String(ctx.query.token)); sources.push('query'); }
+  if (ctx) {
+    ctx._authDiag = {
+      sources,
+      hdr_keys: Object.keys(h).sort(),
+      xf_proto: h['x-forwarded-proto'] || null,
+      matched: null
+    };
+  }
   return list.filter(Boolean);
 }
 
 function parseAuth(ctx) {
   ctx.user = null;
-  for (const token of tokenCandidates(ctx)) {
-    const u = verifyToken(token);
-    if (u) { ctx.user = u; return; }
+  const candidates = tokenCandidates(ctx);
+  for (let i = 0; i < candidates.length; i++) {
+    const u = verifyToken(candidates[i]);
+    if (u) {
+      ctx.user = u;
+      if (ctx._authDiag) ctx._authDiag.matched = ctx._authDiag.sources[i] || 'token';
+      return;
+    }
+  }
+  if (ctx && ctx._authDiag) {
+    ctx._authDiag.matched = candidates.length ? 'invalid_or_expired' : 'none';
   }
 }
 

@@ -24,7 +24,8 @@ function applySecurity(ctx) {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; " +
       "connect-src 'self'; " + frameAncestors + "; base-uri 'self'",
-    'Cache-Control': ctx.path.startsWith('/api/') ? 'no-store' : 'no-cache'
+    'Cache-Control': 'no-store',
+    'Pragma': 'no-cache'
   };
   // 未显式放开时保留 DENY（比 ALLOW-FROM 更可靠，且是被审计的默认值）
   if (!embedOrigins.length) headers['X-Frame-Options'] = 'DENY';
@@ -63,7 +64,7 @@ function applyCors(ctx) {
   ctx.res.setHeader('Access-Control-Allow-Origin', origin);
   ctx.res.setHeader('Vary', 'Origin');
   ctx.res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,PUT,DELETE,OPTIONS');
-  ctx.res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-PKB-Auth');
+  ctx.res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-PKB-Auth, X-PKB-Session');
   if (ctx.req.method === 'OPTIONS') { ctx.res.writeHead(204); ctx.res.end(); return false; }
   return true;
 }
