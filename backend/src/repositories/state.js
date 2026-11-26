@@ -1,6 +1,7 @@
 'use strict';
 const entities = require('./entities');
 const { settings, meta } = require('./misc');
+const { all } = require('../db/connection');
 const { transaction, run } = require('../db/connection');
 const { HttpError } = require('../utils/response');
 
@@ -8,16 +9,77 @@ const DEFAULT_DEFAULTS = { minutes: 90, size: 'small', age: 'adult', freq: 2, un
 const DEFAULT_PARAMS = {};
 const DEFAULT_PREFS = { theme: 'dark', accent: 'lime', density: 'comfortable', motion: 'on' };
 const DEFAULT_UI = { view: 'dash', planview: 'timeline', planForm: null, lastPlan: null, detailId: null };
+function readEnrollments() {
+  const rows = all(`SELECT e.*, s.name AS student_name FROM enrollments e
+                    LEFT JOIN students s ON s.id = e.student_id
+                    WHERE e.status IN ('active','paused') ORDER BY e.start_date DESC LIMIT 200`);
+  const outlines = all(`SELECT * FROM outline_lessons ORDER BY enrollment_id, seq`);
+  const byEnr = new Map();
+  for (const o of outlines) {
+    if (!byEnr.has(o.enrollment_id)) byEnr.set(o.enrollment_id, []);
+    byEnr.get(o.enrollment_id).push({
+      id: o.id, seq: o.seq, unitNo: o.unit_no, lessonNo: o.lesson_no, lessonType: o.lesson_type,
+      plannedDate: o.planned_date, minutes: o.minutes, focus: o.focus, status: o.status,
+      sessionId: o.session_id, planId: o.plan_id, note: o.note
+    });
+  }
+  return rows.map(r => ({
+    id: r.id, studentId: r.student_id, studentName: r.student_name, packageType: r.package_type,
+    className: r.class_name, totalLessons: r.total_lessons, usedLessons: r.used_lessons,
+    lessonsPerWeek: r.lessons_per_week, minutesPerLesson: r.minutes_per_lesson,
+    startDate: r.start_date, expireDate: r.expire_date, goal: r.goal, stage: r.stage,
+    paceMode: r.pace_mode, status: r.status, outline: byEnr.get(r.id) || []
+  }));
+}
+
 const ENTITY_KEYS = ['students', 'plans', 'sessions', 'assessments'];
+
+/**
+ * 课程难度表（只读参考数据，随 state 一起下发）。
+ * 为什么放进 state 而不是让前端单独拉：教案在离线模式下也要按难度算剂量，
+ * 单开一个接口会让「离线备的课」和「在线备的课」球数不一样。数据源唯一：
+ * database/seeds/curriculum-difficulty.json。
+ */
+let cachedDifficulty = null;
+function readDifficulty() {
+  if (cachedDifficulty) return cachedDifficulty;
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const config = require('../config');
+  const file = path.join(config.ROOT, 'database', 'seeds', 'curriculum-difficulty.json');
+  if (!fs.existsSync(file)) return null;
+  const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+  cachedDifficulty = {
+    version: raw.version, status: raw.status,
+    doseModel: raw.doseModel || null,
+    calibrationNote: raw.calibrationNote || '',
+    units: (raw.units || []).map(u => ({
+      u: u.u, difficulty: u.difficulty, newPoints: u.newPoints, repsToUsable: u.repsToUsable,
+      revisedLessons: u.revisedLessons, prereq: u.prereq || [], gate: u.gate || '',
+      splitAdvice: u.splitAdvice || '', risk: u.risk || ''
+    })),
+    missingCoverage: raw.missingCoverage || []
+  };
+  return cachedDifficulty;
+}
 
 /** 聚合为前端可直接消费的 state（含乐观锁版本号） */
 function readState() {
   const s = settings.all();
+  const v3Curriculum = require('../services/v3-curriculum');
+  const v3Fitness = require('../services/v3-fitness');
   return {
     students: entities.listAll('students'),
     plans: entities.listAll('plans'),
     sessions: entities.listAll('sessions'),
     assessments: entities.listAll('assessments'),
+    // P7：课程包与大纲只读下发，供前端离线时也能看「今天上哪节、点评了没」
+    enrollments: readEnrollments(),
+    // P7：难度表随 state 下发，教案剂量在离线状态下也按同一张表算
+    difficulty: readDifficulty(),
+    // V3.0：可热配置课程大纲与零道具 6 维体能常模
+    curriculumConfig: v3Curriculum.getConfig(),
+    courtFitnessBattery: v3Fitness.getBattery(),
     demo: Boolean(s.meta && s.meta.demo),
     thresholds: s.thresholds || {},
     params: Object.assign({}, DEFAULT_PARAMS, s.params || {}),

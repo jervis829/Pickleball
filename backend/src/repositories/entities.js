@@ -5,7 +5,7 @@ const { HttpError } = require('../utils/response');
 
 const TS = () => new Date().toISOString();
 const NUM_COLS = new Set(['stage', 'total', 'used', 'lesson', 'minutes', 'rpe', 'tech_score', 'fit_score', 'pk_level', 'racket_base']);
-const JSON_COLS = new Set(['vals_json', 'zones_json']);
+const JSON_COLS = new Set(['vals_json', 'zones_json', 'judge_vals_json']);
 
 /** 前端字段 -> 数据库列（列名来自本文件常量，不拼接用户输入） */
 const DEFS = {
@@ -23,8 +23,9 @@ const DEFS = {
   },
   sessions: {
     table: 'sessions',
-    cols: { studentId: 'student_id', planId: 'plan_id', date: 'lesson_date', lesson: 'lesson', minutes: 'minutes', attend: 'attend', judge: 'judge', rpe: 'rpe', note: 'note' },
-    defaults: {},
+    cols: { studentId: 'student_id', planId: 'plan_id', enrollmentId: 'enrollment_id', outlineLessonId: 'outline_lesson_id', date: 'lesson_date', lesson: 'lesson', minutes: 'minutes', attend: 'attend', judge: 'judge', rpe: 'rpe', note: 'note', reviewStatus: 'review_status', reviewedAt: 'reviewed_at', judgeVals: 'judge_vals_json', homework: 'homework', nextFocus: 'next_focus' },
+    // review_status 是 NOT NULL：聚合同步 / 导入的老快照没有这个字段，必须补默认值，否则整表替换会失败
+    defaults: { reviewStatus: 'none' },
     search: ['note']
   },
   assessments: {

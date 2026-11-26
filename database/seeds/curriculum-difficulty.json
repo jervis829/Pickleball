@@ -1,0 +1,45 @@
+{
+  "code": "pb-curriculum-difficulty",
+  "version": 1,
+  "status": "coach_estimate",
+  "name": "24 教学单元 · 技术难度与剂量基准表",
+  "note": "本表是教练经验估算，不是实验数据。difficulty 表示动作复杂度 + 容错窗口 + 迁移干扰的综合难度；repsToUsable 表示一名零基础成人在「课堂外还有作业」的前提下，把该技术练到「比赛中敢用、失误可控」所需的高质量触球数（粗略量级，用于判断课堂剂量够不够，不作为考核标准）。revisedLessons 是本表建议的课次分配，与现行 48 课次并列，不影响原主线。",
+  "calibrationNote": "本表由教练经验给出，未经实验校准。本馆实测满 30 人后，应按「实际达标所需课次」回填 revisedLessons，替换前不与旧值比较。",
+  "doseModel": {
+    "maxNewPointsPerLesson": 3,
+    "minQualityRepsPerPoint": 25,
+    "qualityRepsPerLessonAtAdult3Fit3": 32,
+    "note": "maxNewPointsPerLesson=3 是硬约束：单节课并列新授点超过 3 个，就必然出现「每个都只摸了几下」。qualityRepsPerLesson 指教练喂球 + 移动中击球的实球触球数（不含徒手模仿）。"
+  },
+  "units": [
+    { "u": 1,  "difficulty": 1, "newPoints": 6, "repsToUsable": 200,   "revisedLessons": 1, "prereq": [],        "gate": "准备姿势定格连续 3 次稳定；两跳规则快问 3/3 全对", "splitAdvice": "6 个点里握拍/准备姿势/两跳/NVZ/报分/站位轮转，其中「规则类」并入热身快问即可，不必占新授额度", "risk": "低" },
+    { "u": 2,  "difficulty": 2, "newPoints": 2, "repsToUsable": 400,   "revisedLessons": 2, "prereq": [1],       "gate": "定点喂球 10 球中 ≥7 球过网且落在单打区；击球点稳定在身前 30 cm", "splitAdvice": "无需拆分，剂量可由作业补足（对墙 30×2 组）", "risk": "低" },
+    { "u": 3,  "difficulty": 3, "newPoints": 3, "repsToUsable": 600,   "revisedLessons": 2, "prereq": [2],       "gate": "反手 10 球中 ≥6 球过网；拍面不翻（教练侧视 5 球观察）", "splitAdvice": "单反/双反只做认知，不要求两种都成型；基础差者固定一种", "risk": "中" },
+    { "u": 4,  "difficulty": 2, "newPoints": 3, "repsToUsable": 400,   "revisedLessons": 2, "prereq": [2],       "gate": "下手发球连续 5 次不失误；接发后 3 拍内到达 NVZ 线后", "splitAdvice": "发球与接发各占一半课次，不要一节课各练一半又都不熟", "risk": "低" },
+    { "u": 5,  "difficulty": 4, "newPoints": 2, "repsToUsable": 800,   "revisedLessons": 2, "prereq": [2, 4],    "gate": "第三拍 10 球中 ≥4 球落进对方 NVZ 且弧线过网不低于 30 cm", "splitAdvice": "先只练「落进厨房」，不要同时要求弧线与深度", "risk": "高" },
+    { "u": 6,  "difficulty": 4, "newPoints": 3, "repsToUsable": 800,   "revisedLessons": 2, "prereq": [5],       "gate": "斜线 dink 连续 6 回合不失误；脚不触 NVZ 线", "splitAdvice": "斜线单独 1 课、直线单独 1 课，比 A/B 两课混练更有效", "risk": "高" },
+    { "u": 7,  "difficulty": 3, "newPoints": 4, "repsToUsable": 600,   "revisedLessons": 2, "prereq": [1],       "gate": "中速球挡截 10 球中 ≥7 球回球过网；零 NVZ 踩线", "splitAdvice": "block volley 与 NVZ 规则边界拆成两段练，规则部分用快问不占球数", "risk": "中" },
+    { "u": 8,  "difficulty": 3, "newPoints": 4, "repsToUsable": 500,   "revisedLessons": 2, "prereq": [7],       "gate": "两人不站重叠；「我的/你的」口令零冲突；reset 认知口述正确", "splitAdvice": "本单元含初阶考核，建议把考核独立成 1 节考评课，不挤占教学时间", "risk": "中" },
+    { "u": 9,  "difficulty": 4, "newPoints": 4, "repsToUsable": 700,   "revisedLessons": 2, "prereq": [5],       "gate": "能口述 drop/drive/drip 的选择条件；落点分散 ≥3 格", "splitAdvice": "选择树先做「口头判断」再上手，判断错时不许击球", "risk": "高" },
+    { "u": 10, "difficulty": 4, "newPoints": 5, "repsToUsable": 800,   "revisedLessons": 2, "prereq": [8],       "gate": "被攻时软挡回 NVZ 成功 10 球中 ≥5 球；击球前身体停稳", "splitAdvice": "block reset 先单独练到能用，再引入 drop reset / half-volley reset", "risk": "高" },
+    { "u": 11, "difficulty": 4, "newPoints": 3, "repsToUsable": 800,   "revisedLessons": 2, "prereq": [6],       "gate": "上旋与下旋各 10 球中 ≥5 球落点不变且不过网过高", "splitAdvice": "上旋单独 1 课、下旋单独 1 课；两种同日学通常都学不成", "risk": "高" },
+    { "u": 12, "difficulty": 4, "newPoints": 3, "repsToUsable": 700,   "revisedLessons": 2, "prereq": [11],      "gate": "双反上旋 10 球中 ≥5 球过网下坠；单反下旋不甩腕", "splitAdvice": "反手侧剂量本身偏低（多数人反手触球少），建议作业加倍", "risk": "高" },
+    { "u": 13, "difficulty": 5, "newPoints": 6, "repsToUsable": 1200,  "revisedLessons": 3, "prereq": [6, 11],   "gate": "roll / slice / 双反 dink 三种手法各 10 球中 ≥5 球可用；能认出高丁克并主动进攻", "splitAdvice": "三种短丁克手法 + 可攻丁克识别，是本体系最挤的一课，建议拆 3 课（roll dink / slice dink / 识别与惩罚）", "risk": "很高" },
+    { "u": 14, "difficulty": 5, "newPoints": 9, "repsToUsable": 1500,  "revisedLessons": 3, "prereq": [7],       "gate": "flick 与 roll volley 各 10 球中 ≥5 球达到判据；能按来球高度选手法", "splitAdvice": "9 个并列点（block/punch/swinging/half volley + flick + roll volley + 高度判据 + 徒手 + 实打）分 2 课仍不够，强行同课必然「每项 9 球」；建议拆 3 课", "risk": "很高" },
+    { "u": 15, "difficulty": 4, "newPoints": 6, "repsToUsable": 900,   "revisedLessons": 2, "prereq": [13, 14],  "gate": "lob 过对手头顶且落底线区 10 球中 ≥5 球；退到位不仰身", "splitAdvice": "lob 与 overhead 是两个方向的技术，建议 lob 1 课、overhead 1 课", "risk": "高" },
+    { "u": 16, "difficulty": 3, "newPoints": 5, "repsToUsable": 500,   "revisedLessons": 2, "prereq": [8],       "gate": "能说出 stacking 启动条件；轮转路线默写正确；两人不重叠", "splitAdvice": "含中阶考核，建议考评独立成 1 节", "risk": "中" },
+    { "u": 17, "difficulty": 5, "newPoints": 8, "repsToUsable": 1200,  "revisedLessons": 3, "prereq": [4, 9],    "gate": "≥3 种发球变化可用；接发变体按指定执行 10 球中 ≥5 球；能按对手接发选第三拍分支", "splitAdvice": "发球旋转 + 4 种接发变体 + 战术树同课，属于典型的「演示型教案」，建议拆 3 课", "risk": "很高" },
+    { "u": 18, "difficulty": 4, "newPoints": 3, "repsToUsable": 600,   "revisedLessons": 2, "prereq": [17],      "gate": "第三拍 drive 后能用第五拍补吊重新进网前 10 球中 ≥4 球", "splitAdvice": "第五拍依赖第三拍质量，若 U9 未达标应先回补 U9", "risk": "高" },
+    { "u": 19, "difficulty": 5, "newPoints": 7, "repsToUsable": 1200,  "revisedLessons": 3, "prereq": [14],      "gate": "≥3 种提速手法可按球高选用；被提速能挡回并反制 10 球中 ≥4 球", "splitAdvice": "提速 + 反提速 + hands battle + 落点四点合一，建议拆 3 课", "risk": "很高" },
+    { "u": 20, "difficulty": 5, "newPoints": 6, "repsToUsable": 1000,  "revisedLessons": 3, "prereq": [13, 19],  "gate": "限时 8 回合相持中能至少 1 次主动变速且拍面不变形", "splitAdvice": "变速与反制是两件事；变速先练节奏、再练旋转、最后练深度", "risk": "很高" },
+    { "u": 21, "difficulty": 4, "newPoints": 6, "repsToUsable": 800,   "revisedLessons": 2, "prereq": [15],      "gate": "高位球终结 10 球中 ≥6 球得分；对手 lob 后退到位率 ≥70%", "splitAdvice": "反手高压单独加练，不与正手高压同课", "risk": "高" },
+    { "u": 22, "difficulty": 5, "newPoints": 3, "repsToUsable": 800,   "revisedLessons": 2, "prereq": [21],      "gate": "能执行 1 次 ATP 或 Erne 并安全回位；零 NVZ 违规", "splitAdvice": "ATP 与 Erne 拆分；且必须明确「这不是必过项」", "risk": "很高" },
+    { "u": 23, "difficulty": 5, "newPoints": 8, "repsToUsable": 1000,  "revisedLessons": 3, "prereq": [16, 19],  "gate": "中路球归属零犹豫；能执行 poach / shake & bake；按对手弱侧选落点", "splitAdvice": "poach / stacking 进阶 / 中路归属 / shake & bake / 假动作 / 目标选择 六件事，建议拆 3 课", "risk": "很高" },
+    { "u": 24, "difficulty": 3, "newPoints": 3, "repsToUsable": 500,   "revisedLessons": 2, "prereq": [23],      "gate": "决胜分前完成呼吸流程；4.0 清单逐项可观察达标", "splitAdvice": "含高级考核，建议考评独立成 1 节", "risk": "中" }
+  ],
+  "missingCoverage": [
+    { "code": "singles", "name": "单打", "severity": "严重", "detail": "24 个单元、48 课次中「单打」出现 0 次。单打的双打线（singles sideline）、发球后站位、长回合体能分配与双打完全不同，属于独立模块，不能靠双打课次覆盖。" },
+    { "code": "spaced_review", "name": "间隔复习（1/3/7 天）", "severity": "中", "detail": "现行体系在第 8/16/24 单元只做考核，没有「隔 1 课、3 课、7 课回头复习」的结构；技术学完两课就再也不出现，是遗忘的主要原因。" },
+    { "code": "failure_plan", "name": "教学失败预案（学不会怎么办）", "severity": "严重", "detail": "教案没有「若 2 课次后仍未达标 → 退阶到哪个前一个动作」的分支。附录 prereq 字段已给出前置链，但未被教案引擎使用。" }
+  ]
+}

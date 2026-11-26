@@ -25,6 +25,8 @@ function add(method, url, handler, opts = {}) {
 add('GET', '/api/v1/health', C.health, { auth: false });
 add('POST', '/api/v1/auth/login', C.login, { auth: false, write: false });
 add('GET', '/api/v1/auth/me', C.me);
+// 续期：允许过期 grace 内的令牌换新令牌，因此不走 requireAuth（签名仍强制校验）
+add('POST', '/api/v1/auth/refresh', C.refresh, { auth: false, write: false });
 add('POST', '/api/v1/auth/change-password', C.changePassword);
 add('POST', '/api/v1/auth/logout', C.logout, { write: false });
 
@@ -56,6 +58,56 @@ add('GET', '/api/v1/assessment-remediation-plans/:id', C.getAssessmentRemediatio
 add('POST', '/api/v1/assessment-remediation-plans/:id/confirm', C.confirmAssessmentRemediationPlan);
 add('POST', '/api/v1/assessment-retests', C.createScopedAssessmentRetest);
 
+/* ---------- 身体素质测评（入班体能量化 + 图文报告） ---------- */
+add('GET', '/api/v1/fitness-battery', C.fitnessBattery, { write: false });
+add('POST', '/api/v1/fitness-assessments', C.createFitnessAssessment);
+add('GET', '/api/v1/fitness-assessments/:id', C.getFitnessAssessment, { write: false });
+add('PUT', '/api/v1/fitness-assessments/:id/results', C.saveFitnessResults);
+add('POST', '/api/v1/fitness-assessments/:id/finalize', C.finalizeFitnessAssessment);
+add('POST', '/api/v1/fitness-assessments/:id/apply-to-student', C.applyFitnessToStudent);
+add('GET', '/api/v1/students/:id/fitness-assessments', C.studentFitnessAssessments, { write: false });
+add('GET', '/api/v1/students/:id/fitness-latest', C.studentFitnessLatest, { write: false });
+
+/* ---------- P7 课程包 / 课程大纲 / 今日课 / 课后点评 ---------- */
+add('GET', '/api/v1/curriculum-difficulty', C.curriculumDifficulty, { write: false });
+add('POST', '/api/v1/enrollments', C.createEnrollment);
+add('GET', '/api/v1/enrollments', C.listEnrollments, { write: false });
+add('GET', '/api/v1/enrollments/:id', C.getEnrollment, { write: false });
+add('PATCH', '/api/v1/enrollments/:id', C.updateEnrollment);
+add('POST', '/api/v1/enrollments/:id/lessons', C.startLesson);
+add('GET', '/api/v1/today', C.todayBoard, { write: false });
+add('POST', '/api/v1/sessions/:id/review', C.saveSessionReview);
+
+/* ---------- V3.0 配置驱动教学平台（大纲热更新 / 6维零道具体能 / 历史快照 / 60分钟计划与课后独立打分） ---------- */
+add('GET', '/api/v1/v3/curriculum/config', C.v3GetCurriculumConfig, { write: false });
+add('PUT', '/api/v1/v3/curriculum/config', C.v3SaveCurriculumConfig);
+add('POST', '/api/v1/v3/curriculum/config/reset', C.v3ResetCurriculumConfig);
+add('GET', '/api/v1/v3/fitness/battery', C.v3GetFitnessBattery, { write: false });
+
+add('GET', '/api/v1/v3/students', C.v3ListStudents, { write: false });
+add('POST', '/api/v1/v3/students', C.v3CreateStudent);
+add('GET', '/api/v1/v3/students/:id', C.v3GetStudentReport, { write: false });
+add('PATCH', '/api/v1/v3/students/:id', C.v3UpdateStudent);
+add('DELETE', '/api/v1/v3/students/:id', C.v3DeleteStudent);
+add('PUT', '/api/v1/v3/students/:id/scores', C.v3UpdateStudentScores);
+add('GET', '/api/v1/v3/students/:id/snapshots', C.v3ListSnapshots, { write: false });
+add('POST', '/api/v1/v3/students/:id/snapshots', C.v3CaptureSnapshot);
+add('GET', '/api/v1/v3/students/:id/snapshots/compare', C.v3CompareSnapshots, { write: false });
+add('POST', '/api/v1/v3/students/:id/fitness', C.v3SaveFitnessReport);
+add('GET', '/api/v1/v3/students/:id/fitness', C.v3ListFitnessReports, { write: false });
+
+add('GET', '/api/v1/v3/plans', C.v3ListPlans, { write: false });
+add('POST', '/api/v1/v3/plans', C.v3CreatePlan);
+add('GET', '/api/v1/v3/plans/:id', C.v3GetPlan, { write: false });
+add('POST', '/api/v1/v3/plans/:id/students', C.v3AddPlanStudents);
+add('POST', '/api/v1/v3/plans/:id/extend', C.v3ExtendPlan);
+add('POST', '/api/v1/v3/plans/:id/reorder', C.v3ReorderPlan);
+add('POST', '/api/v1/v3/plans/:id/lessons', C.v3InsertPlanLesson);
+add('GET', '/api/v1/v3/plans/:id/lessons/:lessonId', C.v3GetPlanLesson, { write: false });
+add('PATCH', '/api/v1/v3/plans/:id/lessons/:lessonId', C.v3UpdatePlanLesson);
+add('DELETE', '/api/v1/v3/plans/:id/lessons/:lessonId', C.v3DeletePlanLesson);
+add('POST', '/api/v1/v3/plans/:id/lessons/:lessonId/complete', C.v3CompletePlanLesson);
+
 /* ---------- 各实体 RESTful CRUD ---------- */
 for (const [name, h] of Object.entries({
   students: C.students, plans: C.plans, sessions: C.sessions, assessments: C.assessments
@@ -78,6 +130,9 @@ const MIME = {
 function serveStatic(ctx) {
   if (ctx.req.method !== 'GET' && ctx.req.method !== 'HEAD') return false;
   const rel = ctx.path === '/' ? '/index.html' : ctx.path;
+  if (rel.includes('\0') || /(^|\/)\./.test(rel)) {
+    fail(ctx.res, 403, 'FORBIDDEN', '禁止访问该路径'); return true;
+  }
   const file = path.resolve(config.frontendDir, '.' + rel);
   // 路径穿越防护
   if (!file.startsWith(config.frontendDir + path.sep)) {

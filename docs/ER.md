@@ -11,6 +11,8 @@ erDiagram
     PLANS ||--o{ PLAN_STUDENTS : "包含学员"
     STUDENTS ||--o{ SESSIONS : "授课记录"
     STUDENTS ||--o{ ASSESSMENTS : "考核记录"
+    STUDENTS ||--o{ FITNESS_ASSESSMENTS : "体能测评"
+    FITNESS_ASSESSMENTS ||--o{ FITNESS_RESULTS : "单项实测"
 
     USERS {
         TEXT id PK
@@ -152,3 +154,105 @@ erDiagram
 - 每张业务表含 `created_at` / `updated_at` / `deleted_at`。
 - 枚举值使用 CHECK 约束而非数据库 ENUM 类型。
 - 外键显式声明，写入顺序：students → plans → plan_students → sessions → assessments。
+
+## 5. 身体素质测评（P6，迁移 `007_fitness_battery.sql`）
+
+```mermaid
+erDiagram
+    STUDENTS ||--o{ FITNESS_ASSESSMENTS : "每学员多份"
+    FITNESS_ASSESSMENTS ||--o{ FITNESS_RESULTS : "9 项实测"
+    FITNESS_ASSESSMENTS {
+        TEXT id PK
+        TEXT student_id FK
+        TEXT battery_code
+        INTEGER battery_version
+        TEXT battery_snapshot_json "测评表快照（分档/系数/协议）"
+        TEXT test_date
+        TEXT age_group_code
+        REAL age_factor
+        TEXT sex
+        REAL height_cm
+        REAL weight_kg
+        TEXT status "draft / completed / abandoned"
+        REAL total_index "综合体能指数 0-100"
+        REAL fit_score "换算入班体能 0-5"
+        TEXT completed_at
+    }
+    FITNESS_RESULTS {
+        TEXT id PK
+        TEXT assessment_id FK
+        TEXT item_code
+        TEXT dimension
+        TEXT variant_code
+        TEXT direction "higher / lower"
+        REAL raw_value
+        TEXT trials_json
+        TEXT status "measured / aborted / skipped / contraindicated"
+        INTEGER level "0-4"
+        REAL index_value "0-100"
+    }
+```
+
+要点：
+
+- `battery_snapshot_json` 固化测评表（含分档锚点、年龄组系数、测试协议），规则调整不会改变历史报告的解释。
+- `status = completed` 后记录锁定；复测必须新建一份，历史原始值不被覆盖。
+- `fitness_results.status != 'measured'` 的行 `index_value` 为空，报告按「未测」显示，不当作 0 分。
+- `students.fit_score` 只在教练点「写入档案入班体能」时更新，不自动晋级、不自动降阶。
+
+## 6. 课程包 / 课程大纲 / 课次执行（P7，迁移 `008_enrollment_outline.sql`）
+
+```mermaid
+erDiagram
+    STUDENTS ||--o{ ENROLLMENTS : "买课"
+    ENROLLMENTS ||--o{ OUTLINE_LESSONS : "N 节大纲"
+    OUTLINE_LESSONS ||--o| SESSIONS : "执行后关联"
+    PLANS ||--o{ SESSIONS : "教案被引用"
+    ENROLLMENTS {
+        TEXT id PK
+        TEXT student_id FK
+        TEXT package_type "solo / small / large"
+        INTEGER total_lessons "购买课数"
+        INTEGER used_lessons "已用课数"
+        INTEGER lessons_per_week
+        INTEGER minutes_per_lesson
+        TEXT start_date
+        TEXT goal
+        INTEGER stage
+        TEXT pace_mode "fixed / adaptive"
+        TEXT status "active / completed / paused / cancelled"
+    }
+    OUTLINE_LESSONS {
+        TEXT id PK
+        TEXT enrollment_id FK
+        INTEGER seq "包内第几节"
+        INTEGER unit_no "1-24"
+        INTEGER lesson_no "1-48"
+        TEXT lesson_type "A 新授 / B 巩固 / R 补强"
+        TEXT planned_date
+        INTEGER minutes
+        TEXT status "planned / taught / reviewed / skipped"
+        TEXT plan_id FK
+        TEXT session_id FK
+        TEXT pace_json "难度/剂量/预计课次/退阶链快照"
+    }
+    SESSIONS {
+        TEXT id PK
+        TEXT enrollment_id FK
+        TEXT outline_lesson_id
+        TEXT review_status "none / pending / done"
+        TEXT reviewed_at
+        TEXT judge_vals_json "3 要点达成"
+        TEXT homework
+        TEXT next_focus
+    }
+```
+
+要点：
+
+- **课程包是「买了多少节课」这个事实的唯一记录**。`students.total/used` 仍是汇总数字，但排课边界来自 `enrollments`。`students.used` 在执行时同步 +1，且不超过 `total`，避免出现 49/48。
+- **大纲逐节可追踪**：`seq`（包内第几节）、`unit_no`（课程体系第几单元）、`lesson_no`（48 课次里的第几课）、`lesson_type`（A/B/R）四者分离。R 课不占新的 `lesson_no`，它复用该单元的 B 课号，只改教学内容。
+- **`pace_json` 固化排课依据**：难度、并列新授点数、该单元算出的课次、每节实球触球、放行判据、拆分建议。改动难度表不会重算已有大纲，历史可解释。
+- **`sessions.outline_lesson_id` 不加外键到 `outline_lessons`**：避免删课程包时连带删掉历史授课记录（授课记录是经营数据，必须留）。
+- **`review_status` 有 NOT NULL 默认 `none`**：聚合同步 / 导入的旧快照没有这个字段，仓储层补默认值，否则整表替换会失败（本轮已踩过这个坑）。
+- 执行一节课是一个事务：`sessions` 插入 → `outline_lessons.status=taught` → `enrollments.used_lessons+1` → `students.used+1`。

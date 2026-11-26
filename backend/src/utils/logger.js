@@ -3,7 +3,7 @@
 // 敏感字段绝不写入日志
 const REDACT = new Set([
   'password', 'password_hash', 'admin_password', 'jwt_secret', 'secret',
-  'token', 'authorization', 'cookie', 'new_password', 'old_password'
+  'token', 'authorization', 'x-pkb-auth', 'x-pkb-session', 'cookie', 'new_password', 'old_password'
 ]);
 
 function scrub(value, depth = 0) {
@@ -30,12 +30,18 @@ module.exports = {
   info: (msg, meta) => emit('info', msg, meta),
   warn: (msg, meta) => emit('warn', msg, meta),
   error: (msg, meta) => emit('error', msg, meta),
-  request: (ctx, status, ms) => emit('info', 'http.request', {
-    request_id: ctx.requestId,
-    method: ctx.req.method,
-    path: ctx.path,
-    status,
-    duration_ms: ms,
-    actor: ctx.user ? ctx.user.sub : 'anonymous'
-  })
+  request: (ctx, status, ms) => {
+    const meta = {
+      request_id: ctx.requestId,
+      method: ctx.req.method,
+      path: ctx.path,
+      status,
+      duration_ms: ms,
+      actor: ctx.user ? ctx.user.sub : 'anonymous'
+    };
+    if ((status === 401 || ctx.path === '/api/v1/auth/login') && ctx._authDiag) {
+      meta.auth_diag = ctx._authDiag;
+    }
+    emit('info', 'http.request', meta);
+  }
 };

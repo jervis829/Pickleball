@@ -1,0 +1,532 @@
+{
+  "code": "PB-FIT",
+  "version": 1,
+  "status": "pilot",
+  "name": "匹克球身体素质入门测评（9 项）",
+  "durationMinutes": 28,
+  "staff": "教练 1 人 + 记录 1 人（可用手机录入）",
+  "equipment": [
+    "卷尺 / 地面标尺",
+    "标志桶 3 个",
+    "秒表",
+    "30 cm 直尺（反应尺）",
+    "20 cm 台阶或跳箱",
+    "瑜伽垫",
+    "坐位体前屈计或直尺 + 纸胶带",
+    "可测心率的手表（打印/手动摸脉亦可）",
+    "匹克球、球拍、一面平整墙"
+  ],
+  "calibrationNote": "本表所有分档为「参考分档（推定值）」，用于同一学员的前后对比与本馆内部分层，不是官方常模，也不是医疗诊断。首次使用请在本馆收集 ≥30 名同学段学员样本后，在「体系与设置」中把分档改为本馆实测分位。",
+  "orderPolicy": "固定顺序：先无疲劳项（反应 → 柔韧 → 平衡 → 协调），再爆发/灵敏，再力量耐力/核心，最后有氧。每项之间休息 60–90 s；有氧项最后做。",
+  "safetyGeneral": [
+    "测试前完成统一动态热身 6–8 分钟，并询问当日身体状况（发热、胸闷、眩晕、急性疼痛 → 当日不测）。",
+    "常青与少儿不测最大速度、不做急停折返到极限；折返类只要求「安全完成」，出现失衡立即停止。",
+    "平板支撑、俯卧撑、台阶测试出现腰部不适、头晕、心慌立即停止并记录「中止原因」，不得计为 0 分。",
+    "台阶测试需在稳固台阶上进行，旁边留 1 m 空地并有教练在侧保护；不做跳跃上台。",
+    "本系统不做医疗诊断；有心血管、骨关节病史者须先经医生或专业人员评估。"
+  ],
+  "ageGroups": [
+    {
+      "code": "u12",
+      "name": "少儿 6-12 岁",
+      "minAge": 6,
+      "maxAge": 12,
+      "factor": 0.6,
+      "rpeCap": 5,
+      "dimensionFactor": {
+        "reaction": 0.9,
+        "agility": 0.9,
+        "power": 0.72,
+        "strength": 0.62,
+        "core": 0.7,
+        "endurance": 0.82,
+        "flexibility": 1.08,
+        "balance": 1.05,
+        "coordination": 0.78
+      },
+      "note": "少儿以动作质量和趣味为主，不做最大速度与极限力量；爆发/力量/协调按发育让步，柔韧执行更高标准。"
+    },
+    {
+      "code": "u17",
+      "name": "青少年 13-17 岁",
+      "minAge": 13,
+      "maxAge": 17,
+      "factor": 0.9,
+      "rpeCap": 6,
+      "dimensionFactor": {
+        "reaction": 0.98,
+        "agility": 0.98,
+        "power": 0.9,
+        "strength": 0.8,
+        "core": 0.85,
+        "endurance": 0.95,
+        "flexibility": 1.04,
+        "balance": 1.0,
+        "coordination": 0.9
+      },
+      "note": "青春期发育差异大，按实际表现记录，不排名、不跨人比较。"
+    },
+    {
+      "code": "a18",
+      "name": "成人 18-39 岁",
+      "minAge": 18,
+      "maxAge": 39,
+      "factor": 1.0,
+      "rpeCap": 7,
+      "dimensionFactor": {},
+      "note": "基准组，分档即参考分档原值。"
+    },
+    {
+      "code": "a40",
+      "name": "成人 40-54 岁",
+      "minAge": 40,
+      "maxAge": 54,
+      "factor": 0.9,
+      "rpeCap": 7,
+      "dimensionFactor": {
+        "reaction": 0.93,
+        "agility": 0.92,
+        "power": 0.9,
+        "strength": 0.88,
+        "core": 0.9,
+        "endurance": 0.92,
+        "flexibility": 0.92,
+        "balance": 0.9,
+        "coordination": 0.92
+      },
+      "note": "恢复变慢，负荷以 RPE 与次日状态为准。"
+    },
+    {
+      "code": "a55",
+      "name": "常青 55-69 岁",
+      "minAge": 55,
+      "maxAge": 69,
+      "factor": 0.74,
+      "rpeCap": 4,
+      "dimensionFactor": {
+        "reaction": 0.8,
+        "agility": 0.75,
+        "power": 0.68,
+        "strength": 0.72,
+        "core": 0.75,
+        "endurance": 0.78,
+        "flexibility": 0.72,
+        "balance": 0.7,
+        "coordination": 0.76
+      },
+      "note": "一律先经医生或专业人员评估；去跳跃与急停，折返类只要求安全完成。"
+    },
+    {
+      "code": "a70",
+      "name": "常青 70 岁以上",
+      "minAge": 70,
+      "maxAge": 120,
+      "factor": 0.6,
+      "rpeCap": 4,
+      "dimensionFactor": {
+        "reaction": 0.72,
+        "agility": 0.65,
+        "power": 0.55,
+        "strength": 0.6,
+        "core": 0.62,
+        "endurance": 0.66,
+        "flexibility": 0.62,
+        "balance": 0.58,
+        "coordination": 0.65
+      },
+      "note": "以安全性、平衡与日常活动能力为主；立定跳远建议改坐站起立计时版本。"
+    }
+  ],
+  "weights": {
+    "reaction": 0.12,
+    "agility": 0.15,
+    "power": 0.13,
+    "strength": 0.12,
+    "core": 0.12,
+    "endurance": 0.14,
+    "flexibility": 0.08,
+    "balance": 0.07,
+    "coordination": 0.07
+  },
+  "dimensions": {
+    "reaction": {
+      "name": "反应速度",
+      "pickleball": "网前 hands battle 的第一拍反应、接发后的启动判断"
+    },
+    "agility": {
+      "name": "灵敏与变向",
+      "pickleball": "过渡区 reset 的到位速度、NVZ 横向小步调整"
+    },
+    "power": {
+      "name": "下肢爆发力",
+      "pickleball": "split step 蹬地、第三拍后上抢、高压起跳"
+    },
+    "strength": {
+      "name": "上肢力量耐力",
+      "pickleball": "连续 volley / 挡截 40 拍以上不掉拍面"
+    },
+    "core": {
+      "name": "核心耐力",
+      "pickleball": "低位 dink 相持时躯干稳定、不塌腰"
+    },
+    "endurance": {
+      "name": "有氧耐力",
+      "pickleball": "多局比赛的下降点、抢七决胜分的质量"
+    },
+    "flexibility": {
+      "name": "柔韧与活动度",
+      "pickleball": "低位球屈髋、肩胛活动度、预防肩肘劳损"
+    },
+    "balance": {
+      "name": "平衡与踝稳定",
+      "pickleball": "击球后制动、被提速时的身体控制、防踝扭伤"
+    },
+    "coordination": {
+      "name": "手眼协调",
+      "pickleball": "拍面控制与 dink 手感、非持拍手定位"
+    }
+  },
+  "items": [
+    {
+      "code": "reaction_ruler",
+      "no": 1,
+      "name": "反应尺测试",
+      "en": "Ruler drop test",
+      "dimension": "reaction",
+      "unit": "cm",
+      "direction": "lower",
+      "trials": "10 次，取中位数",
+      "protocol": "学员坐姿或站姿，拇指与食指张开约 5 cm，置于 30 cm 直尺 0 刻度两侧；教练在无预告下松手，学员夹住直尺，读数取虎口上缘。同一学员同一个教练全程用同一姿势，不提前报数。",
+      "safety": "不夹尺时不要抢抓；手臂自然放松，避免猛夹扭腕。",
+      "anchors": [
+        26,
+        22,
+        18,
+        14,
+        10
+      ],
+      "sexFactor": {
+        "male": 1.0,
+        "female": 0.95
+      },
+      "variants": []
+    },
+    {
+      "code": "sit_reach",
+      "no": 2,
+      "name": "坐位体前屈",
+      "en": "Sit and reach",
+      "dimension": "flexibility",
+      "unit": "cm",
+      "direction": "higher",
+      "trials": "3 次取最好",
+      "protocol": "坐地双腿伸直、脚底贴测试盒或墙面基准线，双手重叠缓慢前伸，膝盖不弯，保持 2 s 读数。0 点在脚底平面，越脚尖为正值。",
+      "safety": "缓慢前伸不弹压；腰椎间盘问题、坐骨神经痛者改测「站姿体前屈」并记录为替代变体。",
+      "anchors": [
+        -6,
+        2,
+        9,
+        16,
+        24
+      ],
+      "sexFactor": {
+        "male": 1.0,
+        "female": 0.89
+      },
+      "variants": [
+        {
+          "code": "stand",
+          "name": "站姿体前屈（替代）",
+          "factor": 1.15,
+          "note": "常青 / 腰背不适者的替代动作，按 ÷1.15 折算"
+        }
+      ]
+    },
+    {
+      "code": "single_leg",
+      "no": 3,
+      "name": "单腿站立（睁眼）",
+      "en": "Single-leg stance",
+      "dimension": "balance",
+      "unit": "s",
+      "direction": "higher",
+      "trials": "左右各 1 次，取较差侧",
+      "protocol": "双手叉腰、非支撑腿屈膝离地 10 cm，脚尖朝前，支撑脚不动。计时到 60 s 上限或出现明显移位 / 抬脚 / 手离开腰即停。两侧都测，取较差侧记录。",
+      "safety": "旁边留空并有教练在侧，不闭眼、不在软垫上做；摇晃明显即停，不追求极限。",
+      "anchors": [
+        5,
+        15,
+        30,
+        45,
+        60
+      ],
+      "sexFactor": {
+        "male": 1.0,
+        "female": 0.97
+      },
+      "variants": []
+    },
+    {
+      "code": "wall_rally",
+      "no": 4,
+      "name": "对墙连续击球 30 秒",
+      "en": "Wall rally 30 s",
+      "dimension": "coordination",
+      "unit": "次",
+      "direction": "higher",
+      "trials": "2 次，取较好一次",
+      "protocol": "距墙 3 m，用球拍连续向墙击球，球每次触墙计 1 次；球落地即停止计时，记录停止前的次数。中途换手不计次。",
+      "safety": "与墙保持 3 m，其他人不站在击球线后；手腕不适者改「拍面颠球 30 秒」。",
+      "anchors": [
+        6,
+        12,
+        20,
+        30,
+        42
+      ],
+      "sexFactor": {
+        "male": 1.0,
+        "female": 0.95
+      },
+      "variants": [
+        {
+          "code": "paddle_up",
+          "name": "拍面颠球 30 秒（替代）",
+          "factor": 1.2,
+          "note": "空间受限或初学者替代；颠球次数 ÷1.2 折算"
+        }
+      ]
+    },
+    {
+      "code": "slj",
+      "no": 5,
+      "name": "立定跳远",
+      "en": "Standing long jump",
+      "dimension": "power",
+      "unit": "cm",
+      "direction": "higher",
+      "trials": "3 次取最好",
+      "protocol": "双脚原地起跳，落地稳定后从起跳线量到最近落点（脚跟）。摆臂自然，不助跑。",
+      "safety": "在平整、防滑地面做；常青 70 岁以上改「坐站起立 5 次计时」并记录变体；膝踝疼痛当日不测。",
+      "anchors": [
+        120,
+        150,
+        180,
+        205,
+        230
+      ],
+      "sexFactor": {
+        "male": 1.0,
+        "female": 0.85
+      },
+      "variants": [
+        {
+          "code": "sit_to_stand",
+          "name": "坐站起立 5 次计时（替代）",
+          "factor": 1.0,
+          "note": "常青替代项；改用 altAnchors 计时分档（越低越好），不再套用立定跳远分档"
+        }
+      ],
+      "altAnchorsByVariant": {
+        "sit_to_stand": {
+          "unit": "s",
+          "direction": "lower",
+          "anchors": [
+            19,
+            16,
+            13,
+            10.5,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "code": "agility_5_10_5",
+      "no": 6,
+      "name": "5-10-5 侧向折返",
+      "en": "5-10-5 shuttle",
+      "dimension": "agility",
+      "unit": "s",
+      "direction": "lower",
+      "trials": "2 次，取较好一次",
+      "protocol": "标志桶间隔 5 m 共 3 个（总 10 m）。从中间桶起跑 → 摸右侧桶 → 折返摸左侧桶 → 回到中间桶。手掌触桶/触地即算到位。计时 0.1 s。",
+      "safety": "只做 2 次，组间休息 90 s；常青与少儿用 3 m 间距版本并记录变体，不测极限；出现失衡、打滑立即停止。",
+      "anchors": [
+        7.6,
+        6.8,
+        6.2,
+        5.6,
+        5.0
+      ],
+      "sexFactor": {
+        "male": 1.0,
+        "female": 0.92
+      },
+      "variants": [
+        {
+          "code": "short_3m",
+          "name": "3 m 间距折返（常青 / 少儿）",
+          "factor": 1.35,
+          "note": "常青 / 少儿的 3 m 间距版本；时间 ×1.35 还原为 5-10-5 等效值再查分档"
+        }
+      ]
+    },
+    {
+      "code": "pushup_30s",
+      "no": 7,
+      "name": "俯卧撑 30 秒",
+      "en": "Push-up 30 s",
+      "dimension": "strength",
+      "unit": "次",
+      "direction": "higher",
+      "trials": "1 次（动作不合格不计次）",
+      "protocol": "双手略宽于肩，躯干成直线，肘屈至大臂与地面约平行计 1 次。塌腰、撅臀、幅度不足不计次。30 s 内完成的最大合格次数。",
+      "safety": "腕、肩、腰有疼痛改用墙面俯卧撑并记录变体；常青不做标准俯卧撑，一律用墙面或跪姿版本。",
+      "anchors": [
+        8,
+        14,
+        20,
+        26,
+        34
+      ],
+      "sexFactor": {
+        "male": 1.0,
+        "female": 0.65
+      },
+      "variants": [
+        {
+          "code": "knee",
+          "name": "跪姿俯卧撑",
+          "factor": 1.7,
+          "note": "跪姿俯卧撑次数 ÷1.7 后再查分档"
+        },
+        {
+          "code": "wall",
+          "name": "墙面俯卧撑",
+          "factor": 2.6,
+          "note": "墙面俯卧撑次数 ÷2.6（常青 / 初学者版本）"
+        }
+      ]
+    },
+    {
+      "code": "plank",
+      "no": 8,
+      "name": "平板支撑",
+      "en": "Front plank hold",
+      "dimension": "core",
+      "unit": "s",
+      "direction": "higher",
+      "trials": "1 次（塌腰即停）",
+      "protocol": "肘撑，肩肘垂直，躯干成直线，臀不抬不塌。出现塌腰、抬臀、疼痛即停并计时。上限 180 s。",
+      "safety": "腰椎不适改「死虫式 30 s × 2」并记录变体；不憋气，全程自然呼吸。",
+      "anchors": [
+        30,
+        60,
+        90,
+        120,
+        160
+      ],
+      "sexFactor": {
+        "male": 1.0,
+        "female": 0.95
+      },
+      "variants": [
+        {
+          "code": "knee_plank",
+          "name": "屈膝平板支撑",
+          "factor": 1.6,
+          "note": "屈膝平板支撑时长 ÷1.6"
+        },
+        {
+          "code": "deadbug",
+          "name": "死虫式 30 s×2（替代）",
+          "factor": 1.8,
+          "note": "腰背不适替代动作，按 ÷1.8 折算"
+        }
+      ]
+    },
+    {
+      "code": "step_hr",
+      "no": 9,
+      "name": "3 分钟台阶后 1 分钟心率",
+      "en": "3-min step test, 1-min recovery HR",
+      "dimension": "endurance",
+      "unit": "bpm",
+      "direction": "lower",
+      "trials": "1 次（最后进行）",
+      "protocol": "20 cm 台阶，每分钟 24 步（节拍器 96 拍/分）连续上上下下 3 分钟，不许跳跃上台。结束后立即坐下，测恢复 1 分钟的心率（60 s 计数或手表读数）。",
+      "safety": "旁边有教练保护，台阶稳固防滑；常青与少儿把台阶降到 15 cm 并允许中途停下，中途停止记录「未完成」不计 0 分；出现胸闷、头晕、心慌立即停止。",
+      "anchors": [
+        165,
+        150,
+        135,
+        120,
+        105
+      ],
+      "sexFactor": {
+        "male": 1.0,
+        "female": 0.98
+      },
+      "variants": [
+        {
+          "code": "low_step",
+          "name": "15 cm 台阶",
+          "factor": 1.08,
+          "note": "15 cm 台阶心率 ×1.08 后再查分档"
+        }
+      ]
+    }
+  ],
+  "fitScoreBands": [
+    {
+      "min": 0,
+      "max": 20,
+      "score": 0,
+      "label": "起点：先建立基础活动能力"
+    },
+    {
+      "min": 20,
+      "max": 36,
+      "score": 1,
+      "label": "偏弱：以自重与活动度为主"
+    },
+    {
+      "min": 36,
+      "max": 52,
+      "score": 2,
+      "label": "一般：可进入标准体能段"
+    },
+    {
+      "min": 52,
+      "max": 70,
+      "score": 3,
+      "label": "良好：可承受标准负荷"
+    },
+    {
+      "min": 70,
+      "max": 86,
+      "score": 4,
+      "label": "较好：可加药球与间歇"
+    },
+    {
+      "min": 86,
+      "max": 101,
+      "score": 5,
+      "label": "优秀：可承受高量间歇"
+    }
+  ],
+  "planMapping": {
+    "agility": "④ 段步伐模块加 1 组侧滑 / 交叉步，对抗段设「接完即上」计分",
+    "reaction": "④ 段加口令启动 + 网前 hands battle 反应组，缩短组间休息到 45 s",
+    "power": "④ 段加 1 组自重爆发（蹲跳 / 弓步跳，常青改快速起立）",
+    "strength": "④ 段肩带与肘腕预防加量，volley 连续拍数目标下调 20%",
+    "core": "④ 段核心抗旋转 + 1 组低重心 dink 相持，减少高位球练习",
+    "endurance": "对抗段改间歇计分（4 分一局、局间 60 s），记录心率恢复",
+    "flexibility": "热身动态活动加 1 轮髋与胸椎，冷身静态拉伸延长 30 s",
+    "balance": "④ 段加单腿平衡与落地下肢控制，删减跳跃类动作",
+    "coordination": "③ 段加拍面控制与颠球 / 对墙递进，dink 连续回合目标下调"
+  },
+  "sexFactorNote": "系数 <1 表示该群体在同一成绩下获得更多折算（等效成绩更好）；higher 类用「实测 ÷ 系数」，lower 类用「实测 × 系数」。",
+  "factorNote": "年龄组让步在「指数空间」计算：index′ = 100 −(100 − index)×e，e 取该维度系数。e<1 表示该年龄段标准更宽松（同样成绩得更高指数），e>1 表示更严格。这样对「越高越好」「越低越好」和负值项目（坐位体前屈）都一致，不会出现某个区间反而更严的扭曲。少儿在爆发/力量上让步（e≈0.7），在柔韧上执行更高标准（e>1），因为儿童青少年柔韧普遍优于成人。"
+}

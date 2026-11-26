@@ -9,6 +9,12 @@ const skillScoring = require('../services/skill-scoring');
 const assessmentProtocols = require('../services/assessment-protocols');
 const assessmentRemediation = require('../services/assessment-remediation');
 const athleteProfile = require('../services/athlete-profile');
+const fitness = require('../services/fitness-assessment');
+const outline = require('../services/course-outline');
+const v3Curriculum = require('../services/v3-curriculum');
+const v3Fitness = require('../services/v3-fitness');
+const v3StudentReports = require('../services/v3-student-reports');
+const v3Plans = require('../services/v3-plans');
 
 function crud(entity) {
   return {
@@ -25,12 +31,27 @@ const plans = crud('plans');
 const sessions = crud('sessions');
 const assessments = crud('assessments');
 
+function setAuthCookie(ctx, token, maxAgeSec) {
+  const h = (ctx.req && ctx.req.headers) || {};
+  const xfProto = String(h['x-forwarded-proto'] || '').toLowerCase();
+  const origin = String(h.origin || '').toLowerCase();
+  const referer = String(h.referer || '').toLowerCase();
+  const host = String(h['x-forwarded-host'] || h.host || '').toLowerCase();
+  const isHttps = xfProto.includes('https') || origin.startsWith('https://') || referer.startsWith('https://') || /\.e2b\.app(?::\d+)?$/i.test(host);
+  const attrs = isHttps
+    ? 'Path=/api/v1; HttpOnly; SameSite=None; Secure; Partitioned'
+    : 'Path=/api/v1; HttpOnly; SameSite=Lax';
+  const val = token ? encodeURIComponent(token) : '';
+  ctx.res.setHeader('Set-Cookie', `pkb_token=${val}; Max-Age=${Math.max(0, Number(maxAgeSec) || 0)}; ${attrs}`);
+}
+
 module.exports = {
   health: ctx => ok(ctx.res, { status: 'ok', service: 'pickleball-academy', time: new Date().toISOString() }),
-  login: ctx => ok(ctx.res, auth.login(ctx.body)),
+  login: ctx => { const d = auth.login(ctx.body); setAuthCookie(ctx, d.token, d.expires_in); return ok(ctx.res, d); },
   me: ctx => ok(ctx.res, auth.me(ctx)),
+  refresh: ctx => { const d = auth.refresh(ctx); setAuthCookie(ctx, d.token, d.expires_in); return ok(ctx.res, d); },
   changePassword: ctx => ok(ctx.res, auth.changePassword(ctx, ctx.body)),
-  logout: ctx => noContent(ctx.res),
+  logout: ctx => { setAuthCookie(ctx, '', 0); return noContent(ctx.res); },
   stateGet: ctx => ok(ctx.res, stateSvc.get()),
   statePut: ctx => ok(ctx.res, stateSvc.put(ctx.body), 200, 'State synced'),
   exportAll: ctx => ok(ctx.res, stateSvc.exportAll()),
@@ -57,5 +78,49 @@ module.exports = {
   getAssessmentRemediationPlan: ctx => ok(ctx.res, assessmentRemediation.getPlan(ctx.params.id)),
   confirmAssessmentRemediationPlan: ctx => ok(ctx.res, assessmentRemediation.confirmPlan(ctx.params.id, ctx.user)),
   createScopedAssessmentRetest: ctx => created(ctx.res, assessmentRemediation.createScopedRetest(ctx.body, ctx.user)),
+  fitnessBattery: ctx => ok(ctx.res, fitness.battery()),
+  createFitnessAssessment: ctx => created(ctx.res, fitness.createAssessment(ctx.body, ctx.user)),
+  getFitnessAssessment: ctx => ok(ctx.res, fitness.getAssessment(ctx.params.id)),
+  saveFitnessResults: ctx => ok(ctx.res, fitness.saveResults(ctx.params.id, ctx.body.results, ctx.user)),
+  finalizeFitnessAssessment: ctx => ok(ctx.res, fitness.finalizeAssessment(ctx.params.id, ctx.body, ctx.user)),
+  studentFitnessAssessments: ctx => ok(ctx.res, fitness.listStudentAssessments(ctx.params.id)),
+  applyFitnessToStudent: ctx => ok(ctx.res, fitness.applyToStudentProfile(ctx.params.id, ctx.body, ctx.user)),
+  studentFitnessLatest: ctx => ok(ctx.res, { assessment: fitness.latestCompleted(ctx.params.id) }),
+  /* ---------- P7 课程包 / 大纲 / 今日课 / 课后点评 ---------- */
+  curriculumDifficulty: ctx => ok(ctx.res, outline.difficulty()),
+  createEnrollment: ctx => created(ctx.res, outline.createEnrollment(ctx.body, ctx.user)),
+  listEnrollments: ctx => ok(ctx.res, { items: outline.listEnrollments(ctx.query) }),
+  getEnrollment: ctx => ok(ctx.res, outline.getEnrollment(ctx.params.id)),
+  updateEnrollment: ctx => ok(ctx.res, outline.updateEnrollment(ctx.params.id, ctx.body)),
+  startLesson: ctx => created(ctx.res, outline.startLesson(ctx.params.id, ctx.body || {}, ctx.user)),
+  saveSessionReview: ctx => ok(ctx.res, outline.saveReview(ctx.params.id, ctx.body || {}, ctx.user)),
+  todayBoard: ctx => ok(ctx.res, outline.today(ctx.query.date)),
+  /* ---------- V3.0 配置驱动课程大纲 + 6维零道具体能 + 历史快照 + 教学计划 ---------- */
+  v3GetCurriculumConfig: ctx => ok(ctx.res, v3Curriculum.getConfig()),
+  v3SaveCurriculumConfig: ctx => ok(ctx.res, v3Curriculum.saveConfig(ctx.body)),
+  v3ResetCurriculumConfig: ctx => ok(ctx.res, v3Curriculum.resetConfig()),
+  v3GetFitnessBattery: ctx => ok(ctx.res, v3Fitness.getBattery()),
+  v3ListStudents: ctx => ok(ctx.res, { items: v3StudentReports.listStudentsOverview() }),
+  v3CreateStudent: ctx => created(ctx.res, v3StudentReports.createStudentWithBaseline(ctx.body || {})),
+  v3GetStudentReport: ctx => ok(ctx.res, v3StudentReports.getStudentFullReport(ctx.params.id)),
+  v3UpdateStudent: ctx => ok(ctx.res, v3StudentReports.updateStudentProfile(ctx.params.id, ctx.body || {})),
+  v3DeleteStudent: ctx => { catalog.remove('students', ctx.params.id); noContent(ctx.res); },
+  v3UpdateStudentScores: ctx => ok(ctx.res, v3StudentReports.updateStudentScores(ctx.params.id, (ctx.body && ctx.body.scores) || ctx.body || {}, ctx.body || {})),
+  v3ListSnapshots: ctx => ok(ctx.res, { items: v3StudentReports.listSnapshots(ctx.params.id) }),
+  v3CaptureSnapshot: ctx => created(ctx.res, v3StudentReports.captureSnapshot(ctx.params.id, ctx.body || {})),
+  v3CompareSnapshots: ctx => ok(ctx.res, v3StudentReports.compareSnapshots(ctx.params.id, ctx.query.currentId, ctx.query.prevId)),
+  v3SaveFitnessReport: ctx => created(ctx.res, v3Fitness.saveFitnessReport(v3StudentReports.requireStudent(ctx.params.id), ctx.body || {})),
+  v3ListFitnessReports: ctx => { v3StudentReports.requireStudent(ctx.params.id); return ok(ctx.res, { items: v3Fitness.listFitnessHistory(ctx.params.id) }); },
+  v3ListPlans: ctx => ok(ctx.res, { items: v3Plans.listPlans() }),
+  v3CreatePlan: ctx => created(ctx.res, v3Plans.createPlan(ctx.body || {})),
+  v3GetPlan: ctx => ok(ctx.res, v3Plans.getPlanDetail(ctx.params.id)),
+  v3AddPlanStudents: ctx => ok(ctx.res, v3Plans.addStudentsToPlan(ctx.params.id, (ctx.body && ctx.body.studentIds) || [])),
+  v3ExtendPlan: ctx => ok(ctx.res, v3Plans.extendPlan(ctx.params.id, ctx.body || {})),
+  v3ReorderPlan: ctx => ok(ctx.res, v3Plans.reorderPlanLessons(ctx.params.id, (ctx.body && ctx.body.orderedLessonIds) || [])),
+  v3InsertPlanLesson: ctx => created(ctx.res, v3Plans.insertPlanLesson(ctx.params.id, ctx.body || {})),
+  v3GetPlanLesson: ctx => ok(ctx.res, v3Plans.getLessonDetail(ctx.params.id, ctx.params.lessonId)),
+  v3UpdatePlanLesson: ctx => ok(ctx.res, v3Plans.updatePlanLesson(ctx.params.id, ctx.params.lessonId, ctx.body || {})),
+  v3DeletePlanLesson: ctx => ok(ctx.res, v3Plans.deletePlanLesson(ctx.params.id, ctx.params.lessonId)),
+  v3CompletePlanLesson: ctx => ok(ctx.res, v3Plans.completePlanLesson(ctx.params.id, ctx.params.lessonId, ctx.body || {})),
   students, plans, sessions, assessments
 };
